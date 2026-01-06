@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
-import { Document, Tag, SessionUser } from '@/types';
+import { Document, SessionUser } from '@/types';
+import { AppHeader } from '@/components/layout';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -48,15 +49,6 @@ export default function Dashboard() {
     loadData();
   }, [router]);
 
-  const handleLogout = async () => {
-    try {
-      await fetch(buildApiPath('auth/logout'), { method: 'POST' });
-      router.push(buildPath('/login'));
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       raw: 'bg-gray-100 text-gray-700',
@@ -74,6 +66,28 @@ export default function Dashboard() {
     });
   };
 
+  const handleDownload = (doc: Document, e: React.MouseEvent) => {
+    // Prevent row click navigation
+    e.stopPropagation();
+
+    // Create blob from content
+    const blob = new Blob([doc.content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+
+    // Create download link and trigger click
+    const link = document.createElement('a');
+    link.href = url;
+    // Use filename as download name, sanitize it and add .md extension
+    const filename = doc.filename.replace(/[^a-zA-Z0-9-_\s]/g, '').trim() || 'document';
+    link.download = `${filename}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Cleanup
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -84,43 +98,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-bold text-gray-900">Expert Note</h1>
-            </div>
-            <div className="flex items-center gap-6">
-              <nav className="flex gap-4">
-                <Link
-                  href={buildPath('/knowledge')}
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Knowledge Base
-                </Link>
-                <Link
-                  href={buildPath('/prompts')}
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Prompts
-                </Link>
-              </nav>
-              <div className="flex items-center gap-3 pl-6 border-l">
-                <span className="text-sm text-gray-600">
-                  {user?.displayName || user?.username}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm text-gray-500 hover:text-gray-700"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Shared Header */}
+      <AppHeader user={user} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -189,7 +168,13 @@ export default function Dashboard() {
                     Tags
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Uploaded By
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Updated
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -260,7 +245,21 @@ export default function Dashboard() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {doc.creator ? (doc.creator.displayName || doc.creator.username) : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(doc.updatedAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <button
+                        onClick={(e) => handleDownload(doc, e)}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Download as .md"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 ))}

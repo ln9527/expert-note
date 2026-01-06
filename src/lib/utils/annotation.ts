@@ -103,30 +103,84 @@ export function countAnnotations(text: string): { macro: number; meso: number; m
 }
 
 /**
+ * Extract surrounding context for an annotation based on its level
+ * - MACRO: Gets broader context (more lines before/after)
+ * - MESO: Gets medium context (a paragraph or section)
+ * - MICRO: Gets immediate context (surrounding sentences)
+ */
+function extractSurroundingContext(
+  lines: string[],
+  lineIndex: number,
+  level: AnnotationLevel
+): string {
+  // Define context window based on level
+  const contextWindow = {
+    MACRO: { before: 10, after: 10 },  // Broad document context
+    MESO: { before: 5, after: 5 },     // Section/paragraph context
+    MICRO: { before: 2, after: 2 },    // Immediate sentence context
+  };
+
+  const window = contextWindow[level];
+  const startLine = Math.max(0, lineIndex - window.before);
+  const endLine = Math.min(lines.length - 1, lineIndex + window.after);
+
+  // Extract the context lines, removing annotation markers for cleaner context
+  const contextLines = lines
+    .slice(startLine, endLine + 1)
+    .map(line => line.replace(/\[\[(MACRO|MESO|MICRO):\s*(.+?)\]\]/gi, '[ANNOTATION]'))
+    .filter(line => line.trim());
+
+  return contextLines.join('\n');
+}
+
+/**
  * Extract all annotations from document content
+ * Returns level, content, position, line/char information, and surrounding context
  */
 export function extractAnnotations(text: string): Array<{
   level: AnnotationLevel;
   content: string;
   position: number;
+  line: number;
+  char: number;
+  rawText: string;
+  surroundingContext: string;
 }> {
   const annotations: Array<{
     level: AnnotationLevel;
     content: string;
     position: number;
+    line: number;
+    char: number;
+    rawText: string;
+    surroundingContext: string;
   }> = [];
 
-  // Match annotation pattern [[LEVEL: content]]
-  const regex = /\[\[(MACRO|MESO|MICRO):\s*(.+?)\]\]/gi;
-  let match;
+  // Split into lines and track line numbers
+  const lines = text.split('\n');
+  let currentPosition = 0;
 
-  while ((match = regex.exec(text)) !== null) {
-    annotations.push({
-      level: match[1].toUpperCase() as AnnotationLevel,
-      content: match[2].trim(),
-      position: match.index,
-    });
-  }
+  lines.forEach((line, lineIndex) => {
+    // Match annotation pattern [[LEVEL: content]]
+    const regex = /\[\[(MACRO|MESO|MICRO):\s*(.+?)\]\]/gi;
+    let match;
+
+    while ((match = regex.exec(line)) !== null) {
+      const level = match[1].toUpperCase() as AnnotationLevel;
+      annotations.push({
+        level,
+        content: match[2].trim(),
+        position: currentPosition + match.index,
+        line: lineIndex + 1, // 1-indexed
+        char: match.index + 1, // 1-indexed
+        rawText: match[0],
+        surroundingContext: extractSurroundingContext(lines, lineIndex, level),
+      });
+    }
+
+    // Add line length plus newline character
+    currentPosition += line.length + 1;
+  });
 
   return annotations;
 }

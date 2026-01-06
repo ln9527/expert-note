@@ -21,7 +21,7 @@ export default function AnnotationToolbar({
   const levels: AnnotationLevel[] = ['MACRO', 'MESO', 'MICRO'];
 
   return (
-    <div className="flex items-center gap-2 p-3 bg-gray-50 border-b">
+    <div className="flex items-center gap-2 p-3 bg-gray-50">
       <span className="text-sm text-gray-600 mr-2 font-medium">Add Annotation:</span>
 
       {levels.map((level) => {

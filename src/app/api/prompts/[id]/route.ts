@@ -53,7 +53,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    const { title, description, content, templateType, sourceKnowledgeIds } = body;
+    const { title, description, content, templateType, sourceKnowledgeIds, tagIds } = body;
+
+    // Validate tagIds if provided
+    const validTagIds = tagIds !== undefined
+      ? (Array.isArray(tagIds) ? tagIds.filter(id => typeof id === 'number' && !isNaN(id)) : [])
+      : undefined;
 
     const prompt = await updatePrompt(id, {
       title: title?.trim(),
@@ -61,6 +66,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       content: content?.trim(),
       templateType,
       sourceKnowledgeIds,
+      tagIds: validTagIds,
     });
 
     if (!prompt) {

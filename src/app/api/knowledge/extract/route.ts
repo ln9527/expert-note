@@ -1,21 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth/session';
 import { getDocumentById } from '@/lib/db/queries/documents';
-import { createKnowledgeEntry, getKnowledgeEntryWithAnnotations } from '@/lib/db/queries/knowledge';
+import { createKnowledgeEntry, getKnowledgeEntryWithAnnotations, AnnotationData } from '@/lib/db/queries/knowledge';
 import { extractKnowledge, ExtractionResult } from '@/lib/ai/extraction';
 import { extractAnnotations } from '@/lib/utils/annotation';
-import { AnnotationLevel } from '@/types';
 
 /**
  * POST /api/knowledge/extract
  * Extract knowledge from an annotated document using AI
+ *
+ * The AI returns results in Markdown format with:
+ * - Background: Context around the annotation
+ * - Original Comment: Verbatim annotation text
+ * - Refined Comment: AI-improved version
+ * - Level: MACRO/MESO/MICRO
+ * - Location: Where in document this appeared
  *
  * Request body:
  * {
  *   documentId: string,          // Required: ID of the document to extract from
  *   tagIds?: number[],           // Optional: Tags to assign to the knowledge entry
  *   background?: string,         // Optional: Custom background, defaults to document filename
- *   refineAnnotations?: boolean  // Optional: Whether to refine annotations with AI (default: true)
+ *   refineAnnotations?: boolean, // Optional: Whether to refine annotations with AI (default: true)
+ *   customInstructions?: string  // Optional: Custom instructions to guide the AI extraction
  * }
  */
 export async function POST(request: NextRequest) {
@@ -31,6 +38,7 @@ export async function POST(request: NextRequest) {
       tagIds,
       background: customBackground,
       refineAnnotations = true,
+      customInstructions,
     } = body;
 
     // Validate documentId
@@ -50,10 +58,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check document has annotations
-    if (document.status !== 'annotated' && document.status !== 'refined') {
+    // Check document has annotations (status should not be 'raw')
+    if (document.status === 'raw') {
       return NextResponse.json(
-        { success: false, error: 'Document has no annotations to extract' },
+        { success: false, error: 'Document has no annotations to extract. Please add annotations first.' },
         { status: 400 }
       );
     }
@@ -68,73 +76,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare the background text
-    const background = customBackground?.trim() || `Extracted from: ${document.filename}`;
+    // Prepare the background text for the knowledge entry
+    const entryBackground = customBackground?.trim() || `Extracted from: ${document.filename}`;
 
     // Use document tags if no custom tags provided
     const entryTagIds: number[] = tagIds || document.tags.map(t => t.id);
 
-    let annotations: {
-      level: AnnotationLevel;
-      originalText: string;
-      comment: string;
-      refinedComment?: string;
-      positionLine?: number;
-      positionChar?: number;
-    }[];
+    let annotations: AnnotationData[];
 
     if (refineAnnotations) {
-      // Use AI to refine annotations
+      // Use AI to refine annotations with full document context
+      // The new extraction system uses two phases:
+      // 1. Document analysis to understand overall structure and purpose
+      // 2. Context-aware annotation processing with surrounding text
       const extractionInput = {
-        documentBackground: background,
+        documentContent: document.content,  // Full document for analysis
+        documentBackground: entryBackground,
         annotations: parsedAnnotations.map(a => ({
           level: a.level,
           content: a.content,
+          surroundingContext: a.surroundingContext,  // Context around each annotation
+          lineNumber: a.line,
         })),
+        customInstructions: customInstructions?.trim() || undefined,
       };
 
       let extractionResults: ExtractionResult[];
       try {
         extractionResults = await extractKnowledge(extractionInput);
+        console.log(`[Extract API] AI returned ${extractionResults.length} refined annotations with context`);
       } catch (aiError) {
         console.error('[Extract API] AI extraction failed:', aiError);
-        // Fall back to unrefined annotations
-        extractionResults = parsedAnnotations.map(a => ({
-          original: a.content,
-          refined: a.content,
-          isUniversal: false,
-          reasoning: 'AI extraction unavailable',
+        // Fall back to unrefined annotations but still include surrounding context
+        extractionResults = parsedAnnotations.map((a, index) => ({
+          level: a.level,
+          location: a.line ? `Line ${a.line}` : `Annotation ${index + 1}`,
+          background: `${entryBackground}\n\nSurrounding text:\n${a.surroundingContext.substring(0, 500)}`,
+          originalComment: a.content,
+          refinedComment: a.content,
         }));
       }
 
       // Map extraction results to annotation data
-      annotations = parsedAnnotations.map((ann, index) => {
-        const result = extractionResults[index];
+      // The new format includes: level, location, background, originalComment, refinedComment
+      annotations = extractionResults.map((result, index) => {
+        const originalAnnotation = parsedAnnotations[index];
         return {
-          level: ann.level,
-          originalText: result?.original || ann.content,
-          comment: ann.content,
-          refinedComment: result?.refined,
-          positionLine: undefined, // Position in original doc, not needed in knowledge entry
-          positionChar: undefined,
+          level: result.level || originalAnnotation?.level || 'MACRO',
+          originalText: result.originalComment || originalAnnotation?.content || '',
+          comment: originalAnnotation?.content || result.originalComment || '',
+          refinedComment: result.refinedComment,
+          location: result.location,
+          backgroundContext: result.background,
+          positionLine: originalAnnotation?.line,
+          positionChar: originalAnnotation?.char,
         };
       });
     } else {
       // Use annotations as-is without AI refinement
-      annotations = parsedAnnotations.map(ann => ({
+      annotations = parsedAnnotations.map((ann, index) => ({
         level: ann.level,
         originalText: ann.content,
         comment: ann.content,
         refinedComment: undefined,
-        positionLine: undefined,
-        positionChar: undefined,
+        location: ann.line ? `Line ${ann.line}` : `Annotation ${index + 1}`,
+        backgroundContext: undefined,
+        positionLine: ann.line,
+        positionChar: ann.char,
       }));
     }
 
     // Create the knowledge entry
     const entry = await createKnowledgeEntry({
       sourceDocumentId: documentId,
-      background,
+      background: entryBackground,
       tagIds: entryTagIds,
       annotations,
     });
@@ -146,6 +161,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         entry: completeEntry,
+        count: annotations.length,
         extractionSummary: {
           documentId,
           documentFilename: document.filename,

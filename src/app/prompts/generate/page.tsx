@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
-import { KnowledgeEntry } from '@/types';
+import { KnowledgeEntryWithAnnotations, Tag, PromptTemplate } from '@/types';
 import { TemplateSelector, KnowledgeSelector, PromptPreview } from '@/components/prompts';
 
 export default function PromptGeneratorPage() {
@@ -11,14 +11,16 @@ export default function PromptGeneratorPage() {
 
   // Form state
   const [templateType, setTemplateType] = useState('');
-  const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<number[]>([]);
+  const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<string[]>([]);
   const [additionalInstructions, setAdditionalInstructions] = useState('');
   const [promptTitle, setPromptTitle] = useState('');
   const [promptDescription, setPromptDescription] = useState('');
+  const [purpose, setPurpose] = useState('');
 
   // Data state
-  const [knowledgeEntries, setKnowledgeEntries] = useState<KnowledgeEntry[]>([]);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [knowledgeEntries, setKnowledgeEntries] = useState<KnowledgeEntryWithAnnotations[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [generatedContent, setGeneratedContent] = useState('');
 
   // UI state
@@ -27,35 +29,42 @@ export default function PromptGeneratorPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch knowledge entries
+  // Fetch knowledge entries and templates
   useEffect(() => {
-    const fetchKnowledge = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(buildApiPath('knowledge'));
-        const data = await response.json();
+        // Fetch knowledge entries and templates in parallel
+        const [knowledgeResponse, templatesResponse] = await Promise.all([
+          fetch(buildApiPath('knowledge')),
+          fetch(buildApiPath('prompt-templates?category=generation')),
+        ]);
 
-        if (!data.success) {
-          setError(data.error || 'Failed to load knowledge entries');
+        const knowledgeData = await knowledgeResponse.json();
+        const templatesData = await templatesResponse.json();
+
+        if (!knowledgeData.success) {
+          setError(knowledgeData.error || 'Failed to load knowledge entries');
           return;
         }
 
-        setKnowledgeEntries(data.entries || []);
+        setKnowledgeEntries(knowledgeData.entries || []);
+        setTemplates(templatesData.templates || []);
 
-        // Extract unique tags
-        const tags = new Set<string>();
-        (data.entries || []).forEach((entry: KnowledgeEntry) => {
-          entry.tags?.forEach((tag) => tags.add(tag));
+        // Extract unique tags (tags are now Tag objects)
+        const tagMap = new Map<number, Tag>();
+        (knowledgeData.entries || []).forEach((entry: KnowledgeEntryWithAnnotations) => {
+          entry.tags?.forEach((tag) => tagMap.set(tag.id, tag));
         });
-        setAvailableTags(Array.from(tags).sort());
+        setAvailableTags(Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
       } catch (err) {
-        console.error('Failed to fetch knowledge:', err);
+        console.error('Failed to fetch data:', err);
         setError('Network error. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchKnowledge();
+    fetchData();
   }, []);
 
   const handleGenerate = async () => {
@@ -69,6 +78,11 @@ export default function PromptGeneratorPage() {
       return;
     }
 
+    if (!purpose.trim()) {
+      setError('Please enter a purpose for the prompt');
+      return;
+    }
+
     setGenerating(true);
     setError('');
 
@@ -79,7 +93,9 @@ export default function PromptGeneratorPage() {
         body: JSON.stringify({
           templateType,
           knowledgeIds: selectedKnowledgeIds,
+          purpose: purpose.trim(),
           customInstructions: additionalInstructions,
+          saveToDatabase: false, // Don't auto-save, let user save manually
         }),
       });
 
@@ -90,18 +106,14 @@ export default function PromptGeneratorPage() {
         return;
       }
 
-      setGeneratedContent(data.content);
+      setGeneratedContent(data.generatedContent);
 
       // Auto-set title if empty
       if (!promptTitle) {
-        const templateNames: Record<string, string> = {
-          introduction: 'Introduction Review',
-          methodology: 'Methods Review',
-          discussion: 'Discussion Review',
-          academicCoach: 'Academic Coach',
-          custom: 'Custom Prompt',
-        };
-        setPromptTitle(`${templateNames[templateType] || 'Generated'} Prompt`);
+        // Find the template name from our fetched templates
+        const selectedTemplate = templates.find(t => (t.templateType || t.name) === templateType);
+        const templateName = selectedTemplate?.name || templateType || 'Generated';
+        setPromptTitle(`${templateName} Prompt`);
       }
     } catch (err) {
       console.error('Failed to generate prompt:', err);
@@ -186,6 +198,23 @@ export default function PromptGeneratorPage() {
           <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
             <h3 className="text-lg font-semibold text-gray-900">Configuration</h3>
 
+            {/* Purpose */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Purpose <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={purpose}
+                onChange={(e) => setPurpose(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., Review academic paper introductions for clarity"
+              />
+              <p className="text-xs text-gray-500">
+                Describe what you want the AI to do with this prompt
+              </p>
+            </div>
+
             {/* Template Type */}
             <TemplateSelector
               value={templateType}
@@ -217,7 +246,7 @@ export default function PromptGeneratorPage() {
             {/* Generate Button */}
             <button
               onClick={handleGenerate}
-              disabled={generating || selectedKnowledgeIds.length === 0 || !templateType}
+              disabled={generating || selectedKnowledgeIds.length === 0 || !templateType || !purpose.trim()}
               className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {generating ? (

@@ -84,6 +84,13 @@ export interface AnnotationCounts {
   micro: number;
 }
 
+// Creator info for documents
+export interface CreatorInfo {
+  id: number;
+  username: string;
+  displayName: string | null;
+}
+
 export interface Document {
   id: string;
   filename: string;
@@ -91,6 +98,7 @@ export interface Document {
   status: 'raw' | 'annotated' | 'refined';
   createdBy: number | null;
   updatedBy: number | null;
+  creator: CreatorInfo | null;
   isDeleted: boolean;
   deletedAt: Date | null;
   createdAt: Date;
@@ -132,8 +140,50 @@ export interface Session {
   displayName: string | null;
 }
 
-// Knowledge Entry type for AI processing
+// Knowledge Entry type - matches database schema
+// A knowledge entry contains a background/context and multiple annotations
 export interface KnowledgeEntry {
+  id: string;
+  sourceDocumentId: string | null;
+  background: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  tags: Tag[];
+  annotationCount: number;
+}
+
+// Knowledge Annotation type - individual annotations within a knowledge entry
+export interface KnowledgeAnnotation {
+  id: string;
+  knowledgeId: string;
+  level: AnnotationLevel;
+  originalText: string;       // Original verbatim annotation text from the document
+  comment: string;            // The annotation content (may be same as originalText)
+  refinedComment: string | null;  // AI-refined version that preserves meaning but is clearer
+  location: string | null;    // Human-readable location (e.g., "Chapter 7, Section 1")
+  backgroundContext: string | null; // AI-extracted context around this annotation
+  positionLine: number | null;
+  positionChar: number | null;
+  createdAt: Date;
+}
+
+// Extraction result from AI in Markdown format
+export interface MarkdownExtractionItem {
+  level: AnnotationLevel;
+  location: string;
+  background: string;         // Context surrounding the annotation
+  originalComment: string;    // Verbatim annotation text
+  refinedComment: string;     // AI-improved version
+}
+
+// Knowledge Entry with annotations included
+export interface KnowledgeEntryWithAnnotations extends KnowledgeEntry {
+  annotations: KnowledgeAnnotation[];
+}
+
+// Legacy Knowledge Entry format for AI generation
+// Used by prompt generation to create flat annotation-level entries
+export interface KnowledgeEntryFlat {
   id: number;
   userId: number;
   originalContent: string;
@@ -153,8 +203,9 @@ export interface ApiResponse<T = unknown> {
   error?: string;
 }
 
-// Template types for system prompts
-export type TemplateType = 'introduction' | 'methodology' | 'discussion' | 'academicCoach' | 'custom';
+// Template types for system prompts (now dynamically defined by users in Settings)
+// Legacy type kept for backward compatibility - new templates are user-defined strings
+export type TemplateType = string;
 
 // System Prompt type for AI prompt generation
 export interface SystemPrompt {
@@ -168,6 +219,7 @@ export interface SystemPrompt {
   version: number;
   createdAt: Date;
   updatedAt: Date;
+  tags: Tag[];  // Tags for filtering and organization
 }
 
 // Version history entry for system prompts
@@ -177,4 +229,22 @@ export interface PromptVersion {
   version: number;
   content: string;
   createdAt: Date;
+}
+
+// Prompt Template for extraction/generation
+export type PromptTemplateCategory = 'extraction' | 'generation';
+
+export interface PromptTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  category: PromptTemplateCategory;
+  templateType: string | null;
+  content: string;
+  isDefault: boolean;
+  isActive: boolean;
+  createdBy: number | null;
+  version: number;
+  createdAt: Date;
+  updatedAt: Date;
 }

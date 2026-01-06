@@ -1,7 +1,7 @@
 // Document database queries
 
 import { query, queryOne, transaction } from '../index';
-import { Document, Tag, AnnotationCounts } from '@/types';
+import { Document, Tag, AnnotationCounts, CreatorInfo } from '@/types';
 import { parseAnnotations } from '@/lib/utils/annotation';
 import { PoolClient } from 'pg';
 
@@ -18,6 +18,7 @@ interface DocumentRow {
   updated_at: string;
   tags?: Tag[];
   annotation_counts?: AnnotationCounts;
+  creator?: CreatorInfo | null;
 }
 
 function mapDocumentRow(row: DocumentRow): Document {
@@ -28,6 +29,7 @@ function mapDocumentRow(row: DocumentRow): Document {
     status: row.status as Document['status'],
     createdBy: row.created_by,
     updatedBy: row.updated_by,
+    creator: row.creator || null,
     isDeleted: row.is_deleted,
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
     createdAt: new Date(row.created_at),
@@ -76,8 +78,12 @@ export async function getDocuments(options: {
         'macro', COUNT(*) FILTER (WHERE level = 'MACRO'),
         'meso', COUNT(*) FILTER (WHERE level = 'MESO'),
         'micro', COUNT(*) FILTER (WHERE level = 'MICRO')
-      ) FROM annotations WHERE document_id = d.id) as annotation_counts
+      ) FROM annotations WHERE document_id = d.id) as annotation_counts,
+      CASE WHEN u.id IS NOT NULL THEN
+        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+      ELSE NULL END as creator
     FROM documents d
+    LEFT JOIN users u ON d.created_by = u.id
     ${whereClause}
     ORDER BY d.updated_at DESC
   `;
@@ -99,8 +105,12 @@ export async function getDocumentById(id: string): Promise<Document | null> {
         'macro', COUNT(*) FILTER (WHERE level = 'MACRO'),
         'meso', COUNT(*) FILTER (WHERE level = 'MESO'),
         'micro', COUNT(*) FILTER (WHERE level = 'MICRO')
-      ) FROM annotations WHERE document_id = d.id) as annotation_counts
+      ) FROM annotations WHERE document_id = d.id) as annotation_counts,
+      CASE WHEN u.id IS NOT NULL THEN
+        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+      ELSE NULL END as creator
     FROM documents d
+    LEFT JOIN users u ON d.created_by = u.id
     WHERE d.id = $1
   `;
 
@@ -150,7 +160,7 @@ export async function createDocument(data: {
       await client.query(`UPDATE documents SET status = 'annotated' WHERE id = $1`, [docId]);
     }
 
-    // Fetch full document with tags and annotation counts within transaction
+    // Fetch full document with tags, annotation counts, and creator within transaction
     const sql = `
       SELECT
         d.*,
@@ -163,8 +173,12 @@ export async function createDocument(data: {
           'macro', COUNT(*) FILTER (WHERE level = 'MACRO'),
           'meso', COUNT(*) FILTER (WHERE level = 'MESO'),
           'micro', COUNT(*) FILTER (WHERE level = 'MICRO')
-        ) FROM annotations WHERE document_id = d.id) as annotation_counts
+        ) FROM annotations WHERE document_id = d.id) as annotation_counts,
+        CASE WHEN u.id IS NOT NULL THEN
+          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+        ELSE NULL END as creator
       FROM documents d
+      LEFT JOIN users u ON d.created_by = u.id
       WHERE d.id = $1
     `;
     const result = await client.query<DocumentRow>(sql, [docId]);
@@ -223,9 +237,9 @@ export async function updateDocument(
       const annotations = parseAnnotations(content);
       for (const ann of annotations) {
         await client.query(
-          `INSERT INTO annotations (document_id, level, content, position_line, position_char, raw_text, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [id, ann.level, ann.content, ann.line, ann.char, ann.rawText, updatedBy]
+          `INSERT INTO annotations (document_id, level, content, position_line, position_char, raw_text)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [id, ann.level, ann.content, ann.line, ann.char, ann.rawText]
         );
       }
 
@@ -234,8 +248,29 @@ export async function updateDocument(
       await client.query(`UPDATE documents SET status = $2 WHERE id = $1`, [id, newStatus]);
     }
 
-    const result = await getDocumentById(id);
-    return result!;
+    // Fetch updated document with creator within transaction
+    const sql = `
+      SELECT
+        d.*,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
+           FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id),
+          '[]'
+        ) as tags,
+        (SELECT json_build_object(
+          'macro', COUNT(*) FILTER (WHERE level = 'MACRO'),
+          'meso', COUNT(*) FILTER (WHERE level = 'MESO'),
+          'micro', COUNT(*) FILTER (WHERE level = 'MICRO')
+        ) FROM annotations WHERE document_id = d.id) as annotation_counts,
+        CASE WHEN u.id IS NOT NULL THEN
+          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+        ELSE NULL END as creator
+      FROM documents d
+      LEFT JOIN users u ON d.created_by = u.id
+      WHERE d.id = $1
+    `;
+    const result = await client.query<DocumentRow>(sql, [id]);
+    return mapDocumentRow(result.rows[0]);
   });
 }
 

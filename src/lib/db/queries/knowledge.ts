@@ -22,6 +22,8 @@ interface AnnotationRow {
   original_text: string;
   comment: string;
   refined_comment: string | null;
+  location: string | null;
+  background_context: string | null;
   position_line: number | null;
   position_char: number | null;
   created_at: string;
@@ -45,6 +47,8 @@ export interface KnowledgeAnnotation {
   originalText: string;
   comment: string;
   refinedComment: string | null;
+  location: string | null;
+  backgroundContext: string | null;
   positionLine: number | null;
   positionChar: number | null;
   createdAt: Date;
@@ -55,6 +59,8 @@ export interface AnnotationData {
   originalText: string;
   comment: string;
   refinedComment?: string;
+  location?: string;
+  backgroundContext?: string;
   positionLine?: number;
   positionChar?: number;
 }
@@ -84,6 +90,8 @@ function mapAnnotationRow(row: AnnotationRow): KnowledgeAnnotation {
     originalText: row.original_text,
     comment: row.comment,
     refinedComment: row.refined_comment,
+    location: row.location,
+    backgroundContext: row.background_context,
     positionLine: row.position_line,
     positionChar: row.position_char,
     createdAt: new Date(row.created_at),
@@ -190,11 +198,11 @@ export async function createKnowledgeEntry(data: {
   return transaction(async (client: PoolClient) => {
     const { sourceDocumentId, background, tagIds, annotations } = data;
 
-    // Insert knowledge entry
-    const entryResult = await client.query<{ id: string }>(
+    // Insert knowledge entry and get full row back
+    const entryResult = await client.query<KnowledgeEntryRow>(
       `INSERT INTO knowledge_entries (source_document_id, background)
        VALUES ($1, $2)
-       RETURNING id`,
+       RETURNING *`,
       [sourceDocumentId || null, background]
     );
     const knowledgeId = entryResult.rows[0].id;
@@ -211,23 +219,38 @@ export async function createKnowledgeEntry(data: {
     // Insert annotations
     for (const ann of annotations) {
       await client.query(
-        `INSERT INTO annotations (knowledge_id, level, original_text, comment, refined_comment, position_line, position_char)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        `INSERT INTO annotations (knowledge_id, level, original_text, comment, refined_comment, location, background_context, position_line, position_char)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [
           knowledgeId,
           ann.level.toLowerCase(),
           ann.originalText,
           ann.comment,
           ann.refinedComment || null,
+          ann.location || null,
+          ann.backgroundContext || null,
           ann.positionLine || null,
           ann.positionChar || null,
         ]
       );
     }
 
-    // Return full entry
-    const result = await getKnowledgeEntryById(knowledgeId);
-    return result!;
+    // Fetch complete entry with tags using same transaction connection
+    // Note: We must use client.query here to stay within the transaction
+    const sql = `
+      SELECT
+        ke.*,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
+           FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
+          '[]'
+        ) as tags,
+        (SELECT COUNT(*) FROM annotations WHERE knowledge_id = ke.id) as annotation_count
+      FROM knowledge_entries ke
+      WHERE ke.id = $1
+    `;
+    const result = await client.query<KnowledgeEntryRow>(sql, [knowledgeId]);
+    return mapKnowledgeRow(result.rows[0]);
   });
 }
 
@@ -291,7 +314,7 @@ export async function getKnowledgeEntryAnnotations(
 ): Promise<KnowledgeAnnotation[]> {
   const sql = `
     SELECT id, knowledge_id, level, original_text, comment, refined_comment,
-           position_line, position_char, created_at
+           location, background_context, position_line, position_char, created_at
     FROM annotations
     WHERE knowledge_id = $1
     ORDER BY position_line ASC NULLS LAST, created_at ASC
@@ -337,9 +360,9 @@ export async function addAnnotation(
   data: AnnotationData
 ): Promise<KnowledgeAnnotation> {
   const sql = `
-    INSERT INTO annotations (knowledge_id, level, original_text, comment, refined_comment, position_line, position_char)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id, knowledge_id, level, original_text, comment, refined_comment, position_line, position_char, created_at
+    INSERT INTO annotations (knowledge_id, level, original_text, comment, refined_comment, location, background_context, position_line, position_char)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING id, knowledge_id, level, original_text, comment, refined_comment, location, background_context, position_line, position_char, created_at
   `;
 
   const row = await queryOne<AnnotationRow>(sql, [
@@ -348,6 +371,8 @@ export async function addAnnotation(
     data.originalText,
     data.comment,
     data.refinedComment || null,
+    data.location || null,
+    data.backgroundContext || null,
     data.positionLine || null,
     data.positionChar || null,
   ]);
@@ -366,7 +391,7 @@ export async function updateAnnotationRefinedComment(
     UPDATE annotations
     SET refined_comment = $2
     WHERE id = $1
-    RETURNING id, knowledge_id, level, original_text, comment, refined_comment, position_line, position_char, created_at
+    RETURNING id, knowledge_id, level, original_text, comment, refined_comment, location, background_context, position_line, position_char, created_at
   `;
 
   const row = await queryOne<AnnotationRow>(sql, [annotationId, refinedComment]);

@@ -1,10 +1,11 @@
 // System prompt database queries
 
 import { query, queryOne } from '../index';
+import { Tag } from '@/types';
 
 export interface SystemPromptRow {
   id: string;
-  user_id: string;
+  user_id: number;  // Database column is INTEGER
   title: string;
   description: string | null;
   content: string;
@@ -26,12 +27,19 @@ export interface SystemPrompt {
   version: number;
   createdAt: Date;
   updatedAt: Date;
+  tags: Tag[];
 }
 
-function mapPromptRow(row: SystemPromptRow): SystemPrompt {
+interface TagRow {
+  id: number;
+  name: string;
+  color: string;
+}
+
+function mapPromptRow(row: SystemPromptRow, tags: Tag[] = []): SystemPrompt {
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: String(row.user_id),  // Convert to string for consistent comparison
     title: row.title,
     description: row.description,
     content: row.content,
@@ -40,13 +48,64 @@ function mapPromptRow(row: SystemPromptRow): SystemPrompt {
     version: row.version,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
+    tags,
   };
 }
 
 export interface GetAllPromptsOptions {
   templateType?: string;
+  tagIds?: number[];
+  search?: string;
   limit?: number;
   offset?: number;
+}
+
+/**
+ * Get tags for a specific prompt
+ */
+export async function getPromptTags(promptId: string): Promise<Tag[]> {
+  const sql = `
+    SELECT t.id, t.name, t.color
+    FROM tags t
+    INNER JOIN prompt_tags pt ON t.id = pt.tag_id
+    WHERE pt.prompt_id = $1
+    ORDER BY t.name
+  `;
+  const rows = await query<TagRow>(sql, [promptId]);
+  return rows.map(row => ({
+    id: row.id,
+    name: row.name,
+    color: row.color,
+  }));
+}
+
+/**
+ * Add tags to a prompt
+ */
+export async function addPromptTags(promptId: string, tagIds: number[]): Promise<void> {
+  if (tagIds.length === 0) return;
+
+  // Build bulk insert
+  const values = tagIds.map((tagId, i) => `($1, $${i + 2})`).join(', ');
+  const sql = `
+    INSERT INTO prompt_tags (prompt_id, tag_id)
+    VALUES ${values}
+    ON CONFLICT (prompt_id, tag_id) DO NOTHING
+  `;
+  await query(sql, [promptId, ...tagIds]);
+}
+
+/**
+ * Update prompt tags (replace all existing tags)
+ */
+export async function updatePromptTags(promptId: string, tagIds: number[]): Promise<void> {
+  // Delete existing tags
+  await query('DELETE FROM prompt_tags WHERE prompt_id = $1', [promptId]);
+
+  // Add new tags
+  if (tagIds.length > 0) {
+    await addPromptTags(promptId, tagIds);
+  }
 }
 
 /**
@@ -56,47 +115,123 @@ export async function getAllPrompts(
   userId: string,
   options: GetAllPromptsOptions = {}
 ): Promise<{ prompts: SystemPrompt[]; total: number }> {
-  const { templateType, limit = 50, offset = 0 } = options;
+  const { templateType, tagIds, search, limit = 50, offset = 0 } = options;
 
-  const conditions: string[] = ['user_id = $1'];
+  const conditions: string[] = ['sp.user_id = $1'];
   const params: unknown[] = [userId];
   let paramIndex = 2;
 
   if (templateType) {
-    conditions.push(`template_type = $${paramIndex++}`);
+    conditions.push(`sp.template_type = $${paramIndex++}`);
     params.push(templateType);
+  }
+
+  // Search in title and content
+  if (search && search.trim()) {
+    conditions.push(`(sp.title ILIKE $${paramIndex} OR sp.content ILIKE $${paramIndex})`);
+    params.push(`%${search.trim()}%`);
+    paramIndex++;
+  }
+
+  // Filter by tags (prompts must have ALL specified tags)
+  let tagJoin = '';
+  let tagHaving = '';
+  if (tagIds && tagIds.length > 0) {
+    tagJoin = `
+      INNER JOIN prompt_tags pt_filter ON sp.id = pt_filter.prompt_id
+        AND pt_filter.tag_id = ANY($${paramIndex}::int[])
+    `;
+    tagHaving = `HAVING COUNT(DISTINCT pt_filter.tag_id) = ${tagIds.length}`;
+    params.push(tagIds);
+    paramIndex++;
   }
 
   const whereClause = conditions.join(' AND ');
 
-  // Get total count
-  const countSql = `SELECT COUNT(*) as total FROM system_prompts WHERE ${whereClause}`;
-  const countResult = await queryOne<{ total: string }>(countSql, params);
+  // Get total count (with tag filtering)
+  const countSql = tagIds && tagIds.length > 0
+    ? `
+      SELECT COUNT(*) as total FROM (
+        SELECT sp.id
+        FROM system_prompts sp
+        ${tagJoin}
+        WHERE ${whereClause}
+        GROUP BY sp.id
+        ${tagHaving}
+      ) filtered
+    `
+    : `SELECT COUNT(*) as total FROM system_prompts sp WHERE ${whereClause}`;
+
+  const countParams = tagIds && tagIds.length > 0 ? params.slice(0, -1).concat([tagIds]) : params.slice(0, paramIndex - (tagIds?.length ? 1 : 0));
+  const countResult = await queryOne<{ total: string }>(countSql, params.slice(0, paramIndex - 1 + (tagIds?.length ? 1 : 0)));
   const total = parseInt(countResult?.total || '0', 10);
 
-  // Get paginated results
-  const sql = `
-    SELECT *
-    FROM system_prompts
-    WHERE ${whereClause}
-    ORDER BY updated_at DESC
-    LIMIT $${paramIndex++} OFFSET $${paramIndex++}
-  `;
+  // Get paginated results with tags
+  const sql = tagIds && tagIds.length > 0
+    ? `
+      SELECT sp.*
+      FROM system_prompts sp
+      ${tagJoin}
+      WHERE ${whereClause}
+      GROUP BY sp.id
+      ${tagHaving}
+      ORDER BY sp.updated_at DESC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+    `
+    : `
+      SELECT sp.*
+      FROM system_prompts sp
+      WHERE ${whereClause}
+      ORDER BY sp.updated_at DESC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+    `;
 
-  const rows = await query<SystemPromptRow>(sql, [...params, limit, offset]);
-  return {
-    prompts: rows.map(mapPromptRow),
-    total,
-  };
+  const finalParams = [...params, limit, offset];
+  const rows = await query<SystemPromptRow>(sql, finalParams);
+
+  // Get tags for all prompts in one query
+  if (rows.length === 0) {
+    return { prompts: [], total };
+  }
+
+  const promptIds = rows.map(r => r.id);
+  const tagsSql = `
+    SELECT pt.prompt_id, t.id, t.name, t.color
+    FROM prompt_tags pt
+    INNER JOIN tags t ON pt.tag_id = t.id
+    WHERE pt.prompt_id = ANY($1::uuid[])
+    ORDER BY t.name
+  `;
+  const tagRows = await query<TagRow & { prompt_id: string }>(tagsSql, [promptIds]);
+
+  // Group tags by prompt
+  const tagsByPrompt = new Map<string, Tag[]>();
+  for (const row of tagRows) {
+    if (!tagsByPrompt.has(row.prompt_id)) {
+      tagsByPrompt.set(row.prompt_id, []);
+    }
+    tagsByPrompt.get(row.prompt_id)!.push({
+      id: row.id,
+      name: row.name,
+      color: row.color,
+    });
+  }
+
+  const prompts = rows.map(row => mapPromptRow(row, tagsByPrompt.get(row.id) || []));
+
+  return { prompts, total };
 }
 
 /**
- * Get a single prompt by ID
+ * Get a single prompt by ID with tags
  */
 export async function getPromptById(id: string): Promise<SystemPrompt | null> {
   const sql = `SELECT * FROM system_prompts WHERE id = $1`;
   const row = await queryOne<SystemPromptRow>(sql, [id]);
-  return row ? mapPromptRow(row) : null;
+  if (!row) return null;
+
+  const tags = await getPromptTags(id);
+  return mapPromptRow(row, tags);
 }
 
 export interface CreatePromptData {
@@ -106,10 +241,11 @@ export interface CreatePromptData {
   content: string;
   templateType?: string;
   sourceKnowledgeIds?: string[];
+  tagIds?: number[];
 }
 
 /**
- * Create a new system prompt
+ * Create a new system prompt with optional tags
  */
 export async function createPrompt(data: CreatePromptData): Promise<SystemPrompt> {
   const {
@@ -119,6 +255,7 @@ export async function createPrompt(data: CreatePromptData): Promise<SystemPrompt
     content,
     templateType = null,
     sourceKnowledgeIds = [],
+    tagIds = [],
   } = data;
 
   const sql = `
@@ -138,7 +275,15 @@ export async function createPrompt(data: CreatePromptData): Promise<SystemPrompt
     sourceKnowledgeIds.length > 0 ? sourceKnowledgeIds : null,
   ]);
 
-  return mapPromptRow(row!);
+  const prompt = row!;
+
+  // Add tags if provided
+  if (tagIds.length > 0) {
+    await addPromptTags(prompt.id, tagIds);
+  }
+
+  const tags = tagIds.length > 0 ? await getPromptTags(prompt.id) : [];
+  return mapPromptRow(prompt, tags);
 }
 
 export interface UpdatePromptData {
@@ -147,10 +292,11 @@ export interface UpdatePromptData {
   content?: string;
   templateType?: string;
   sourceKnowledgeIds?: string[];
+  tagIds?: number[];
 }
 
 /**
- * Update an existing system prompt
+ * Update an existing system prompt with optional tag update
  */
 export async function updatePrompt(
   id: string,
@@ -195,11 +341,19 @@ export async function updatePrompt(
   `;
 
   const row = await queryOne<SystemPromptRow>(sql, params);
-  return row ? mapPromptRow(row) : null;
+  if (!row) return null;
+
+  // Update tags if provided
+  if (data.tagIds !== undefined) {
+    await updatePromptTags(id, data.tagIds);
+  }
+
+  const tags = await getPromptTags(id);
+  return mapPromptRow(row, tags);
 }
 
 /**
- * Delete a system prompt
+ * Delete a system prompt (also deletes tags via CASCADE)
  */
 export async function deletePrompt(id: string): Promise<boolean> {
   const sql = `DELETE FROM system_prompts WHERE id = $1`;
@@ -222,7 +376,33 @@ export async function getPromptsByTemplateType(
   `;
 
   const rows = await query<SystemPromptRow>(sql, [userId, templateType]);
-  return rows.map(mapPromptRow);
+
+  // Get tags for all prompts
+  const promptIds = rows.map(r => r.id);
+  if (promptIds.length === 0) return [];
+
+  const tagsSql = `
+    SELECT pt.prompt_id, t.id, t.name, t.color
+    FROM prompt_tags pt
+    INNER JOIN tags t ON pt.tag_id = t.id
+    WHERE pt.prompt_id = ANY($1::uuid[])
+    ORDER BY t.name
+  `;
+  const tagRows = await query<TagRow & { prompt_id: string }>(tagsSql, [promptIds]);
+
+  const tagsByPrompt = new Map<string, Tag[]>();
+  for (const row of tagRows) {
+    if (!tagsByPrompt.has(row.prompt_id)) {
+      tagsByPrompt.set(row.prompt_id, []);
+    }
+    tagsByPrompt.get(row.prompt_id)!.push({
+      id: row.id,
+      name: row.name,
+      color: row.color,
+    });
+  }
+
+  return rows.map(row => mapPromptRow(row, tagsByPrompt.get(row.id) || []));
 }
 
 /**

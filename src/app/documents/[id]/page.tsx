@@ -6,6 +6,18 @@ import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
 import { Document, Tag } from '@/types';
 import MarkdownEditor from '@/components/editor/MarkdownEditor';
 
+// Predefined colors for new tags
+const TAG_COLORS = [
+  { name: 'Blue', value: '#3B82F6' },
+  { name: 'Green', value: '#10B981' },
+  { name: 'Amber', value: '#F59E0B' },
+  { name: 'Red', value: '#EF4444' },
+  { name: 'Violet', value: '#8B5CF6' },
+  { name: 'Pink', value: '#EC4899' },
+  { name: 'Cyan', value: '#06B6D4' },
+  { name: 'Orange', value: '#F97316' },
+];
+
 export default function DocumentEditorPage() {
   const router = useRouter();
   const params = useParams();
@@ -23,9 +35,18 @@ export default function DocumentEditorPage() {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [showExtractModal, setShowExtractModal] = useState(false);
+  const [customInstructions, setCustomInstructions] = useState('');
+
+  // New tag creation state
+  const [showCreateTagModal, setShowCreateTagModal] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0].value);
+  const [creatingTag, setCreatingTag] = useState(false);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const newTagInputRef = useRef<HTMLInputElement>(null);
 
   // Load document and tags
   useEffect(() => {
@@ -144,20 +165,89 @@ export default function DocumentEditorPage() {
     saveDocument(undefined, undefined, newTagIds);
   };
 
-  // Extract knowledge
+  // Open create tag modal
+  const openCreateTagModal = () => {
+    setShowTagDropdown(false);
+    setShowCreateTagModal(true);
+    setNewTagName('');
+    setNewTagColor(TAG_COLORS[0].value);
+  };
+
+  // Create new tag
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) {
+      setError('Tag name is required');
+      return;
+    }
+
+    setCreatingTag(true);
+    try {
+      const res = await fetch(buildApiPath('tags'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newTagName.trim(),
+          color: newTagColor,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // Add the new tag to the list
+        setAllTags((prev) => [...prev, data.tag].sort((a, b) => a.name.localeCompare(b.name)));
+        // Auto-select the new tag
+        const newTagIds = [...selectedTagIds, data.tag.id];
+        setSelectedTagIds(newTagIds);
+        // Save document with new tag
+        saveDocument(undefined, undefined, newTagIds);
+        // Close modal
+        setShowCreateTagModal(false);
+        setNewTagName('');
+        setNewTagColor(TAG_COLORS[0].value);
+      } else {
+        setError(data.error || 'Failed to create tag');
+      }
+    } catch (err) {
+      console.error('Create tag error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setCreatingTag(false);
+    }
+  };
+
+  // Focus new tag input when modal opens
+  useEffect(() => {
+    if (showCreateTagModal && newTagInputRef.current) {
+      newTagInputRef.current.focus();
+    }
+  }, [showCreateTagModal]);
+
+  // Open extract modal
+  const openExtractModal = () => {
+    setShowExtractModal(true);
+    setCustomInstructions('');
+  };
+
+  // Extract knowledge with optional custom instructions
   const handleExtractKnowledge = async () => {
     setExtracting(true);
+    setShowExtractModal(false);
     try {
       const res = await fetch(buildApiPath('knowledge/extract'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentId }),
+        body: JSON.stringify({
+          documentId,
+          customInstructions: customInstructions.trim() || undefined,
+        }),
       });
 
       const data = await res.json();
 
       if (data.success) {
         alert(`Extracted ${data.count} knowledge entries from annotations.`);
+        setCustomInstructions('');
       } else {
         setError(data.error || 'Failed to extract knowledge');
       }
@@ -167,6 +257,26 @@ export default function DocumentEditorPage() {
     } finally {
       setExtracting(false);
     }
+  };
+
+  // Handle download
+  const handleDownload = () => {
+    // Create blob from content
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+
+    // Create download link and trigger click
+    const link = window.document.createElement('a');
+    link.href = url;
+    // Use title as filename, sanitize it and add .md extension
+    const filename = title.replace(/[^a-zA-Z0-9-_\s]/g, '').trim() || 'document';
+    link.download = `${filename}.md`;
+    window.document.body.appendChild(link);
+    link.click();
+    window.document.body.removeChild(link);
+
+    // Cleanup
+    URL.revokeObjectURL(url);
   };
 
   // Handle delete
@@ -239,7 +349,7 @@ export default function DocumentEditorPage() {
       {/* Left Panel - Editor */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Title Bar */}
-        <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
+        <div className="bg-white border-b px-3 py-2 flex items-center justify-between flex-shrink-0">
           <div className="flex-1 mr-4">
             {editingTitle ? (
               <input
@@ -255,12 +365,12 @@ export default function DocumentEditorPage() {
                     setEditingTitle(false);
                   }
                 }}
-                className="text-lg font-medium w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="text-base font-medium w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             ) : (
               <h2
                 onClick={() => setEditingTitle(true)}
-                className="text-lg font-medium cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                className="text-base font-medium cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
               >
                 {title}
               </h2>
@@ -298,8 +408,8 @@ export default function DocumentEditorPage() {
           </div>
         )}
 
-        {/* Editor */}
-        <div className="flex-1 overflow-hidden p-4">
+        {/* Editor - fills remaining space */}
+        <div className="flex-1 min-h-0 p-2">
           <MarkdownEditor
             initialContent={content}
             onChange={handleContentChange}
@@ -309,13 +419,13 @@ export default function DocumentEditorPage() {
       </div>
 
       {/* Right Panel - Metadata */}
-      <div className="w-80 bg-white border-l flex flex-col">
-        <div className="p-4 border-b">
-          <h3 className="text-sm font-medium text-gray-900 mb-1">Document Info</h3>
+      <div className="w-64 bg-white border-l flex flex-col flex-shrink-0">
+        <div className="p-3 border-b">
+          <h3 className="text-sm font-medium text-gray-900 mb-0.5">Document Info</h3>
           <p className="text-xs text-gray-500">Manage tags and actions</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
           {/* Status */}
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
@@ -383,33 +493,39 @@ export default function DocumentEditorPage() {
               </button>
 
               {showTagDropdown && (
-                <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                  {allTags.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500">No tags available</div>
-                  ) : (
-                    allTags.map((tag) => (
-                      <label
-                        key={tag.id}
-                        className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {allTags.map((tag) => (
+                    <label
+                      key={tag.id}
+                      className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedTagIds.includes(tag.id)}
+                        onChange={() => handleTagToggle(tag.id)}
+                        className="rounded border-gray-300"
+                      />
+                      <span
+                        className="px-2 py-0.5 text-xs rounded"
+                        style={{
+                          backgroundColor: `${tag.color}20`,
+                          color: tag.color,
+                        }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedTagIds.includes(tag.id)}
-                          onChange={() => handleTagToggle(tag.id)}
-                          className="rounded border-gray-300"
-                        />
-                        <span
-                          className="px-2 py-0.5 text-xs rounded"
-                          style={{
-                            backgroundColor: `${tag.color}20`,
-                            color: tag.color,
-                          }}
-                        >
-                          {tag.name}
-                        </span>
-                      </label>
-                    ))
-                  )}
+                        {tag.name}
+                      </span>
+                    </label>
+                  ))}
+                  {/* Create new tag button */}
+                  <button
+                    onClick={openCreateTagModal}
+                    className="w-full px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 border-t flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Create new tag
+                  </button>
                 </div>
               )}
             </div>
@@ -448,11 +564,20 @@ export default function DocumentEditorPage() {
             </label>
             <div className="space-y-2">
               <button
-                onClick={handleExtractKnowledge}
+                onClick={openExtractModal}
                 disabled={extracting}
                 className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {extracting ? 'Extracting...' : 'Extract Knowledge'}
+              </button>
+              <button
+                onClick={handleDownload}
+                className="w-full px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download
               </button>
               <button
                 onClick={handleDelete}
@@ -489,6 +614,184 @@ export default function DocumentEditorPage() {
           </div>
         </div>
       </div>
+
+      {/* Create Tag Modal */}
+      {showCreateTagModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50"
+              onClick={() => setShowCreateTagModal(false)}
+            />
+
+            {/* Modal */}
+            <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full">
+              <div className="px-6 py-4 border-b flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Create New Tag
+                </h2>
+                <button
+                  onClick={() => setShowCreateTagModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Tag Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tag Name
+                  </label>
+                  <input
+                    ref={newTagInputRef}
+                    type="text"
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !creatingTag) {
+                        handleCreateTag();
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    placeholder="Enter tag name..."
+                  />
+                </div>
+
+                {/* Color Picker */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tag Color
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {TAG_COLORS.map((color) => (
+                      <button
+                        key={color.value}
+                        onClick={() => setNewTagColor(color.value)}
+                        className={`w-8 h-8 rounded-full border-2 transition-all ${
+                          newTagColor === color.value
+                            ? 'border-gray-800 scale-110'
+                            : 'border-transparent hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: color.value }}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preview
+                  </label>
+                  <span
+                    className="inline-flex px-3 py-1 text-sm rounded"
+                    style={{
+                      backgroundColor: `${newTagColor}20`,
+                      color: newTagColor,
+                    }}
+                  >
+                    {newTagName || 'Tag name'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3 rounded-b-lg">
+                <button
+                  onClick={() => setShowCreateTagModal(false)}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateTag}
+                  disabled={creatingTag || !newTagName.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {creatingTag ? 'Creating...' : 'Create Tag'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Extract Knowledge Modal */}
+      {showExtractModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50"
+              onClick={() => setShowExtractModal(false)}
+            />
+
+            {/* Modal */}
+            <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full">
+              <div className="px-6 py-4 border-b flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Extract Knowledge
+                </h2>
+                <button
+                  onClick={() => setShowExtractModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Extract knowledge from {document?.annotationCounts ?
+                      (document.annotationCounts.macro + document.annotationCounts.meso + document.annotationCounts.micro) : 0
+                    } annotations in this document.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Instructions (Optional)
+                  </label>
+                  <textarea
+                    value={customInstructions}
+                    onChange={(e) => setCustomInstructions(e.target.value)}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    placeholder="Add any specific instructions to guide the AI extraction...&#10;&#10;Examples:&#10;- Focus on generalizing principles for academic writing&#10;- Preserve domain-specific terminology&#10;- Keep examples concrete but transferable"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    These instructions will be appended to the system prompt to customize the extraction behavior.
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3 rounded-b-lg">
+                <button
+                  onClick={() => setShowExtractModal(false)}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleExtractKnowledge}
+                  disabled={extracting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {extracting ? 'Extracting...' : 'Extract'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { buildApiPath } from '@/lib/utils/pathHelper';
-import { KnowledgeEntry, Tag, AnnotationLevel, ANNOTATION_COLORS, LEVEL_CONFIG } from '@/types';
+import { KnowledgeEntry, Tag } from '@/types';
 import { KnowledgeCard, TagFilter } from '@/components/knowledge';
 
+// Extended entry with optional fields from API
 interface ExtendedKnowledgeEntry extends KnowledgeEntry {
   sourceDocumentName?: string;
+  // Detailed counts by level (computed from annotations)
   annotationCounts?: {
     macro: number;
     meso: number;
@@ -23,7 +25,6 @@ export default function KnowledgeListPage() {
   // Filters
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState<AnnotationLevel | 'ALL'>('ALL');
 
   // Fetch knowledge entries
   useEffect(() => {
@@ -58,30 +59,25 @@ export default function KnowledgeListPage() {
     fetchData();
   }, []);
 
-  // Filter entries based on search query, selected tags, and level
+  // Filter entries based on search query and selected tags
+  // Note: Knowledge entries contain multiple annotations, so level filtering is removed
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
-      // Filter by search query (in original content or refined content)
+      // Filter by search query (in background field)
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        const matchesContent = entry.originalContent.toLowerCase().includes(query);
-        const matchesRefined = entry.refinedContent?.toLowerCase().includes(query);
-        if (!matchesContent && !matchesRefined) {
+        const matchesBackground = entry.background?.toLowerCase().includes(query) || false;
+        if (!matchesBackground) {
           return false;
         }
       }
 
       // Filter by selected tags
       if (selectedTags.length > 0) {
-        // Convert entry tags (string[]) to compare with selectedTags (number[])
-        // This assumes the API returns tag IDs or we need to match by name
-        const entryTagNames = entry.tags || [];
-        const selectedTagNames = tags
-          .filter((t) => selectedTags.includes(t.id))
-          .map((t) => t.name);
-
-        const hasMatchingTag = entryTagNames.some((tagName) =>
-          selectedTagNames.includes(tagName)
+        // Entry tags are now Tag[] objects, compare by ID
+        const entryTagIds = (entry.tags || []).map((t) => t.id);
+        const hasMatchingTag = selectedTags.some((tagId) =>
+          entryTagIds.includes(tagId)
         );
 
         if (!hasMatchingTag) {
@@ -89,24 +85,21 @@ export default function KnowledgeListPage() {
         }
       }
 
-      // Filter by annotation level
-      if (selectedLevel !== 'ALL' && entry.level !== selectedLevel) {
-        return false;
-      }
+      // Level filtering is not applicable for knowledge entries
+      // (each entry can have annotations of multiple levels)
+      // If selectedLevel is set, we could filter by annotationCounts having that level > 0
+      // But for now we keep all entries
 
       return true;
     });
-  }, [entries, searchQuery, selectedTags, selectedLevel, tags]);
+  }, [entries, searchQuery, selectedTags]);
 
-  // Get counts by level
-  const levelCounts = useMemo(() => {
-    const counts = { MACRO: 0, MESO: 0, MICRO: 0, ALL: entries.length };
-    entries.forEach((entry) => {
-      if (counts[entry.level] !== undefined) {
-        counts[entry.level]++;
-      }
-    });
-    return counts;
+  // Get total entries count
+  const totalEntries = entries.length;
+
+  // Get total annotation count across all entries
+  const totalAnnotations = useMemo(() => {
+    return entries.reduce((sum, entry) => sum + (entry.annotationCount || 0), 0);
   }, [entries]);
 
   if (loading) {
@@ -182,32 +175,21 @@ export default function KnowledgeListPage() {
             />
           </div>
 
-          {/* Level filter */}
+          {/* Stats */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Level
+              Statistics
             </label>
-            <select
-              value={selectedLevel}
-              onChange={(e) => setSelectedLevel(e.target.value as AnnotationLevel | 'ALL')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">All Levels ({levelCounts.ALL})</option>
-              <option value="MACRO">
-                {LEVEL_CONFIG.MACRO.icon} Macro ({levelCounts.MACRO})
-              </option>
-              <option value="MESO">
-                {LEVEL_CONFIG.MESO.icon} Meso ({levelCounts.MESO})
-              </option>
-              <option value="MICRO">
-                {LEVEL_CONFIG.MICRO.icon} Micro ({levelCounts.MICRO})
-              </option>
-            </select>
+            <div className="flex items-center gap-4 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+              <span>{totalEntries} entries</span>
+              <span className="text-gray-300">|</span>
+              <span>{totalAnnotations} annotations</span>
+            </div>
           </div>
         </div>
 
         {/* Active filters summary */}
-        {(searchQuery || selectedTags.length > 0 || selectedLevel !== 'ALL') && (
+        {(searchQuery || selectedTags.length > 0) && (
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
             <span className="text-sm text-gray-600">
               Showing {filteredEntries.length} of {entries.length} entries
@@ -216,7 +198,6 @@ export default function KnowledgeListPage() {
               onClick={() => {
                 setSearchQuery('');
                 setSelectedTags([]);
-                setSelectedLevel('ALL');
               }}
               className="text-sm text-blue-600 hover:text-blue-800"
             >
@@ -224,34 +205,6 @@ export default function KnowledgeListPage() {
             </button>
           </div>
         )}
-      </div>
-
-      {/* Level summary badges */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {(['MACRO', 'MESO', 'MICRO'] as AnnotationLevel[]).map((level) => {
-          const colors = ANNOTATION_COLORS[level];
-          const config = LEVEL_CONFIG[level];
-          const count = levelCounts[level];
-
-          return (
-            <button
-              key={level}
-              onClick={() => setSelectedLevel(selectedLevel === level ? 'ALL' : level)}
-              className={`
-                inline-flex items-center gap-2 px-3 py-1.5 rounded-md border
-                ${colors.bg} ${colors.text} ${colors.border}
-                ${selectedLevel === level ? 'ring-2 ring-offset-1 ring-blue-500' : ''}
-                hover:opacity-80 transition-opacity
-              `}
-            >
-              <span>{config.icon}</span>
-              <span className="font-medium">{config.label}</span>
-              <span className="px-1.5 py-0.5 bg-white/60 rounded-full text-xs font-semibold">
-                {count}
-              </span>
-            </button>
-          );
-        })}
       </div>
 
       {/* Knowledge entries grid */}

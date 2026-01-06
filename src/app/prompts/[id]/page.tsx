@@ -4,16 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
-import { SystemPrompt, KnowledgeEntry, PromptVersion } from '@/types';
+import { SystemPrompt, KnowledgeEntryWithAnnotations, PromptVersion, ANNOTATION_COLORS, LEVEL_CONFIG, Tag } from '@/types';
 import { TemplateSelector } from '@/components/prompts';
-
-const TEMPLATE_LABELS: Record<string, string> = {
-  introduction: 'Introduction Review',
-  methodology: 'Methods Review',
-  discussion: 'Discussion Review',
-  academicCoach: 'Academic Coach',
-  custom: 'Custom',
-};
+import TagFilter from '@/components/knowledge/TagFilter';
 
 export default function PromptDetailPage() {
   const router = useRouter();
@@ -21,8 +14,9 @@ export default function PromptDetailPage() {
   const promptId = params.id as string;
 
   const [prompt, setPrompt] = useState<SystemPrompt | null>(null);
-  const [sourceKnowledge, setSourceKnowledge] = useState<KnowledgeEntry[]>([]);
+  const [sourceKnowledge, setSourceKnowledge] = useState<KnowledgeEntryWithAnnotations[]>([]);
   const [versions, setVersions] = useState<PromptVersion[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -36,29 +30,38 @@ export default function PromptDetailPage() {
   const [editDescription, setEditDescription] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editTemplateType, setEditTemplateType] = useState('');
+  const [editTagIds, setEditTagIds] = useState<number[]>([]);
 
   useEffect(() => {
-    const fetchPrompt = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(buildApiPath(`prompts/${promptId}`));
-        const data = await response.json();
+        // Fetch prompt and tags in parallel
+        const [promptResponse, tagsResponse] = await Promise.all([
+          fetch(buildApiPath(`prompts/${promptId}`)),
+          fetch(buildApiPath('tags')),
+        ]);
 
-        if (!data.success) {
-          setError(data.error || 'Failed to load prompt');
+        const promptData = await promptResponse.json();
+        const tagsData = await tagsResponse.json();
+
+        if (!promptData.success) {
+          setError(promptData.error || 'Failed to load prompt');
           return;
         }
 
-        setPrompt(data.prompt);
-        setSourceKnowledge(data.sourceKnowledge || []);
-        setVersions(data.versions || []);
+        setPrompt(promptData.prompt);
+        setSourceKnowledge(promptData.sourceKnowledge || []);
+        setVersions(promptData.versions || []);
+        setAllTags(tagsData.tags || []);
 
         // Initialize edit fields
-        setEditTitle(data.prompt.title);
-        setEditDescription(data.prompt.description || '');
-        setEditContent(data.prompt.content);
-        setEditTemplateType(data.prompt.templateType || 'custom');
+        setEditTitle(promptData.prompt.title);
+        setEditDescription(promptData.prompt.description || '');
+        setEditContent(promptData.prompt.content);
+        setEditTemplateType(promptData.prompt.templateType || '');
+        setEditTagIds(promptData.prompt.tags?.map((t: Tag) => t.id) || []);
       } catch (err) {
-        console.error('Failed to fetch prompt:', err);
+        console.error('Failed to fetch data:', err);
         setError('Network error. Please try again.');
       } finally {
         setLoading(false);
@@ -66,9 +69,13 @@ export default function PromptDetailPage() {
     };
 
     if (promptId) {
-      fetchPrompt();
+      fetchData();
     }
   }, [promptId]);
+
+  const handleTagCreated = (newTag: Tag) => {
+    setAllTags(prev => [...prev, newTag]);
+  };
 
   const handleCopy = async () => {
     if (!prompt) return;
@@ -97,6 +104,7 @@ export default function PromptDetailPage() {
           description: editDescription,
           content: editContent,
           templateType: editTemplateType,
+          tagIds: editTagIds,
         }),
       });
 
@@ -156,7 +164,8 @@ export default function PromptDetailPage() {
     setEditTitle(prompt.title);
     setEditDescription(prompt.description || '');
     setEditContent(prompt.content);
-    setEditTemplateType(prompt.templateType || 'custom');
+    setEditTemplateType(prompt.templateType || '');
+    setEditTagIds(prompt.tags?.map((t: Tag) => t.id) || []);
     setIsEditing(false);
   };
 
@@ -289,6 +298,17 @@ export default function PromptDetailPage() {
                 value={editTemplateType}
                 onChange={setEditTemplateType}
               />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                <TagFilter
+                  tags={allTags}
+                  selectedTags={editTagIds}
+                  onChange={setEditTagIds}
+                  onTagCreated={handleTagCreated}
+                  placeholder="Add tags..."
+                  allowCreate={true}
+                />
+              </div>
             </div>
           ) : (
             <>
@@ -300,9 +320,29 @@ export default function PromptDetailPage() {
                   )}
                 </div>
                 <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">
-                  {TEMPLATE_LABELS[prompt.templateType || 'custom'] || 'Custom'}
+                  {prompt.templateType || 'No Template'}
                 </span>
               </div>
+
+              {/* Tags display */}
+              {prompt.tags && prompt.tags.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {prompt.tags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="px-2.5 py-1 text-xs rounded-full"
+                      style={{
+                        backgroundColor: tag.color + '20',
+                        color: tag.color,
+                        border: `1px solid ${tag.color}40`,
+                      }}
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
                 <span>Version {prompt.version}</span>
                 <span>Created: {new Date(prompt.createdAt).toLocaleDateString()}</span>
@@ -337,28 +377,53 @@ export default function PromptDetailPage() {
       {sourceKnowledge.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Source Knowledge ({sourceKnowledge.length})
+            Source Knowledge ({sourceKnowledge.length} entries)
           </h2>
-          <div className="space-y-3 max-h-64 overflow-y-auto">
+          <div className="space-y-4 max-h-96 overflow-y-auto">
             {sourceKnowledge.map((entry) => (
-              <div key={entry.id} className="p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded ${
-                    entry.level === 'MACRO' ? 'bg-red-100 text-red-700' :
-                    entry.level === 'MESO' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-green-100 text-green-700'
-                  }`}>
-                    {entry.level}
+              <div key={entry.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                {/* Entry header with tags */}
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span className="text-xs font-medium text-gray-500">
+                    {entry.annotations?.length || 0} annotations
                   </span>
                   {entry.tags && entry.tags.length > 0 && (
-                    <span className="text-xs text-gray-500">
-                      {entry.tags.join(', ')}
-                    </span>
+                    <>
+                      <span className="text-gray-300">|</span>
+                      {entry.tags.map((tag) => (
+                        <span key={tag.id} className="px-1.5 py-0.5 text-xs bg-gray-200 text-gray-600 rounded">
+                          {tag.name}
+                        </span>
+                      ))}
+                    </>
                   )}
                 </div>
-                <p className="text-sm text-gray-700">
-                  {entry.refinedContent || entry.originalContent}
-                </p>
+                {/* Background/context */}
+                {entry.background && (
+                  <p className="text-sm text-gray-600 mb-3 italic">
+                    {entry.background.length > 200 ? entry.background.substring(0, 200) + '...' : entry.background}
+                  </p>
+                )}
+                {/* Annotations by level */}
+                {entry.annotations && entry.annotations.length > 0 && (
+                  <div className="space-y-2">
+                    {entry.annotations.map((annotation) => {
+                      const colors = ANNOTATION_COLORS[annotation.level];
+                      const config = LEVEL_CONFIG[annotation.level];
+                      return (
+                        <div key={annotation.id} className={`p-2 rounded border ${colors.bg} ${colors.border}`}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-xs">{config.icon}</span>
+                            <span className={`text-xs font-medium ${colors.text}`}>{annotation.level}</span>
+                          </div>
+                          <p className={`text-sm ${colors.text}`}>
+                            {annotation.refinedComment || annotation.comment || annotation.originalText}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -6,6 +6,31 @@ import {
   updateKnowledgeEntry,
   deleteKnowledgeEntry,
 } from '@/lib/db/queries/knowledge';
+import { getTagByName, createTag } from '@/lib/db/queries/tags';
+
+/**
+ * Resolve tag names to tag IDs, creating new tags if needed
+ */
+async function resolveTagNames(tagNames: string[]): Promise<number[]> {
+  const tagIds: number[] = [];
+
+  for (const name of tagNames) {
+    const trimmedName = name.trim();
+    if (!trimmedName) continue;
+
+    // Try to find existing tag
+    let tag = await getTagByName(trimmedName);
+
+    // Create tag if it doesn't exist
+    if (!tag) {
+      tag = await createTag(trimmedName);
+    }
+
+    tagIds.push(tag.id);
+  }
+
+  return tagIds;
+}
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -55,6 +80,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 /**
  * PUT /api/knowledge/[id]
  * Update a knowledge entry
+ *
+ * Accepts either:
+ * - tagIds: number[] - direct tag IDs
+ * - tags: string[] - tag names (will be resolved to IDs, creating new tags if needed)
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
@@ -65,7 +94,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
     const body = await request.json();
-    const { background, tagIds } = body;
+    const { background, tagIds, tags } = body;
 
     // Check if entry exists
     const existing = await getKnowledgeEntryById(id);
@@ -76,10 +105,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Resolve tag names to IDs if provided
+    let resolvedTagIds = tagIds;
+    if (tags && Array.isArray(tags)) {
+      resolvedTagIds = await resolveTagNames(tags);
+    }
+
     // Update the entry
     const entry = await updateKnowledgeEntry(id, {
       background,
-      tagIds,
+      tagIds: resolvedTagIds,
     });
 
     return NextResponse.json({ success: true, entry });

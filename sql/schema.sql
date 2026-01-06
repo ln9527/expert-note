@@ -77,6 +77,9 @@ CREATE TABLE annotations (
   original_text TEXT,
   comment TEXT,
   refined_comment TEXT,
+  -- Location and context info (AI-extracted)
+  location VARCHAR(255),                -- Human-readable location (e.g., "Chapter 7, Section 1")
+  background_context TEXT,              -- AI-extracted context around this annotation
   -- Position info
   position_line INTEGER,
   position_char INTEGER,
@@ -88,7 +91,7 @@ CREATE TABLE annotations (
   )
 );
 
--- 8. System Prompts
+-- 8. System Prompts (user-generated prompts)
 CREATE TABLE system_prompts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -97,6 +100,23 @@ CREATE TABLE system_prompts (
   content TEXT NOT NULL,
   template_type VARCHAR(50),
   source_knowledge_ids UUID[],
+  version INTEGER DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Prompt Templates (system templates for extraction/generation)
+-- These are the predefined/user-customizable templates that guide AI behavior
+CREATE TABLE prompt_templates (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  category VARCHAR(50) NOT NULL CHECK (category IN ('extraction', 'generation')),
+  template_type VARCHAR(50), -- For generation: introduction, methodology, discussion, academicCoach, custom
+  content TEXT NOT NULL,
+  is_default BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
   version INTEGER DEFAULT 1,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -112,6 +132,8 @@ CREATE INDEX idx_annotations_level ON annotations(level);
 CREATE INDEX idx_knowledge_entries_source ON knowledge_entries(source_document_id);
 CREATE INDEX idx_system_prompts_user_id ON system_prompts(user_id);
 CREATE INDEX idx_system_prompts_template_type ON system_prompts(template_type);
+CREATE INDEX idx_prompt_templates_category ON prompt_templates(category);
+CREATE INDEX idx_prompt_templates_is_default ON prompt_templates(is_default);
 
 -- Trigger for updating updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -134,5 +156,10 @@ CREATE TRIGGER update_knowledge_entries_updated_at
 
 CREATE TRIGGER update_system_prompts_updated_at
   BEFORE UPDATE ON system_prompts
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_prompt_templates_updated_at
+  BEFORE UPDATE ON prompt_templates
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();

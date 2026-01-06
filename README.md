@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Expert Note
 
-## Getting Started
+Annotation-based knowledge capture system for academic writing feedback.
 
-First, run the development server:
+## Overview
+
+Expert Note allows experts to annotate documents with structured feedback at three levels:
+- **MACRO** (Red): High-level principles and judgments
+- **MESO** (Yellow): Pattern-level guidance
+- **MICRO** (Green): Specific edits and suggestions
+
+Annotations are extracted into a searchable knowledge base and can be used to generate AI prompts.
+
+## Quick Start
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 and login with `ning` / `password123`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Documentation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| File | Description |
+|------|-------------|
+| [LOCAL_SETUP.md](./LOCAL_SETUP.md) | Full setup guide for new computers |
+| [CLAUDE.md](./CLAUDE.md) | Project configuration for Claude Code |
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- Document editor with annotation toolbar
+- Knowledge base with tag filtering
+- Markdown export for knowledge entries
+- AI-powered prompt generation
+- Batch annotation extraction
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Next.js 16 (App Router)
+- React 19
+- PostgreSQL 16
+- Tailwind CSS
+- OpenRouter AI (Qwen model)
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/           # Pages and API routes
+├── components/    # React components
+├── lib/           # Database, auth, AI utilities
+└── types/         # TypeScript definitions
+sql/
+├── schema.sql     # Database tables
+└── seed.sql       # Initial data
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+Private project.

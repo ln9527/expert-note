@@ -1,6 +1,6 @@
 'use client';
 
-import { SystemPrompt, TemplateType } from '@/types';
+import { SystemPrompt } from '@/types';
 import { buildPath } from '@/lib/utils/pathHelper';
 import Link from 'next/link';
 
@@ -8,13 +8,17 @@ interface PromptCardProps {
   prompt: SystemPrompt;
 }
 
-const TEMPLATE_LABELS: Record<string, { label: string; color: string }> = {
-  introduction: { label: 'Introduction Review', color: 'bg-blue-100 text-blue-700' },
-  methodology: { label: 'Methods Review', color: 'bg-purple-100 text-purple-700' },
-  discussion: { label: 'Discussion Review', color: 'bg-green-100 text-green-700' },
-  academicCoach: { label: 'Academic Coach', color: 'bg-orange-100 text-orange-700' },
-  custom: { label: 'Custom', color: 'bg-gray-100 text-gray-700' },
-};
+// Default colors for dynamically generated template badges
+const DEFAULT_BADGE_COLORS = [
+  'bg-blue-100 text-blue-700',
+  'bg-purple-100 text-purple-700',
+  'bg-green-100 text-green-700',
+  'bg-orange-100 text-orange-700',
+  'bg-pink-100 text-pink-700',
+  'bg-cyan-100 text-cyan-700',
+  'bg-indigo-100 text-indigo-700',
+  'bg-teal-100 text-teal-700',
+];
 
 function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
@@ -25,8 +29,23 @@ function formatDate(date: Date | string): string {
   });
 }
 
+// Simple hash function to get consistent color for a template type
+function getTemplateColor(templateType: string): string {
+  let hash = 0;
+  for (let i = 0; i < templateType.length; i++) {
+    hash = ((hash << 5) - hash) + templateType.charCodeAt(i);
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  const index = Math.abs(hash) % DEFAULT_BADGE_COLORS.length;
+  return DEFAULT_BADGE_COLORS[index];
+}
+
 export default function PromptCard({ prompt }: PromptCardProps) {
-  const templateConfig = TEMPLATE_LABELS[prompt.templateType || 'custom'] || TEMPLATE_LABELS.custom;
+  // Display the template type as-is (user-created templates)
+  const templateLabel = prompt.templateType || 'No Template';
+  const templateColor = prompt.templateType
+    ? getTemplateColor(prompt.templateType)
+    : 'bg-gray-100 text-gray-700';
 
   // Get first 150 characters of description or content for preview
   const preview = prompt.description || prompt.content.substring(0, 150);
@@ -40,8 +59,8 @@ export default function PromptCard({ prompt }: PromptCardProps) {
           <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
             {prompt.title}
           </h3>
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${templateConfig.color}`}>
-            {templateConfig.label}
+          <span className={`px-2 py-1 text-xs font-medium rounded-full ${templateColor}`}>
+            {templateLabel}
           </span>
         </div>
 
@@ -49,6 +68,30 @@ export default function PromptCard({ prompt }: PromptCardProps) {
         <p className="text-gray-600 text-sm mb-4 line-clamp-2">
           {displayPreview}
         </p>
+
+        {/* Tags */}
+        {prompt.tags && prompt.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {prompt.tags.slice(0, 5).map((tag) => (
+              <span
+                key={tag.id}
+                className="px-2 py-0.5 text-xs rounded-full"
+                style={{
+                  backgroundColor: tag.color + '20',
+                  color: tag.color,
+                  border: `1px solid ${tag.color}40`,
+                }}
+              >
+                {tag.name}
+              </span>
+            ))}
+            {prompt.tags.length > 5 && (
+              <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
+                +{prompt.tags.length - 5} more
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between text-xs text-gray-500">

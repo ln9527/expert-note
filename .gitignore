@@ -41,6 +41,10 @@ ningli.pem
 # vercel
 .vercel
 
+# claude code
+.claude/
+.playwright-mcp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

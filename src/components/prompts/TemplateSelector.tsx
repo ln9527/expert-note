@@ -1,7 +1,9 @@
 'use client';
 
-import { TemplateType } from '@/types';
-import { PROMPT_TEMPLATES } from '@/lib/ai/generation';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
+import { PromptTemplate } from '@/types';
 
 interface TemplateSelectorProps {
   value: string;
@@ -10,7 +12,28 @@ interface TemplateSelectorProps {
 }
 
 export default function TemplateSelector({ value, onChange, disabled = false }: TemplateSelectorProps) {
-  const templates = Object.entries(PROMPT_TEMPLATES);
+  const [templates, setTemplates] = useState<PromptTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const response = await fetch(buildApiPath('prompt-templates?category=generation'));
+        const data = await response.json();
+        if (data.success) {
+          setTemplates(data.templates || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch templates:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
+
+  const selectedTemplate = templates.find(t => (t.templateType || t.name) === value);
 
   return (
     <div className="space-y-2">
@@ -20,19 +43,27 @@ export default function TemplateSelector({ value, onChange, disabled = false }: 
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
+        disabled={disabled || loading}
         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
       >
-        <option value="">Select a template...</option>
-        {templates.map(([key, template]) => (
-          <option key={key} value={key}>
+        <option value="">{loading ? 'Loading templates...' : 'Select a template...'}</option>
+        {templates.map((template) => (
+          <option key={template.id} value={template.templateType || template.name}>
             {template.name}
           </option>
         ))}
       </select>
-      {value && PROMPT_TEMPLATES[value as keyof typeof PROMPT_TEMPLATES] && (
+      {selectedTemplate?.description && (
         <p className="text-sm text-gray-500 mt-1">
-          {PROMPT_TEMPLATES[value as keyof typeof PROMPT_TEMPLATES].description}
+          {selectedTemplate.description}
+        </p>
+      )}
+      {!loading && templates.length === 0 && (
+        <p className="text-sm text-amber-600 mt-1">
+          No generation templates found.{' '}
+          <Link href={buildPath('/settings/prompts')} className="text-blue-600 hover:text-blue-700 underline">
+            Create one in Settings
+          </Link>
         </p>
       )}
     </div>

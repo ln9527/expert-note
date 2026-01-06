@@ -6,41 +6,11 @@ import {
   KnowledgeEntryWithAnnotations,
 } from '@/lib/db/queries/knowledge';
 import {
+  getAllPromptTemplates,
+} from '@/lib/db/queries/promptTemplates';
+import {
   generateSystemPrompt,
-  getTemplateInfo,
-  PROMPT_TEMPLATES,
-  TemplateType,
 } from '@/lib/ai/generation';
-import { KnowledgeEntry, AnnotationLevel } from '@/types';
-
-/**
- * Transform knowledge entry with annotations to the format expected by generateSystemPrompt
- */
-function transformToKnowledgeEntries(
-  entriesWithAnnotations: KnowledgeEntryWithAnnotations[]
-): KnowledgeEntry[] {
-  const result: KnowledgeEntry[] = [];
-
-  for (const entry of entriesWithAnnotations) {
-    for (const annotation of entry.annotations) {
-      result.push({
-        id: parseInt(annotation.id, 10) || 0,
-        userId: 0, // Not needed for generation
-        originalContent: annotation.comment,
-        refinedContent: annotation.refinedComment,
-        level: annotation.level as AnnotationLevel,
-        isUniversal: false,
-        tags: entry.tags.map((t) => t.name),
-        sourceDocumentId: entry.sourceDocumentId,
-        sourceAnnotationId: parseInt(annotation.id, 10) || null,
-        createdAt: annotation.createdAt,
-        updatedAt: entry.updatedAt,
-      });
-    }
-  }
-
-  return result;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,10 +45,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate template type
-    const validTemplateType = templateType && templateType in PROMPT_TEMPLATES
-      ? (templateType as TemplateType)
-      : 'custom';
+    // Fetch generation templates from database
+    const generationTemplates = await getAllPromptTemplates({ category: 'generation' });
+
+    // Find the matching template (by templateType field or by name)
+    const matchedTemplate = generationTemplates.find(
+      t => (t.templateType || t.name) === templateType
+    );
+
+    // Use the provided templateType as-is (it's user-defined now)
+    const validTemplateType = templateType || 'custom';
 
     // Fetch all knowledge entries with annotations
     const entriesWithAnnotations: KnowledgeEntryWithAnnotations[] = [];
@@ -101,14 +77,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Transform to the format expected by generateSystemPrompt
-    const knowledgeEntries = transformToKnowledgeEntries(entriesWithAnnotations);
+    // Count total annotations for summary
+    const totalAnnotations = entriesWithAnnotations.reduce(
+      (sum, entry) => sum + (entry.annotations?.length || 0), 0
+    );
 
-    // Generate the system prompt
+    // Generate the system prompt (pass entries with nested annotations)
+    // Include template info if a matching template was found
     const generatedContent = await generateSystemPrompt({
       purpose: purpose.trim(),
       templateType: validTemplateType,
-      knowledgeEntries,
+      templateName: matchedTemplate?.name,
+      templateBaseInstructions: matchedTemplate?.content,
+      knowledgeEntries: entriesWithAnnotations,
       documentBackgrounds: documentBackgrounds.length > 0 ? documentBackgrounds : undefined,
       customInstructions: customInstructions?.trim() || undefined,
     });
@@ -123,7 +104,7 @@ export async function POST(request: NextRequest) {
     } = {
       generatedContent,
       knowledgeCount: entriesWithAnnotations.length,
-      annotationCount: knowledgeEntries.length,
+      annotationCount: totalAnnotations,
       templateType: validTemplateType,
     };
 
@@ -163,7 +144,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET: Return available template types
+ * GET: Return available template types from database
  */
 export async function GET() {
   try {
@@ -172,11 +153,16 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const templates = getTemplateInfo();
+    // Fetch generation templates from database
+    const templates = await getAllPromptTemplates({ category: 'generation' });
 
     return NextResponse.json({
       success: true,
-      templates,
+      templates: templates.map(t => ({
+        id: t.templateType || t.name,
+        name: t.name,
+        description: t.description,
+      })),
     });
   } catch (error) {
     console.error('[API] GET /prompts/generate error:', error);

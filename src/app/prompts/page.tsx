@@ -1,63 +1,109 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
-import { SystemPrompt } from '@/types';
-import { PromptCard } from '@/components/prompts';
+import { SystemPrompt, PromptTemplate, Tag } from '@/types';
+import { PromptCard, PromptUpload } from '@/components/prompts';
+import TagFilter from '@/components/knowledge/TagFilter';
 
-type FilterType = 'all' | 'introduction' | 'methodology' | 'discussion' | 'academicCoach' | 'custom';
-
-const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
-  { value: 'all', label: 'All Templates' },
-  { value: 'introduction', label: 'Introduction Review' },
-  { value: 'methodology', label: 'Methods Review' },
-  { value: 'discussion', label: 'Discussion Review' },
-  { value: 'academicCoach', label: 'Academic Coach' },
-  { value: 'custom', label: 'Custom' },
-];
+interface FilterOption {
+  value: string;
+  label: string;
+}
 
 export default function PromptsListPage() {
   const [prompts, setPrompts] = useState<SystemPrompt[]>([]);
+  const [templates, setTemplates] = useState<PromptTemplate[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<string>('all');
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
+  const fetchPrompts = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (selectedTags.length > 0) {
+        params.set('tagIds', selectedTags.join(','));
+      }
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim());
+      }
+      if (filter !== 'all') {
+        params.set('templateType', filter);
+      }
+
+      const url = buildApiPath(`prompts${params.toString() ? `?${params.toString()}` : ''}`);
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || 'Failed to load prompts');
+        return;
+      }
+
+      setPrompts(data.prompts || []);
+    } catch (err) {
+      console.error('Failed to fetch prompts:', err);
+      setError('Network error. Please try again.');
+    }
+  }, [selectedTags, searchQuery, filter]);
 
   useEffect(() => {
-    const fetchPrompts = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await fetch(buildApiPath('prompts'));
-        const data = await response.json();
+        // Fetch templates and tags initially
+        const [templatesResponse, tagsResponse] = await Promise.all([
+          fetch(buildApiPath('prompt-templates?category=generation')),
+          fetch(buildApiPath('tags')),
+        ]);
 
-        if (!data.success) {
-          setError(data.error || 'Failed to load prompts');
-          return;
-        }
+        const templatesData = await templatesResponse.json();
+        const tagsData = await tagsResponse.json();
 
-        setPrompts(data.prompts || []);
+        setTemplates(templatesData.templates || []);
+        setTags(tagsData.tags || []);
       } catch (err) {
-        console.error('Failed to fetch prompts:', err);
-        setError('Network error. Please try again.');
-      } finally {
-        setLoading(false);
+        console.error('Failed to fetch initial data:', err);
       }
     };
 
-    fetchPrompts();
+    fetchInitialData();
   }, []);
 
-  // Filter prompts based on selected filter
-  const filteredPrompts = filter === 'all'
-    ? prompts
-    : prompts.filter(p => p.templateType === filter);
+  useEffect(() => {
+    setLoading(true);
+    fetchPrompts().finally(() => setLoading(false));
+  }, [fetchPrompts]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Search is handled by fetchPrompts via searchQuery dependency
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleTagCreated = (newTag: Tag) => {
+    setTags(prev => [...prev, newTag]);
+  };
+
+  const handleUploadComplete = () => {
+    setShowUploadModal(false);
+    fetchPrompts();
+  };
+
+  // Build filter options dynamically from templates
+  const filterOptions: FilterOption[] = [
+    { value: 'all', label: 'All Templates' },
+    ...templates.map(t => ({
+      value: t.templateType || t.name,
+      label: t.name,
+    })),
+  ];
 
   return (
     <div className="space-y-6">
@@ -70,20 +116,75 @@ export default function PromptsListPage() {
           </p>
         </div>
 
-        <Link
-          href={buildPath('/prompts/generate')}
-          className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Generate New Prompt
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            Upload MD
+          </button>
+          <Link
+            href={buildPath('/prompts/generate')}
+            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Generate New Prompt
+          </Link>
+        </div>
       </div>
 
-      {/* Filter bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {FILTER_OPTIONS.map((option) => (
+      {/* Search and Tag Filter */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Search input */}
+        <div className="relative flex-1 max-w-md">
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search prompts..."
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Tag filter */}
+        <div className="flex-1 max-w-md">
+          <TagFilter
+            tags={tags}
+            selectedTags={selectedTags}
+            onChange={setSelectedTags}
+            onTagCreated={handleTagCreated}
+            placeholder="Filter by tags..."
+            allowCreate={true}
+          />
+        </div>
+      </div>
+
+      {/* Template filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        {filterOptions.map((option) => (
           <button
             key={option.value}
             onClick={() => setFilter(option.value)}
@@ -96,6 +197,14 @@ export default function PromptsListPage() {
             {option.label}
           </button>
         ))}
+        {templates.length === 0 && (
+          <Link
+            href={buildPath('/settings/prompts')}
+            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap"
+          >
+            + Create template in Settings
+          </Link>
+        )}
       </div>
 
       {/* Error message */}
@@ -105,31 +214,56 @@ export default function PromptsListPage() {
         </div>
       )}
 
-      {/* Prompts grid */}
-      {filteredPrompts.length === 0 ? (
+      {/* Loading state */}
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : prompts.length === 0 ? (
         <div className="text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No prompts yet</h3>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">No prompts found</h3>
           <p className="mt-2 text-gray-500">
-            {filter === 'all'
-              ? 'Get started by generating your first prompt.'
-              : `No prompts found with the "${FILTER_OPTIONS.find(o => o.value === filter)?.label}" template.`}
+            {searchQuery || selectedTags.length > 0 || filter !== 'all'
+              ? 'Try adjusting your search or filters.'
+              : 'Get started by generating or uploading your first prompt.'}
           </p>
-          <Link
-            href={buildPath('/prompts/generate')}
-            className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-          >
-            Generate Your First Prompt
-          </Link>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Upload MD
+            </button>
+            <Link
+              href={buildPath('/prompts/generate')}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+            >
+              Generate Your First Prompt
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredPrompts.map((prompt) => (
+          {prompts.map((prompt) => (
             <PromptCard key={prompt.id} prompt={prompt} />
           ))}
         </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <PromptUpload
+          tags={tags}
+          onTagCreated={handleTagCreated}
+          onUploadComplete={handleUploadComplete}
+          onClose={() => setShowUploadModal(false)}
+        />
       )}
     </div>
   );
