@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  getPromptById,
+  updatePrompt,
+  deletePrompt,
+  isPromptOwnedByUser,
+} from '@/lib/db/queries/prompts';
+import { getSessionUser } from '@/lib/auth/session';
+
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const prompt = await getPromptById(id);
+
+    if (!prompt) {
+      return NextResponse.json({ success: false, error: 'Prompt not found' }, { status: 404 });
+    }
+
+    // Check ownership
+    if (prompt.userId !== String(user.userId)) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
+    return NextResponse.json({ success: true, prompt });
+  } catch (error) {
+    console.error('[API] GET /prompts/[id] error:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    // Check ownership
+    const isOwner = await isPromptOwnedByUser(id, String(user.userId));
+    if (!isOwner) {
+      return NextResponse.json({ success: false, error: 'Prompt not found' }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const { title, description, content, templateType, sourceKnowledgeIds } = body;
+
+    const prompt = await updatePrompt(id, {
+      title: title?.trim(),
+      description: description?.trim(),
+      content: content?.trim(),
+      templateType,
+      sourceKnowledgeIds,
+    });
+
+    if (!prompt) {
+      return NextResponse.json({ success: false, error: 'Prompt not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, prompt });
+  } catch (error) {
+    console.error('[API] PUT /prompts/[id] error:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    // Check ownership
+    const isOwner = await isPromptOwnedByUser(id, String(user.userId));
+    if (!isOwner) {
+      return NextResponse.json({ success: false, error: 'Prompt not found' }, { status: 404 });
+    }
+
+    await deletePrompt(id);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[API] DELETE /prompts/[id] error:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
