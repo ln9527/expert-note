@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 
 interface Tag {
   id: number;
@@ -88,7 +89,7 @@ export default function TagFilter({
     setCreateError('');
 
     try {
-      const response = await fetch('/api/tags', {
+      const response = await fetch(buildApiPath('tags'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: trimmedName, color: newTagColor }),

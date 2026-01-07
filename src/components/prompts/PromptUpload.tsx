@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Tag } from '@/types';
 import TagFilter from '@/components/knowledge/TagFilter';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 
 interface PromptUploadProps {
   tags: Tag[];
@@ -95,7 +96,7 @@ export default function PromptUpload({
         formData.append('tagIds', selectedTags.join(','));
       }
 
-      const response = await fetch('/api/prompts/upload', {
+      const response = await fetch(buildApiPath('prompts/upload'), {
         method: 'POST',
         body: formData,
       });
