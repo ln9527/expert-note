@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 
 interface Tag {
@@ -16,6 +16,7 @@ interface TagFilterProps {
   onTagCreated?: (newTag: Tag) => void;
   placeholder?: string;
   allowCreate?: boolean;
+  dropdownPosition?: 'auto' | 'up' | 'down';
 }
 
 // Predefined color palette for new tags
@@ -39,6 +40,7 @@ export default function TagFilter({
   onTagCreated,
   placeholder = 'Filter by tags...',
   allowCreate = false,
+  dropdownPosition = 'auto',
 }: TagFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,9 +49,37 @@ export default function TagFilter({
   const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+  const [openUpward, setOpenUpward] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const newTagInputRef = useRef<HTMLInputElement>(null);
+
+  // Determine dropdown position based on available space
+  const calculateDropdownPosition = useCallback(() => {
+    if (dropdownPosition === 'up') {
+      setOpenUpward(true);
+      return;
+    }
+    if (dropdownPosition === 'down') {
+      setOpenUpward(false);
+      return;
+    }
+    // Auto mode: check available space
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // Open upward if less than 300px below and more space above
+      setOpenUpward(spaceBelow < 300 && spaceAbove > spaceBelow);
+    }
+  }, [dropdownPosition]);
+
+  // Recalculate position when dropdown opens
+  useEffect(() => {
+    if (isOpen) {
+      calculateDropdownPosition();
+    }
+  }, [isOpen, calculateDropdownPosition]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -202,20 +232,22 @@ export default function TagFilter({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-auto">
-          {/* Create new tag option */}
+        <div className={`absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-auto ${
+          openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
+        }`}>
+          {/* Create new tag option - More prominent */}
           {allowCreate && !showCreateForm && (
             <button
               onClick={() => {
                 setShowCreateForm(true);
                 setNewTagName(searchQuery);
               }}
-              className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 text-blue-600 hover:bg-blue-50 border-b border-gray-100"
+              className="w-full px-4 py-3 text-left text-sm flex items-center gap-2 bg-blue-50 text-blue-700 hover:bg-blue-100 border-b-2 border-blue-200 font-medium"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              <span>Create new tag{searchQuery ? `: "${searchQuery}"` : ''}</span>
+              <span>+ Create new tag{searchQuery ? `: "${searchQuery}"` : ''}</span>
             </button>
           )}
 

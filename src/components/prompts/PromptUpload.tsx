@@ -213,6 +213,22 @@ export default function PromptUpload({
               />
             </div>
 
+            {/* Tags - Moved up for better visibility */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tags <span className="text-gray-400 font-normal">(optional - you can create new tags)</span>
+              </label>
+              <TagFilter
+                tags={tags}
+                selectedTags={selectedTags}
+                onChange={setSelectedTags}
+                onTagCreated={onTagCreated}
+                placeholder="Select or create tags..."
+                allowCreate={true}
+                dropdownPosition="down"
+              />
+            </div>
+
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -224,21 +240,6 @@ export default function PromptUpload({
                 placeholder="Brief description of this prompt..."
                 rows={2}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              />
-            </div>
-
-            {/* Tags */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tags <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <TagFilter
-                tags={tags}
-                selectedTags={selectedTags}
-                onChange={setSelectedTags}
-                onTagCreated={onTagCreated}
-                placeholder="Add tags..."
-                allowCreate={true}
               />
             </div>
 
