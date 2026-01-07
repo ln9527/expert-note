@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { SessionUser } from '@/types';
 import { AppHeader } from '@/components/layout';
 
@@ -22,14 +22,14 @@ export default function PromptsLayout({
         const data = await response.json();
 
         if (!data.authenticated || !data.user) {
-          router.push(buildPath('/login'));
+          router.push('/login');
           return;
         }
 
         setUser(data.user);
       } catch (error) {
         console.error('Session check error:', error);
-        router.push(buildPath('/login'));
+        router.push('/login');
       } finally {
         setLoading(false);
       }

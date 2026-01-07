@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
+import { buildApiPath, getBasePath } from '@/lib/utils/pathHelper';
 import { SessionUser } from '@/types';
 import { AppHeader } from '@/components/layout';
 
@@ -18,8 +18,10 @@ export default function SettingsLayout({
   const [loading, setLoading] = useState(true);
 
   // Check if a sidebar link is active
+  // Note: pathname from usePathname() includes the basePath in production
   const isActive = (path: string) => {
-    const fullPath = buildPath(path);
+    const basePath = getBasePath();
+    const fullPath = basePath ? `${basePath}${path}` : path;
     return pathname === fullPath || pathname?.startsWith(fullPath + '/');
   };
 
@@ -31,10 +33,10 @@ export default function SettingsLayout({
         if (data.authenticated && data.user) {
           setUser(data.user);
         } else {
-          router.push(buildPath('/login'));
+          router.push('/login');
         }
       } catch {
-        router.push(buildPath('/login'));
+        router.push('/login');
       } finally {
         setLoading(false);
       }
@@ -67,7 +69,7 @@ export default function SettingsLayout({
             <ul className="space-y-1">
               <li>
                 <Link
-                  href={buildPath('/settings/prompts')}
+                  href="/settings/prompts"
                   className={`block px-4 py-2 text-sm rounded-lg transition-colors ${
                     isActive('/settings/prompts')
                       ? 'bg-blue-50 text-blue-700 font-medium'

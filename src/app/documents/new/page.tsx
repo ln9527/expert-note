@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { Tag } from '@/types';
 
 export default function NewDocumentPage() {
@@ -62,7 +62,7 @@ export default function NewDocumentPage() {
       const data = await res.json();
 
       if (data.success) {
-        router.push(buildPath(`/documents/${data.document.id}`));
+        router.push(`/documents/${data.document.id}`);
       } else {
         setError(data.error || 'Failed to create document');
       }
@@ -285,7 +285,7 @@ export default function NewDocumentPage() {
           <div className="flex gap-3 pt-4">
             <button
               type="button"
-              onClick={() => router.push(buildPath('/'))}
+              onClick={() => router.push('/')}
               className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Cancel

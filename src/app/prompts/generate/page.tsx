@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { KnowledgeEntryWithAnnotations, Tag, PromptTemplate } from '@/types';
 import { TemplateSelector, KnowledgeSelector, PromptPreview } from '@/components/prompts';
 
@@ -158,7 +158,7 @@ export default function PromptGeneratorPage() {
       }
 
       // Redirect to the new prompt
-      router.push(buildPath(`/prompts/${data.prompt.id}`));
+      router.push(`/prompts/${data.prompt.id}`);
     } catch (err) {
       console.error('Failed to save prompt:', err);
       setError('Network error. Please try again.');

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { SystemPrompt, PromptTemplate, Tag } from '@/types';
 import { PromptCard, PromptUpload } from '@/components/prompts';
 import TagFilter from '@/components/knowledge/TagFilter';
@@ -127,7 +127,7 @@ export default function PromptsListPage() {
             Upload MD
           </button>
           <Link
-            href={buildPath('/prompts/generate')}
+            href="/prompts/generate"
             className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,7 +199,7 @@ export default function PromptsListPage() {
         ))}
         {templates.length === 0 && (
           <Link
-            href={buildPath('/settings/prompts')}
+            href="/settings/prompts"
             className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap"
           >
             + Create template in Settings
@@ -241,7 +241,7 @@ export default function PromptsListPage() {
               Upload MD
             </button>
             <Link
-              href={buildPath('/prompts/generate')}
+              href="/prompts/generate"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
             >
               Generate Your First Prompt

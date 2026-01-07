@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { PromptTemplate } from '@/types';
 
 interface TemplateSelectorProps {
@@ -61,7 +61,7 @@ export default function TemplateSelector({ value, onChange, disabled = false }: 
       {!loading && templates.length === 0 && (
         <p className="text-sm text-amber-600 mt-1">
           No generation templates found.{' '}
-          <Link href={buildPath('/settings/prompts')} className="text-blue-600 hover:text-blue-700 underline">
+          <Link href="/settings/prompts" className="text-blue-600 hover:text-blue-700 underline">
             Create one in Settings
           </Link>
         </p>

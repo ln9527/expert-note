@@ -1,7 +1,6 @@
 'use client';
 
 import { SystemPrompt } from '@/types';
-import { buildPath } from '@/lib/utils/pathHelper';
 import Link from 'next/link';
 
 interface PromptCardProps {
@@ -52,7 +51,7 @@ export default function PromptCard({ prompt }: PromptCardProps) {
   const displayPreview = preview.length > 150 ? preview.substring(0, 150) + '...' : preview;
 
   return (
-    <Link href={buildPath(`/prompts/${prompt.id}`)}>
+    <Link href={`/prompts/${prompt.id}`}>
       <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">

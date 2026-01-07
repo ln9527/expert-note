@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
+import { buildApiPath, getBasePath } from '@/lib/utils/pathHelper';
 import { SessionUser } from '@/types';
 
 interface AppHeaderProps {
@@ -33,11 +33,13 @@ export default function AppHeader({
   const [loading, setLoading] = useState(!externalUser);
 
   // Check if a nav link is active
+  // Note: pathname from usePathname() includes the basePath in production
   const isActive = (path: string) => {
-    const fullPath = buildPath(path);
+    const basePath = getBasePath();
+    const fullPath = basePath ? `${basePath}${path}` : path;
     // For root path, exact match only
     if (path === '/') {
-      return pathname === fullPath;
+      return pathname === fullPath || pathname === basePath;
     }
     // For other paths, check if current path starts with the nav path
     return pathname === fullPath || pathname?.startsWith(fullPath + '/');
@@ -61,11 +63,11 @@ export default function AppHeader({
           setUser(data.user);
           onUserLoaded?.(data.user);
         } else {
-          router.push(buildPath('/login'));
+          router.push('/login');
         }
       } catch (error) {
         console.error('Session check error:', error);
-        router.push(buildPath('/login'));
+        router.push('/login');
       } finally {
         setLoading(false);
       }
@@ -77,7 +79,7 @@ export default function AppHeader({
   const handleLogout = async () => {
     try {
       await fetch(buildApiPath('auth/logout'), { method: 'POST' });
-      router.push(buildPath('/login'));
+      router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -110,7 +112,7 @@ export default function AppHeader({
           {/* Left side - Logo/Title */}
           <div className="flex items-center gap-4">
             <Link
-              href={buildPath('/')}
+              href="/"
               className={`text-xl font-bold ${isActive('/') ? 'text-blue-600' : 'text-gray-900 hover:text-blue-600'} transition-colors`}
             >
               Expert Note
@@ -124,7 +126,7 @@ export default function AppHeader({
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
-                  href={buildPath(link.href)}
+                  href={link.href}
                   className={`text-sm transition-colors ${
                     isActive(link.href)
                       ? 'text-blue-600 font-medium'

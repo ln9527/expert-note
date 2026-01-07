@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { KnowledgeEntryWithAnnotations, Tag, ANNOTATION_COLORS, LEVEL_CONFIG, AnnotationLevel } from '@/types';
 import { AnnotationList } from '@/components/knowledge';
 import { MarkdownRenderer } from '@/components/common';
@@ -226,7 +226,7 @@ export default function KnowledgeDetailPage() {
           {error || 'Entry not found'}
         </div>
         <Link
-          href={buildPath('/knowledge')}
+          href="/knowledge"
           className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-800"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,7 +255,7 @@ export default function KnowledgeDetailPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Back link */}
       <Link
-        href={buildPath('/knowledge')}
+        href="/knowledge"
         className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,7 +306,7 @@ export default function KnowledgeDetailPage() {
             <div className="mb-4 flex items-center">
               <span className="text-sm font-medium text-gray-500 mr-2">Source:</span>
               <Link
-                href={buildPath(`/documents/${entry.sourceDocumentId}`)}
+                href={`/documents/${entry.sourceDocumentId}`}
                 className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -492,7 +492,7 @@ export default function KnowledgeDetailPage() {
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
         <div className="flex items-center justify-between">
           <Link
-            href={buildPath(`/prompts/generate?knowledgeId=${entry.id}`)}
+            href={`/prompts/generate?knowledgeId=${entry.id}`}
             className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -512,7 +512,7 @@ export default function KnowledgeDetailPage() {
               Download
             </button>
             <Link
-              href={buildPath(`/knowledge/${entry.id}/edit`)}
+              href={`/knowledge/${entry.id}/edit`}
               className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

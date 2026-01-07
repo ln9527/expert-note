@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -31,7 +31,7 @@ export default function LoginForm() {
       }
 
       // Redirect to dashboard
-      router.push(buildPath('/'));
+      router.push('/');
       router.refresh();
     } catch (err) {
       setError('Network error. Please try again.');

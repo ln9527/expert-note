@@ -1,8 +1,10 @@
 # Expert Note System - Project Configuration
 
 **Project**: Expert Note (Annotation-based knowledge capture)
-**Status**: Local Testing
+**Status**: Production Deployed
+**Production URL**: https://spansurvey.net/annote
 **Local URL**: http://localhost:3000
+**GitHub**: https://github.com/ln9527/expert-note
 
 ---
 
@@ -157,18 +159,40 @@ OPENROUTER_API_KEY=sk-or-v1-5daf6532fb43483932c6d015a506e366950dee400e52c4d16f60
 
 ## Next Steps (TODO)
 
-1. [ ] Complete local testing of all features
-2. [ ] Test AI knowledge extraction with real documents
-3. [ ] Test prompt generation workflow
-4. [ ] Deploy to Aliyun ECS (spansurvey.net/annote/)
+1. [x] Complete local testing of all features
+2. [x] Deploy to Aliyun ECS (spansurvey.net/annote/)
+3. [ ] Test AI knowledge extraction with real documents
+4. [ ] Improve extraction prompt quality
+5. [ ] Test prompt generation workflow
 
 ---
 
-## Future Deployment (Not Yet Configured)
+## Production Deployment
+
+**See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment guide.**
 
 | Item | Value |
 |------|-------|
 | Server | 47.121.176.193 (Aliyun ECS) |
-| Production URL | https://spansurvey.net/annote/ |
+| Production URL | https://spansurvey.net/annote |
 | Port | 3006 |
 | SSH | `ssh -i ningli.pem root@47.121.176.193` |
+| App Location | `/var/www/expert-note` |
+| PM2 Process | `expert-note` |
+
+### Quick Update Commands
+```bash
+# SSH to server
+ssh -i ningli.pem root@47.121.176.193
+
+# Update & restart
+cd /var/www/expert-note && git pull && npm install && npm run build && pm2 restart expert-note
+
+# View logs
+pm2 logs expert-note --lines 50
+```
+
+### GitHub Token (for git operations)
+```
+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
+```

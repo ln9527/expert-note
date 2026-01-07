@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { KnowledgeEntryWithAnnotations, Tag, ANNOTATION_COLORS, LEVEL_CONFIG, AnnotationLevel, KnowledgeAnnotation } from '@/types';
 
 interface KnowledgeDetailData extends KnowledgeEntryWithAnnotations {
@@ -112,7 +112,7 @@ export default function KnowledgeEditPage() {
       await Promise.all(annotationPromises);
 
       // Navigate back to the detail page
-      router.push(buildPath(`/knowledge/${id}`));
+      router.push(`/knowledge/${id}`);
     } catch (err) {
       console.error('Error saving:', err);
       alert('Failed to save changes');
@@ -162,7 +162,7 @@ export default function KnowledgeEditPage() {
           {error || 'Entry not found'}
         </div>
         <Link
-          href={buildPath('/knowledge')}
+          href="/knowledge"
           className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-800"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +180,7 @@ export default function KnowledgeEditPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Link
-            href={buildPath(`/knowledge/${id}`)}
+            href={`/knowledge/${id}`}
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -364,7 +364,7 @@ export default function KnowledgeEditPage() {
       {/* Action buttons at bottom */}
       <div className="flex justify-end gap-3">
         <Link
-          href={buildPath(`/knowledge/${id}`)}
+          href={`/knowledge/${id}`}
           className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
         >
           Cancel

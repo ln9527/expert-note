@@ -5,7 +5,9 @@
  * In development, BASE_PATH is empty so paths work as normal
  */
 
-const BASE_PATH = process.env.BASE_PATH || '';
+// Use NEXT_PUBLIC_BASE_PATH for client-side access (set via next.config.js env)
+// Falls back to BASE_PATH for server-side code
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || '';
 
 /**
  * Build a path with the BASE_PATH prefix

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { Document, SessionUser } from '@/types';
 import { AppHeader } from '@/components/layout';
 
@@ -23,7 +23,7 @@ export default function Dashboard() {
         const sessionData = await sessionRes.json();
 
         if (!sessionData.authenticated) {
-          router.push(buildPath('/login'));
+          router.push('/login');
           return;
         }
 
@@ -108,7 +108,7 @@ export default function Dashboard() {
           <h2 className="text-2xl font-semibold text-gray-900">Documents</h2>
           <div className="flex gap-3">
             <Link
-              href={buildPath('/documents/new')}
+              href="/documents/new"
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
             >
               + New Document
@@ -144,7 +144,7 @@ export default function Dashboard() {
             <h3 className="text-lg font-medium text-gray-900 mb-2">No documents yet</h3>
             <p className="text-gray-500 mb-6">Get started by creating your first document.</p>
             <Link
-              href={buildPath('/documents/new')}
+              href="/documents/new"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
             >
               Create Document
@@ -183,7 +183,7 @@ export default function Dashboard() {
                   <tr
                     key={doc.id}
                     className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => router.push(buildPath(`/documents/${doc.id}`))}
+                    onClick={() => router.push(`/documents/${doc.id}`)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{doc.filename}</div>

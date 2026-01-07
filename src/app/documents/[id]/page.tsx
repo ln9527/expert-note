@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { Document, Tag } from '@/types';
 import MarkdownEditor from '@/components/editor/MarkdownEditor';
 
@@ -293,7 +293,7 @@ export default function DocumentEditorPage() {
       const data = await res.json();
 
       if (data.success) {
-        router.push(buildPath('/'));
+        router.push('/');
       } else {
         setError(data.error || 'Failed to delete document');
       }
@@ -334,7 +334,7 @@ export default function DocumentEditorPage() {
         <div className="text-center">
           <div className="text-red-500 mb-4">{error}</div>
           <button
-            onClick={() => router.push(buildPath('/'))}
+            onClick={() => router.push('/')}
             className="text-blue-600 hover:text-blue-700"
           >
             Back to Dashboard

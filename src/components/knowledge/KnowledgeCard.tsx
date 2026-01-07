@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { buildPath } from '@/lib/utils/pathHelper';
 import { KnowledgeEntry, Tag, ANNOTATION_COLORS, LEVEL_CONFIG, AnnotationLevel } from '@/types';
 
 interface KnowledgeCardProps {
@@ -51,7 +50,7 @@ export default function KnowledgeCard({ entry }: KnowledgeCardProps) {
   const accentColors = dominantLevel ? ANNOTATION_COLORS[dominantLevel] : null;
 
   return (
-    <Link href={buildPath(`/knowledge/${entry.id}`)}>
+    <Link href={`/knowledge/${entry.id}`}>
       <div
         className={`
           bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer

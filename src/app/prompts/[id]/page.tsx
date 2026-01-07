@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { buildPath, buildApiPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { SystemPrompt, KnowledgeEntryWithAnnotations, PromptVersion, ANNOTATION_COLORS, LEVEL_CONFIG, Tag } from '@/types';
 import { TemplateSelector } from '@/components/prompts';
 import TagFilter from '@/components/knowledge/TagFilter';
@@ -150,7 +150,7 @@ export default function PromptDetailPage() {
         return;
       }
 
-      router.push(buildPath('/prompts'));
+      router.push('/prompts');
     } catch (err) {
       console.error('Failed to delete prompt:', err);
       setError('Network error. Please try again.');
@@ -181,7 +181,7 @@ export default function PromptDetailPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-gray-900">Prompt not found</h2>
-        <Link href={buildPath('/prompts')} className="mt-4 text-blue-600 hover:text-blue-700">
+        <Link href="/prompts" className="mt-4 text-blue-600 hover:text-blue-700">
           Back to prompts
         </Link>
       </div>
@@ -193,7 +193,7 @@ export default function PromptDetailPage() {
       {/* Back button and actions */}
       <div className="flex items-center justify-between">
         <Link
-          href={buildPath('/prompts')}
+          href="/prompts"
           className="inline-flex items-center text-gray-600 hover:text-gray-900"
         >
           <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

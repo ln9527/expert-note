@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import { SessionUser } from '@/types';
 import { AppHeader } from '@/components/layout';
 
@@ -22,14 +22,14 @@ export default function KnowledgeLayout({
         const data = await res.json();
 
         if (!data.authenticated) {
-          router.push(buildPath('/login'));
+          router.push('/login');
           return;
         }
 
         setUser(data.user);
       } catch (err) {
         console.error('Auth check error:', err);
-        router.push(buildPath('/login'));
+        router.push('/login');
       } finally {
         setLoading(false);
       }
