@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { Tag } from '@/types';
+import TagFilter from '@/components/knowledge/TagFilter';
 
 export default function NewDocumentPage() {
   const router = useRouter();
@@ -13,7 +14,6 @@ export default function NewDocumentPage() {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showTagDropdown, setShowTagDropdown] = useState(false);
 
   // Load available tags
   useEffect(() => {
@@ -31,10 +31,9 @@ export default function NewDocumentPage() {
     loadTags();
   }, []);
 
-  const handleTagToggle = (tagId: number) => {
-    setSelectedTagIds((prev) =>
-      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
-    );
+  // Handle newly created tags
+  const handleTagCreated = (newTag: Tag) => {
+    setAllTags(prev => [...prev, newTag].sort((a, b) => a.name.localeCompare(b.name)));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,6 +133,22 @@ export default function NewDocumentPage() {
             />
           </div>
 
+          {/* Tags - Moved up for better visibility */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tags <span className="text-gray-400 font-normal">(optional - you can create new tags)</span>
+            </label>
+            <TagFilter
+              tags={allTags}
+              selectedTags={selectedTagIds}
+              onChange={setSelectedTagIds}
+              onTagCreated={handleTagCreated}
+              placeholder="Select or create tags..."
+              allowCreate={true}
+              dropdownPosition="auto"
+            />
+          </div>
+
           {/* File Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -184,101 +199,6 @@ export default function NewDocumentPage() {
             <p className="mt-1 text-xs text-gray-500">
               {content.length} characters
             </p>
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tags (optional)
-            </label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowTagDropdown(!showTagDropdown)}
-                className="w-full px-4 py-2 text-left border rounded-lg hover:bg-gray-50 flex items-center justify-between"
-              >
-                <span className="text-gray-600">
-                  {selectedTagIds.length === 0
-                    ? 'Select tags...'
-                    : `${selectedTagIds.length} tag${selectedTagIds.length > 1 ? 's' : ''} selected`}
-                </span>
-                <svg
-                  className={`w-4 h-4 transition-transform ${showTagDropdown ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-
-              {showTagDropdown && (
-                <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                  {allTags.length === 0 ? (
-                    <div className="px-4 py-3 text-sm text-gray-500">
-                      No tags available. Tags can be created in the Knowledge Base.
-                    </div>
-                  ) : (
-                    allTags.map((tag) => (
-                      <label
-                        key={tag.id}
-                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedTagIds.includes(tag.id)}
-                          onChange={() => handleTagToggle(tag.id)}
-                          className="rounded border-gray-300"
-                        />
-                        <span
-                          className="px-2 py-0.5 text-xs rounded"
-                          style={{
-                            backgroundColor: `${tag.color}20`,
-                            color: tag.color,
-                          }}
-                        >
-                          {tag.name}
-                        </span>
-                      </label>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Selected Tags Display */}
-            {selectedTagIds.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {selectedTagIds.map((tagId) => {
-                  const tag = allTags.find((t) => t.id === tagId);
-                  if (!tag) return null;
-                  return (
-                    <span
-                      key={tag.id}
-                      className="px-2 py-0.5 text-xs rounded flex items-center gap-1"
-                      style={{
-                        backgroundColor: `${tag.color}20`,
-                        color: tag.color,
-                      }}
-                    >
-                      {tag.name}
-                      <button
-                        type="button"
-                        onClick={() => handleTagToggle(tag.id)}
-                        className="hover:opacity-70"
-                      >
-                        x
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
           {/* Actions */}

@@ -79,6 +79,18 @@ export default function SettingsLayout({
                   Prompt Templates
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/settings/tags"
+                  className={`block px-4 py-2 text-sm rounded-lg transition-colors ${
+                    isActive('/settings/tags')
+                      ? 'bg-blue-50 text-blue-700 font-medium'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Tag Management
+                </Link>
+              </li>
             </ul>
           </nav>
 
