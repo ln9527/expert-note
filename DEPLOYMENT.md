@@ -7,7 +7,7 @@
 | Server IP | 47.121.176.193 |
 | Production URL | https://spansurvey.net/annote |
 | Port | 3006 |
-| SSH Command | `ssh -i ningli.pem root@47.121.176.193` |
+| SSH Command | `ssh -i /Users/ningli/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem root@47.121.176.193` |
 | App Location | `/var/www/expert-note` |
 | PM2 Process | `expert-note` |
 
@@ -25,7 +25,7 @@
 - **Port**: 5432
 - **Database**: annotservice
 - **User**: postgres
-- **Password**: testpass123
+- **Password**: annotservice2025
 
 ### Application Users
 All users have password: `password123`
@@ -77,9 +77,14 @@ ssh -i /Users/ningli/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ni
 cd /var/www/expert-note
 git pull origin main
 npm install
+export BASE_PATH=/annote  # CRITICAL: Must set before build!
 npm run build
 pm2 restart expert-note
 ```
+
+> **CRITICAL**: Always set `BASE_PATH=/annote` before running `npm run build`.
+> Next.js `basePath` and `assetPrefix` are applied at BUILD TIME, not runtime.
+> Without this, JS/CSS assets will fail to load with "Unexpected token '<'" errors.
 
 ### View Logs
 ```bash
@@ -120,7 +125,7 @@ module.exports = {
       DB_PORT: '5432',
       DB_NAME: 'annotservice',
       DB_USER: 'postgres',
-      DB_PASSWORD: 'testpass123',
+      DB_PASSWORD: 'annotservice2025',
       OPENROUTER_API_KEY: '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',
       SESSION_SECRET: 'annote-session-secret-production-2026-very-secure-key'
     }
@@ -130,14 +135,29 @@ module.exports = {
 
 ### 3. Setup Database
 ```bash
+# Create database
 sudo -u postgres psql -c "CREATE DATABASE annotservice;"
+
+# Set postgres password (required for ecosystem.config.js connection)
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'annotservice2025';"
+
+# Run schema and seed
 sudo -u postgres psql -d annotservice -f /var/www/expert-note/sql/schema.sql
 sudo -u postgres psql -d annotservice -f /var/www/expert-note/sql/seed.sql
+
+# Run migrations
+sudo -u postgres psql -d annotservice -f /var/www/expert-note/sql/migrations/001_add_location_to_annotations.sql
+sudo -u postgres psql -d annotservice -f /var/www/expert-note/sql/migrations/002_prompt_tags.sql
+sudo -u postgres psql -d annotservice -f /var/www/expert-note/sql/migrations/003_update_extraction_template.sql
 ```
 
 ### 4. Build & Start
 ```bash
+# CRITICAL: Set BASE_PATH before build!
+export BASE_PATH=/annote
 npm run build
+
+# Start with PM2
 pm2 start ecosystem.config.js
 pm2 save
 ```
@@ -175,10 +195,10 @@ nginx -t && systemctl reload nginx
 **Solution**:
 ```bash
 # Set the postgres password
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'testpass123';"
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'annotservice2025';"
 
 # Verify connection works
-PGPASSWORD=testpass123 psql -h localhost -U postgres -d annotservice -c 'SELECT 1'
+PGPASSWORD=annotservice2025 psql -h localhost -U postgres -d annotservice -c 'SELECT 1'
 ```
 
 ### Issue 2: Environment Variables Not Loaded
@@ -222,8 +242,14 @@ BASE_PATH=/annote
 Run migrations in order:
 ```bash
 sudo -u postgres psql -d annotservice -f sql/migrations/001_add_location_to_annotations.sql
+sudo -u postgres psql -d annotservice -f sql/migrations/002_prompt_tags.sql
 sudo -u postgres psql -d annotservice -f sql/migrations/003_update_extraction_template.sql
 ```
+
+> **Note**: If migrations fail due to permission issues, run inline:
+> ```bash
+> sudo -u postgres psql -d annotservice -c "CREATE TABLE IF NOT EXISTS prompt_tags (prompt_id UUID REFERENCES system_prompts(id) ON DELETE CASCADE, tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE, PRIMARY KEY (prompt_id, tag_id));"
+> ```
 
 ---
 

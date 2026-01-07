@@ -176,21 +176,26 @@ OPENROUTER_API_KEY=sk-or-v1-5daf6532fb43483932c6d015a506e366950dee400e52c4d16f60
 | Server | 47.121.176.193 (Aliyun ECS) |
 | Production URL | https://spansurvey.net/annote |
 | Port | 3006 |
-| SSH | `ssh -i ningli.pem root@47.121.176.193` |
+| SSH | `ssh -i /Users/ningli/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem root@47.121.176.193` |
 | App Location | `/var/www/expert-note` |
 | PM2 Process | `expert-note` |
 
 ### Quick Update Commands
 ```bash
 # SSH to server
-ssh -i ningli.pem root@47.121.176.193
+ssh -i /Users/ningli/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem root@47.121.176.193
 
-# Update & restart
-cd /var/www/expert-note && git pull && npm install && npm run build && pm2 restart expert-note
+# Update & restart (IMPORTANT: BASE_PATH must be set before build!)
+cd /var/www/expert-note && git pull && npm install && export BASE_PATH=/annote && npm run build && pm2 restart expert-note
 
 # View logs
 pm2 logs expert-note --lines 50
 ```
+
+### CRITICAL: Build Requirement
+**Always set `BASE_PATH=/annote` before running `npm run build` on production.**
+Next.js `basePath` and `assetPrefix` are applied at BUILD TIME, not runtime.
+Without this, JS/CSS assets will fail to load (404 errors).
 
 ### GitHub Token (for git operations)
 ```
