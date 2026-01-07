@@ -11,6 +11,8 @@ interface KnowledgeEntryRow {
   background: string | null;
   created_at: string;
   updated_at: string;
+  is_deleted: boolean;
+  deleted_at: string | null;
   tags?: Tag[];
   annotation_count?: number;
 }
@@ -111,7 +113,7 @@ export async function getAllKnowledgeEntries(
 ): Promise<KnowledgeEntry[]> {
   const { tagIds, limit = 50, offset = 0 } = options;
 
-  const conditions: string[] = [];
+  const conditions: string[] = ['ke.is_deleted = FALSE'];
   const params: unknown[] = [];
   let paramIndex = 1;
 
@@ -123,7 +125,7 @@ export async function getAllKnowledgeEntries(
     params.push(tagIds);
   }
 
-  const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+  const whereClause = 'WHERE ' + conditions.join(' AND ');
 
   const sql = `
     SELECT
@@ -147,9 +149,10 @@ export async function getAllKnowledgeEntries(
 }
 
 /**
- * Get a single knowledge entry by ID
+ * Get a single knowledge entry by ID (excludes deleted by default)
  */
-export async function getKnowledgeEntryById(id: string): Promise<KnowledgeEntry | null> {
+export async function getKnowledgeEntryById(id: string, includeDeleted = false): Promise<KnowledgeEntry | null> {
+  const deleteFilter = includeDeleted ? '' : 'AND ke.is_deleted = FALSE';
   const sql = `
     SELECT
       ke.*,
@@ -160,7 +163,7 @@ export async function getKnowledgeEntryById(id: string): Promise<KnowledgeEntry 
       ) as tags,
       (SELECT COUNT(*) FROM annotations WHERE knowledge_id = ke.id) as annotation_count
     FROM knowledge_entries ke
-    WHERE ke.id = $1
+    WHERE ke.id = $1 ${deleteFilter}
   `;
 
   const row = await queryOne<KnowledgeEntryRow>(sql, [id]);
@@ -299,11 +302,54 @@ export async function updateKnowledgeEntry(
 }
 
 /**
- * Delete a knowledge entry
+ * Soft delete a knowledge entry (move to trash)
  */
 export async function deleteKnowledgeEntry(id: string): Promise<void> {
+  await query(
+    `UPDATE knowledge_entries SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1 AND is_deleted = FALSE`,
+    [id]
+  );
+}
+
+/**
+ * Restore a soft-deleted knowledge entry from trash
+ */
+export async function restoreKnowledgeEntry(id: string): Promise<KnowledgeEntry | null> {
+  await query(
+    `UPDATE knowledge_entries SET is_deleted = FALSE, deleted_at = NULL, updated_at = NOW() WHERE id = $1 AND is_deleted = TRUE`,
+    [id]
+  );
+  return getKnowledgeEntryById(id);
+}
+
+/**
+ * Permanently delete a knowledge entry (cannot be undone)
+ */
+export async function permanentlyDeleteKnowledgeEntry(id: string): Promise<void> {
   // Cascading delete will handle annotations and tags
   await query(`DELETE FROM knowledge_entries WHERE id = $1`, [id]);
+}
+
+/**
+ * Get all soft-deleted knowledge entries (trash)
+ */
+export async function getDeletedKnowledgeEntries(): Promise<KnowledgeEntry[]> {
+  const sql = `
+    SELECT
+      ke.*,
+      COALESCE(
+        (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
+         FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
+        '[]'
+      ) as tags,
+      (SELECT COUNT(*) FROM annotations WHERE knowledge_id = ke.id) as annotation_count
+    FROM knowledge_entries ke
+    WHERE ke.is_deleted = TRUE
+    ORDER BY ke.deleted_at DESC
+  `;
+
+  const rows = await query<KnowledgeEntryRow>(sql, []);
+  return rows.map(mapKnowledgeRow);
 }
 
 /**
@@ -406,7 +452,7 @@ export async function deleteAnnotation(annotationId: string): Promise<void> {
 }
 
 /**
- * Get knowledge entries count (for pagination)
+ * Get knowledge entries count (for pagination, excludes deleted)
  */
 export async function getKnowledgeEntriesCount(
   userId: string,
@@ -414,7 +460,7 @@ export async function getKnowledgeEntriesCount(
 ): Promise<number> {
   const { tagIds } = options;
 
-  const conditions: string[] = [];
+  const conditions: string[] = ['is_deleted = FALSE'];
   const params: unknown[] = [];
   let paramIndex = 1;
 
@@ -425,7 +471,7 @@ export async function getKnowledgeEntriesCount(
     params.push(tagIds);
   }
 
-  const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+  const whereClause = 'WHERE ' + conditions.join(' AND ');
 
   const sql = `SELECT COUNT(*) as count FROM knowledge_entries ${whereClause}`;
   const row = await queryOne<{ count: string }>(sql, params);

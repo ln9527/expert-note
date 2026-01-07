@@ -3,19 +3,21 @@
 import Link from 'next/link';
 import { KnowledgeEntry, Tag, ANNOTATION_COLORS, LEVEL_CONFIG, AnnotationLevel } from '@/types';
 
-interface KnowledgeCardProps {
-  entry: KnowledgeEntry & {
-    sourceDocumentName?: string;
-    // Detailed counts by level (from API with annotations query)
-    annotationCounts?: {
-      macro: number;
-      meso: number;
-      micro: number;
-    };
+interface ExtendedKnowledgeEntry extends KnowledgeEntry {
+  sourceDocumentName?: string;
+  annotationCounts?: {
+    macro: number;
+    meso: number;
+    micro: number;
   };
 }
 
-export default function KnowledgeCard({ entry }: KnowledgeCardProps) {
+interface KnowledgeCardProps {
+  entry: ExtendedKnowledgeEntry;
+  onDelete?: (entry: ExtendedKnowledgeEntry) => void;
+}
+
+export default function KnowledgeCard({ entry, onDelete }: KnowledgeCardProps) {
   // Preview text - use background or fallback message
   const backgroundText = entry.background || 'No background description';
   const previewText = backgroundText.length > 200
@@ -49,11 +51,17 @@ export default function KnowledgeCard({ entry }: KnowledgeCardProps) {
   const dominantLevel = getDominantLevel();
   const accentColors = dominantLevel ? ANNOTATION_COLORS[dominantLevel] : null;
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete?.(entry);
+  };
+
   return (
     <Link href={`/knowledge/${entry.id}`}>
       <div
         className={`
-          bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer
+          bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer group
           ${accentColors ? `${accentColors.border} border-l-4` : 'border-gray-200'}
         `}
       >
@@ -72,9 +80,22 @@ export default function KnowledgeCard({ entry }: KnowledgeCardProps) {
               </div>
             )}
           </div>
-          <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
-            {formatDate(entry.createdAt)}
-          </span>
+          <div className="flex items-center gap-2 ml-2">
+            <span className="text-xs text-gray-400 whitespace-nowrap">
+              {formatDate(entry.createdAt)}
+            </span>
+            {onDelete && (
+              <button
+                onClick={handleDeleteClick}
+                className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+                title="Delete entry"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Background preview */}

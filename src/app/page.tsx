@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { Document, SessionUser } from '@/types';
 import { AppHeader } from '@/components/layout';
+import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -13,6 +14,10 @@ export default function Dashboard() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Delete modal state
+  const [deletingDoc, setDeletingDoc] = useState<Document | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Check authentication and load data
   useEffect(() => {
@@ -86,6 +91,36 @@ export default function Dashboard() {
 
     // Cleanup
     URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteClick = (doc: Document, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeletingDoc(doc);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingDoc) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(buildApiPath(`documents/${deletingDoc.id}`), {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // Remove from list
+        setDocuments(documents.filter(d => d.id !== deletingDoc.id));
+        setDeletingDoc(null);
+      } else {
+        setError(data.error || 'Failed to delete document');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -251,15 +286,26 @@ export default function Dashboard() {
                       {formatDate(doc.updatedAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button
-                        onClick={(e) => handleDownload(doc, e)}
-                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Download as .md"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={(e) => handleDownload(doc, e)}
+                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Download as .md"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteClick(doc, e)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -292,6 +338,17 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deletingDoc}
+        title="Delete Document"
+        itemName={deletingDoc?.filename || ''}
+        itemType="document"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeletingDoc(null)}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

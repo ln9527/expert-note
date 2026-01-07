@@ -5,6 +5,8 @@ import {
   getKnowledgeEntryWithAnnotations,
   updateKnowledgeEntry,
   deleteKnowledgeEntry,
+  permanentlyDeleteKnowledgeEntry,
+  restoreKnowledgeEntry,
 } from '@/lib/db/queries/knowledge';
 import { getTagByName, createTag } from '@/lib/db/queries/tags';
 
@@ -129,7 +131,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 /**
  * DELETE /api/knowledge/[id]
- * Delete a knowledge entry
+ * Delete a knowledge entry (soft delete by default, permanent with ?permanent=true)
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
@@ -139,9 +141,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const permanent = searchParams.get('permanent') === 'true';
 
-    // Check if entry exists
-    const existing = await getKnowledgeEntryById(id);
+    // For permanent delete, check if entry exists (including deleted)
+    // For soft delete, check if entry exists and is not deleted
+    const existing = await getKnowledgeEntryById(id, permanent);
     if (!existing) {
       return NextResponse.json(
         { success: false, error: 'Knowledge entry not found' },
@@ -149,11 +154,51 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    await deleteKnowledgeEntry(id);
+    if (permanent) {
+      await permanentlyDeleteKnowledgeEntry(id);
+    } else {
+      await deleteKnowledgeEntry(id);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[API] DELETE /knowledge/[id] error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/knowledge/[id]
+ * Restore a soft-deleted knowledge entry
+ */
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { action } = body;
+
+    if (action === 'restore') {
+      const entry = await restoreKnowledgeEntry(id);
+      if (!entry) {
+        return NextResponse.json(
+          { success: false, error: 'Knowledge entry not found or not deleted' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ success: true, entry });
+    }
+
+    return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
+  } catch (error) {
+    console.error('[API] PATCH /knowledge/[id] error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

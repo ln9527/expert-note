@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 interface PromptCardProps {
   prompt: SystemPrompt;
+  onDelete?: (prompt: SystemPrompt) => void;
 }
 
 // Default colors for dynamically generated template badges
@@ -39,7 +40,7 @@ function getTemplateColor(templateType: string): string {
   return DEFAULT_BADGE_COLORS[index];
 }
 
-export default function PromptCard({ prompt }: PromptCardProps) {
+export default function PromptCard({ prompt, onDelete }: PromptCardProps) {
   // Display the template type as-is (user-created templates)
   const templateLabel = prompt.templateType || 'No Template';
   const templateColor = prompt.templateType
@@ -50,17 +51,36 @@ export default function PromptCard({ prompt }: PromptCardProps) {
   const preview = prompt.description || prompt.content.substring(0, 150);
   const displayPreview = preview.length > 150 ? preview.substring(0, 150) + '...' : preview;
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete?.(prompt);
+  };
+
   return (
     <Link href={`/prompts/${prompt.id}`}>
-      <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer">
+      <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
+          <h3 className="text-lg font-semibold text-gray-900 line-clamp-1 flex-1 mr-2">
             {prompt.title}
           </h3>
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${templateColor}`}>
-            {templateLabel}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-1 text-xs font-medium rounded-full ${templateColor}`}>
+              {templateLabel}
+            </span>
+            {onDelete && (
+              <button
+                onClick={handleDeleteClick}
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                title="Delete prompt"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Description Preview */}

@@ -14,6 +14,8 @@ export interface SystemPromptRow {
   version: number;
   created_at: string;
   updated_at: string;
+  is_deleted: boolean;
+  deleted_at: string | null;
 }
 
 export interface SystemPrompt {
@@ -117,7 +119,7 @@ export async function getAllPrompts(
 ): Promise<{ prompts: SystemPrompt[]; total: number }> {
   const { templateType, tagIds, search, limit = 50, offset = 0 } = options;
 
-  const conditions: string[] = ['sp.user_id = $1'];
+  const conditions: string[] = ['sp.user_id = $1', 'sp.is_deleted = FALSE'];
   const params: unknown[] = [userId];
   let paramIndex = 2;
 
@@ -223,10 +225,12 @@ export async function getAllPrompts(
 }
 
 /**
- * Get a single prompt by ID with tags
+ * Get a single prompt by ID with tags (excludes deleted by default)
  */
-export async function getPromptById(id: string): Promise<SystemPrompt | null> {
-  const sql = `SELECT * FROM system_prompts WHERE id = $1`;
+export async function getPromptById(id: string, includeDeleted = false): Promise<SystemPrompt | null> {
+  const sql = includeDeleted
+    ? `SELECT * FROM system_prompts WHERE id = $1`
+    : `SELECT * FROM system_prompts WHERE id = $1 AND is_deleted = FALSE`;
   const row = await queryOne<SystemPromptRow>(sql, [id]);
   if (!row) return null;
 
@@ -353,16 +357,85 @@ export async function updatePrompt(
 }
 
 /**
- * Delete a system prompt (also deletes tags via CASCADE)
+ * Soft delete a system prompt (move to trash)
  */
 export async function deletePrompt(id: string): Promise<boolean> {
+  const sql = `
+    UPDATE system_prompts
+    SET is_deleted = TRUE, deleted_at = NOW()
+    WHERE id = $1 AND is_deleted = FALSE
+  `;
+  await query(sql, [id]);
+  return true;
+}
+
+/**
+ * Restore a soft-deleted prompt from trash
+ */
+export async function restorePrompt(id: string): Promise<SystemPrompt | null> {
+  const sql = `
+    UPDATE system_prompts
+    SET is_deleted = FALSE, deleted_at = NULL, updated_at = NOW()
+    WHERE id = $1 AND is_deleted = TRUE
+    RETURNING *
+  `;
+  const row = await queryOne<SystemPromptRow>(sql, [id]);
+  if (!row) return null;
+
+  const tags = await getPromptTags(id);
+  return mapPromptRow(row, tags);
+}
+
+/**
+ * Permanently delete a system prompt (cannot be undone)
+ */
+export async function permanentlyDeletePrompt(id: string): Promise<boolean> {
   const sql = `DELETE FROM system_prompts WHERE id = $1`;
   await query(sql, [id]);
   return true;
 }
 
 /**
- * Get prompts by template type for a user
+ * Get all soft-deleted prompts for a user (trash)
+ */
+export async function getDeletedPrompts(userId: string): Promise<SystemPrompt[]> {
+  const sql = `
+    SELECT * FROM system_prompts
+    WHERE user_id = $1 AND is_deleted = TRUE
+    ORDER BY deleted_at DESC
+  `;
+  const rows = await query<SystemPromptRow>(sql, [userId]);
+
+  if (rows.length === 0) return [];
+
+  // Get tags for all prompts
+  const promptIds = rows.map(r => r.id);
+  const tagsSql = `
+    SELECT pt.prompt_id, t.id, t.name, t.color
+    FROM prompt_tags pt
+    INNER JOIN tags t ON pt.tag_id = t.id
+    WHERE pt.prompt_id = ANY($1::uuid[])
+    ORDER BY t.name
+  `;
+  const tagRows = await query<TagRow & { prompt_id: string }>(tagsSql, [promptIds]);
+
+  const tagsByPrompt = new Map<string, Tag[]>();
+  for (const row of tagRows) {
+    if (!tagsByPrompt.has(row.prompt_id)) {
+      tagsByPrompt.set(row.prompt_id, []);
+    }
+    tagsByPrompt.get(row.prompt_id)!.push({
+      id: row.id,
+      name: row.name,
+      color: row.color,
+    });
+  }
+
+  return rows.map(row => mapPromptRow(row, tagsByPrompt.get(row.id) || []));
+}
+
+/**
+ * Get prompts by template type for a user (excludes deleted)
  */
 export async function getPromptsByTemplateType(
   userId: string,
@@ -371,7 +444,7 @@ export async function getPromptsByTemplateType(
   const sql = `
     SELECT *
     FROM system_prompts
-    WHERE user_id = $1 AND template_type = $2
+    WHERE user_id = $1 AND template_type = $2 AND is_deleted = FALSE
     ORDER BY updated_at DESC
   `;
 
@@ -406,7 +479,7 @@ export async function getPromptsByTemplateType(
 }
 
 /**
- * Check if a prompt belongs to a user
+ * Check if a prompt belongs to a user (includes deleted prompts for restore/permanent delete operations)
  */
 export async function isPromptOwnedByUser(
   promptId: string,
@@ -415,4 +488,13 @@ export async function isPromptOwnedByUser(
   const sql = `SELECT 1 FROM system_prompts WHERE id = $1 AND user_id = $2`;
   const row = await queryOne(sql, [promptId, userId]);
   return row !== null;
+}
+
+/**
+ * Check if a prompt is soft-deleted
+ */
+export async function isPromptDeleted(promptId: string): Promise<boolean> {
+  const sql = `SELECT is_deleted FROM system_prompts WHERE id = $1`;
+  const row = await queryOne<{ is_deleted: boolean }>(sql, [promptId]);
+  return row?.is_deleted === true;
 }

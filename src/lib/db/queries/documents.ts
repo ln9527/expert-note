@@ -292,3 +292,33 @@ export async function restoreDocument(id: string): Promise<Document | null> {
   );
   return getDocumentById(id);
 }
+
+/**
+ * Get all soft-deleted documents (for trash)
+ */
+export async function getDeletedDocuments(): Promise<Document[]> {
+  const sql = `
+    SELECT
+      d.*,
+      COALESCE(
+        (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
+         FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id),
+        '[]'
+      ) as tags,
+      (SELECT json_build_object(
+        'macro', COUNT(*) FILTER (WHERE level = 'MACRO'),
+        'meso', COUNT(*) FILTER (WHERE level = 'MESO'),
+        'micro', COUNT(*) FILTER (WHERE level = 'MICRO')
+      ) FROM annotations WHERE document_id = d.id) as annotation_counts,
+      CASE WHEN u.id IS NOT NULL THEN
+        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+      ELSE NULL END as creator
+    FROM documents d
+    LEFT JOIN users u ON d.created_by = u.id
+    WHERE d.is_deleted = TRUE
+    ORDER BY d.deleted_at DESC
+  `;
+
+  const rows = await query<DocumentRow>(sql, []);
+  return rows.map(mapDocumentRow);
+}

@@ -3,6 +3,8 @@ import {
   getPromptById,
   updatePrompt,
   deletePrompt,
+  permanentlyDeletePrompt,
+  restorePrompt,
   isPromptOwnedByUser,
 } from '@/lib/db/queries/prompts';
 import { getSessionUser } from '@/lib/auth/session';
@@ -88,6 +90,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const permanent = searchParams.get('permanent') === 'true';
 
     // Check ownership
     const isOwner = await isPromptOwnedByUser(id, String(user.userId));
@@ -95,11 +99,48 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ success: false, error: 'Prompt not found' }, { status: 404 });
     }
 
-    await deletePrompt(id);
+    if (permanent) {
+      await permanentlyDeletePrompt(id);
+    } else {
+      await deletePrompt(id);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[API] DELETE /prompts/[id] error:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// PATCH handler for restore action
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { action } = body;
+
+    // Check ownership
+    const isOwner = await isPromptOwnedByUser(id, String(user.userId));
+    if (!isOwner) {
+      return NextResponse.json({ success: false, error: 'Prompt not found' }, { status: 404 });
+    }
+
+    if (action === 'restore') {
+      const prompt = await restorePrompt(id);
+      if (!prompt) {
+        return NextResponse.json({ success: false, error: 'Prompt not found or not deleted' }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, prompt });
+    }
+
+    return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
+  } catch (error) {
+    console.error('[API] PATCH /prompts/[id] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

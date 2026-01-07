@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { KnowledgeEntry, Tag } from '@/types';
 import { KnowledgeCard, TagFilter } from '@/components/knowledge';
+import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
 
 // Extended entry with optional fields from API
 interface ExtendedKnowledgeEntry extends KnowledgeEntry {
@@ -25,6 +26,10 @@ export default function KnowledgeListPage() {
   // Filters
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Delete modal state
+  const [deletingEntry, setDeletingEntry] = useState<ExtendedKnowledgeEntry | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch knowledge entries
   useEffect(() => {
@@ -101,6 +106,34 @@ export default function KnowledgeListPage() {
   const totalAnnotations = useMemo(() => {
     return entries.reduce((sum, entry) => sum + (entry.annotationCount || 0), 0);
   }, [entries]);
+
+  const handleDeleteClick = (entry: ExtendedKnowledgeEntry) => {
+    setDeletingEntry(entry);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingEntry) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(buildApiPath(`knowledge/${deletingEntry.id}`), {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setEntries(entries.filter(e => e.id !== deletingEntry.id));
+        setDeletingEntry(null);
+      } else {
+        setError(data.error || 'Failed to delete knowledge entry');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -234,10 +267,21 @@ export default function KnowledgeListPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEntries.map((entry) => (
-            <KnowledgeCard key={entry.id} entry={entry} />
+            <KnowledgeCard key={entry.id} entry={entry} onDelete={handleDeleteClick} />
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deletingEntry}
+        title="Delete Knowledge Entry"
+        itemName={deletingEntry?.background?.slice(0, 50) || `Knowledge #${deletingEntry?.id.slice(0, 8)}`}
+        itemType="knowledge"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeletingEntry(null)}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

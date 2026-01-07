@@ -6,6 +6,7 @@ import { buildApiPath } from '@/lib/utils/pathHelper';
 import { SystemPrompt, PromptTemplate, Tag } from '@/types';
 import { PromptCard, PromptUpload } from '@/components/prompts';
 import TagFilter from '@/components/knowledge/TagFilter';
+import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
 
 interface FilterOption {
   value: string;
@@ -22,6 +23,10 @@ export default function PromptsListPage() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // Delete modal state
+  const [deletingPrompt, setDeletingPrompt] = useState<SystemPrompt | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchPrompts = useCallback(async () => {
     try {
@@ -94,6 +99,34 @@ export default function PromptsListPage() {
   const handleUploadComplete = () => {
     setShowUploadModal(false);
     fetchPrompts();
+  };
+
+  const handleDeleteClick = (prompt: SystemPrompt) => {
+    setDeletingPrompt(prompt);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingPrompt) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(buildApiPath(`prompts/${deletingPrompt.id}`), {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setPrompts(prompts.filter(p => p.id !== deletingPrompt.id));
+        setDeletingPrompt(null);
+      } else {
+        setError(data.error || 'Failed to delete prompt');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Build filter options dynamically from templates
@@ -251,10 +284,21 @@ export default function PromptsListPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {prompts.map((prompt) => (
-            <PromptCard key={prompt.id} prompt={prompt} />
+            <PromptCard key={prompt.id} prompt={prompt} onDelete={handleDeleteClick} />
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deletingPrompt}
+        title="Delete Prompt"
+        itemName={deletingPrompt?.title || ''}
+        itemType="prompt"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeletingPrompt(null)}
+        isDeleting={isDeleting}
+      />
 
       {/* Upload Modal */}
       {showUploadModal && (
