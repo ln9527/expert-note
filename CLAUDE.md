@@ -27,20 +27,22 @@ npm run dev
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Login/Auth | Done | 10 hardcoded users, iron-session |
-| Dashboard | Done | Document list, stats, quick links |
+| Dashboard | Done | Document list, stats, quick links, **delete button** |
 | Document Editor | Done | Side-by-side layout, auto-save |
 | Annotation Toolbar | Done | MACRO/MESO/MICRO buttons, Cmd+1/2/3 |
 | Annotation Parsing | Done | `[[LEVEL: content]]` format |
 | Tag Management | Done | 10 default academic tags |
-| Knowledge Base UI | Done | List, detail, filter by tags, **edit**, **download** |
+| Knowledge Base UI | Done | List, detail, filter by tags, **edit**, **download**, **delete** |
 | Knowledge Edit Page | Done | Edit background, tags, refined comments |
 | Knowledge Download | Done | Export as Markdown with annotations by level |
-| Prompt Generator UI | Done | Template selection, knowledge picker |
+| Prompt Generator UI | Done | Template selection, knowledge picker, **delete** |
 | Prompt Templates | Done | Customizable extraction/generation templates |
-| Document API | Done | CRUD operations |
-| Knowledge API | Done | Extraction, CRUD, batch processing |
+| Soft Delete & Trash | Done | Trash page, restore, permanent delete |
+| Document API | Done | CRUD + soft delete + restore |
+| Knowledge API | Done | Extraction, CRUD + soft delete + restore |
 | Annotations API | Done | PUT/DELETE for individual annotations |
-| Prompts API | Done | Generation, CRUD |
+| Prompts API | Done | Generation, CRUD + soft delete + restore |
+| Trash API | Done | List deleted items, restore, permanent delete |
 | AI Integration | Done | OpenRouter/Qwen with batch processing |
 
 ---
@@ -63,31 +65,36 @@ Colors: MACRO=Red, MESO=Yellow, MICRO=Green
 expert-note/
 ├── sql/
 │   ├── schema.sql          # Database tables
-│   └── seed.sql            # 10 users + 10 tags
+│   ├── seed.sql            # 10 users + 10 tags
+│   └── migrations/         # Database migrations
+│       └── 004_soft_delete.sql  # Soft delete for prompts/knowledge
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx        # Dashboard
+│   │   ├── page.tsx        # Dashboard (with delete buttons)
 │   │   ├── login/          # Login page
 │   │   ├── documents/      # Editor pages
 │   │   ├── knowledge/
-│   │   │   ├── page.tsx    # Knowledge list
+│   │   │   ├── page.tsx    # Knowledge list (with delete)
 │   │   │   └── [id]/
 │   │   │       ├── page.tsx      # Detail view + download
-│   │   │       └── edit/page.tsx # Edit page (NEW)
-│   │   ├── prompts/        # Prompt generator pages
-│   │   ├── settings/       # Settings pages (prompts config)
+│   │   │       └── edit/page.tsx # Edit page
+│   │   ├── prompts/        # Prompt generator pages (with delete)
+│   │   ├── trash/          # Trash page (restore/permanent delete)
+│   │   ├── settings/       # Settings pages (prompts config, trash link)
 │   │   └── api/
-│   │       ├── documents/  # Document CRUD
-│   │       ├── knowledge/  # Knowledge CRUD + extraction
-│   │       ├── annotations/[id]/ # Annotation PUT/DELETE (NEW)
-│   │       ├── prompts/    # Prompt CRUD + generation
+│   │       ├── documents/  # Document CRUD + soft delete
+│   │       ├── knowledge/  # Knowledge CRUD + soft delete + restore
+│   │       ├── annotations/[id]/ # Annotation PUT/DELETE
+│   │       ├── prompts/    # Prompt CRUD + soft delete + restore
 │   │       ├── prompt-templates/ # Template CRUD
-│   │       └── tags/       # Tag CRUD
+│   │       ├── tags/       # Tag CRUD
+│   │       └── trash/      # Trash API (list, restore, permanent delete)
 │   ├── components/
 │   │   ├── auth/           # LoginForm
 │   │   ├── editor/         # MarkdownEditor, AnnotationToolbar, Modal
 │   │   ├── knowledge/      # KnowledgeCard, AnnotationList, TagFilter
-│   │   └── prompts/        # PromptCard, TemplateSelector, Preview
+│   │   ├── prompts/        # PromptCard, TemplateSelector, Preview
+│   │   └── shared/         # DeleteConfirmModal (reusable)
 │   ├── lib/
 │   │   ├── db/             # PostgreSQL connection + queries
 │   │   ├── ai/             # OpenRouter client + extraction (batch)
@@ -110,7 +117,50 @@ psql -U ningli -d postgres -c "CREATE DATABASE annotservice;"
 # Run schema and seed
 psql -U ningli -d annotservice -f sql/schema.sql
 psql -U ningli -d annotservice -f sql/seed.sql
+
+# Run migrations (for soft delete support)
+psql -U ningli -d annotservice -f sql/migrations/004_soft_delete.sql
 ```
+
+---
+
+## Soft Delete & Trash System
+
+All three main entities (Documents, Prompts, Knowledge) support soft delete:
+
+| Entity | Soft Delete Columns | Query File |
+|--------|---------------------|------------|
+| Documents | `is_deleted`, `deleted_at` | `src/lib/db/queries/documents.ts` |
+| Prompts | `is_deleted`, `deleted_at` | `src/lib/db/queries/prompts.ts` |
+| Knowledge | `is_deleted`, `deleted_at` | `src/lib/db/queries/knowledge.ts` |
+
+### How It Works
+
+1. **Delete from list view** → Sets `is_deleted = TRUE`, item moves to Trash
+2. **Restore from Trash** → Sets `is_deleted = FALSE`, item returns to list
+3. **Permanent delete** → Hard DELETE from database (only from Trash page)
+4. **Empty Trash** → Permanently deletes ALL items in trash
+
+### API Endpoints
+
+| Endpoint | Method | Action |
+|----------|--------|--------|
+| `/api/documents/[id]` | DELETE | Soft delete |
+| `/api/documents/[id]` | PATCH `{action: 'restore'}` | Restore |
+| `/api/prompts/[id]` | DELETE | Soft delete |
+| `/api/prompts/[id]` | PATCH `{action: 'restore'}` | Restore |
+| `/api/knowledge/[id]` | DELETE | Soft delete |
+| `/api/knowledge/[id]` | PATCH `{action: 'restore'}` | Restore |
+| `/api/trash` | GET | List all deleted items |
+| `/api/trash?type=X&id=Y` | DELETE | Permanent delete specific item |
+| `/api/trash` | DELETE | Empty entire trash |
+
+### Key Files
+
+- `src/app/trash/page.tsx` - Trash UI with filters and actions
+- `src/app/api/trash/route.ts` - Trash API endpoint
+- `src/components/shared/DeleteConfirmModal.tsx` - Reusable confirmation modal
+- `sql/migrations/004_soft_delete.sql` - Database migration
 
 ---
 
@@ -187,6 +237,9 @@ ssh -i /Users/ningli/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ni
 
 # Update & restart (IMPORTANT: BASE_PATH must be set before build!)
 cd /var/www/expert-note && git pull && npm install && export BASE_PATH=/annote && npm run build && pm2 restart expert-note
+
+# Run database migrations (if any new ones)
+sudo -u postgres psql -d annotservice -f sql/migrations/004_soft_delete.sql
 
 # View logs
 pm2 logs expert-note --lines 50
