@@ -7,7 +7,7 @@ import { MarkdownRenderer } from '@/components/common';
 interface AnnotationListProps {
   annotations: KnowledgeAnnotation[];
   onEdit?: (annotation: KnowledgeAnnotation) => void;
-  onDelete?: (annotationId: number) => void;
+  // Removed: Individual annotation delete - knowledge entries should be deleted as atomic units
   showActions?: boolean;
 }
 
@@ -66,13 +66,12 @@ function AnnotationItem({
   annotation,
   colors,
   onEdit,
-  onDelete,
   showActions,
 }: {
   annotation: KnowledgeAnnotation;
   colors: { bg: string; text: string; border: string };
   onEdit?: (annotation: KnowledgeAnnotation) => void;
-  onDelete?: (annotationId: number) => void;
+  // Removed: onDelete - knowledge entries should be deleted as atomic units
   showActions: boolean;
 }) {
   return (
@@ -192,30 +191,18 @@ function AnnotationItem({
           </span>
         </div>
 
-        {showActions && (onEdit || onDelete) && (
+        {showActions && onEdit && (
           <div className="flex items-center gap-2">
-            {onEdit && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onEdit(annotation);
-                }}
-                className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                Edit
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onDelete(parseInt(annotation.id));
-                }}
-                className="text-xs text-red-600 hover:text-red-800 transition-colors"
-              >
-                Delete
-              </button>
-            )}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onEdit(annotation);
+              }}
+              className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              Edit
+            </button>
+            {/* Removed: Delete button - knowledge entries should be deleted as atomic units from the list view */}
           </div>
         )}
       </div>
@@ -226,7 +213,6 @@ function AnnotationItem({
 export default function AnnotationList({
   annotations,
   onEdit,
-  onDelete,
   showActions = true,
 }: AnnotationListProps) {
   // Group annotations by level
@@ -295,7 +281,6 @@ export default function AnnotationList({
                   annotation={annotation}
                   colors={colors}
                   onEdit={onEdit}
-                  onDelete={onDelete}
                   showActions={showActions}
                 />
               ))}

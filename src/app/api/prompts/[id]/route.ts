@@ -55,7 +55,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    const { title, description, content, templateType, sourceKnowledgeIds, tagIds } = body;
+    const {
+      title,
+      description,
+      content,
+      templateType,
+      sourceKnowledgeIds,
+      sourceDocumentIds,
+      basePromptId,
+      tagIds,
+    } = body;
 
     // Validate tagIds if provided
     const validTagIds = tagIds !== undefined
@@ -68,6 +77,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       content: content?.trim(),
       templateType,
       sourceKnowledgeIds,
+      sourceDocumentIds,
+      basePromptId,
       tagIds: validTagIds,
     });
 

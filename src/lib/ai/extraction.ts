@@ -138,6 +138,16 @@ export interface ExtractionResult {
   refinedComment: string;
 }
 
+// Response wrapper with metadata about extraction process
+export interface ExtractionResponse {
+  results: ExtractionResult[];
+  metadata: {
+    usedFallback: boolean;
+    fallbackReason?: string;
+    usedDatabaseTemplate: boolean;
+  };
+}
+
 // Legacy result format for backward compatibility
 export interface LegacyExtractionResult {
   original: string;
@@ -148,21 +158,27 @@ export interface LegacyExtractionResult {
 
 /**
  * Get the system prompt for extraction
- * Uses the knowledge extraction prompt, optionally with custom instructions
+ * PRIORITY: Database templates first, then hardcoded fallback
+ * This implements "DB as source of truth" architecture
  */
 async function getExtractionSystemPrompt(customInstructions?: string): Promise<string> {
-  // Use the knowledge extraction prompt as the base
+  // Hardcoded prompt is the fallback only
   let basePrompt = KNOWLEDGE_EXTRACTION_SYSTEM_PROMPT;
+  let source = 'hardcoded (fallback)';
 
-  // Try to get custom template from database (if user has customized it)
+  // PRIORITY: Try to load from database FIRST
   try {
     const template = await getDefaultTemplate('extraction');
-    if (template && template.content.includes('## Document Context')) {
-      // Only use database template if it's compatible with new format
+    if (template?.content) {
+      // Trust the database - use it without compatibility checks
       basePrompt = template.content;
+      source = 'database';
+      console.log('[Extraction] ✓ Using database template (user-configurable)');
+    } else {
+      console.log('[Extraction] ⚠ No database template found, using hardcoded default');
     }
   } catch (error) {
-    console.warn('[Extraction] Failed to load template from database, using default:', error);
+    console.warn('[Extraction] ⚠ Failed to load template from database, using hardcoded default:', error);
   }
 
   // Append custom instructions if provided
@@ -246,16 +262,26 @@ IMPORTANT:
  * - Send the full document content to the LLM
  * - LLM analyzes document and finds actual text for each annotation
  * - Returns structured markdown with document context and annotated insights
+ *
+ * Returns metadata to indicate whether AI refinement succeeded or used fallback
  */
-export async function extractKnowledge(input: ExtractionInput): Promise<ExtractionResult[]> {
+export async function extractKnowledge(input: ExtractionInput): Promise<ExtractionResponse> {
   if (input.annotations.length === 0) {
-    return [];
+    return {
+      results: [],
+      metadata: {
+        usedFallback: false,
+        usedDatabaseTemplate: false,
+      },
+    };
   }
 
   console.log(`[Extraction] Starting knowledge extraction for ${input.annotations.length} annotations`);
 
   // Get the system prompt (with optional custom instructions)
+  // This will log whether DB template was used
   const systemPrompt = await getExtractionSystemPrompt(input.customInstructions);
+  const usedDatabaseTemplate = systemPrompt !== KNOWLEDGE_EXTRACTION_SYSTEM_PROMPT;
 
   // Build the user prompt with full document content
   const userPrompt = buildUserPrompt(input);
@@ -277,71 +303,40 @@ export async function extractKnowledge(input: ExtractionInput): Promise<Extracti
       { temperature: 0.3, maxTokens }
     );
 
-    console.log(`[Extraction] Response received: ${response.length} chars`);
+    console.log(`[Extraction] ✓ AI refinement successful: ${response.length} chars`);
 
     // Parse the markdown response into structured results
     const results = parseMarkdownExtractionResponse(response, input.annotations);
 
-    console.log(`[Extraction] Parsed ${results.length} knowledge items`);
+    console.log(`[Extraction] ✓ Parsed ${results.length} knowledge items from AI response`);
 
-    return results;
+    return {
+      results,
+      metadata: {
+        usedFallback: false,
+        usedDatabaseTemplate,
+      },
+    };
   } catch (error) {
-    console.error('[Extraction] Failed:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Extraction] ⚠ AI extraction failed, using fallback:', errorMessage);
 
     // Return fallback results from original annotations
-    return input.annotations.map((a, index) => ({
+    const fallbackResults = input.annotations.map((a, index) => ({
       level: a.level,
       location: a.lineNumber ? `Line ${a.lineNumber}` : `Annotation ${index + 1}`,
       background: `${input.documentBackground}\n\nSurrounding text:\n${a.surroundingContext.substring(0, 500)}`,
       originalComment: a.content,
       refinedComment: a.content,
     }));
-  }
-}
-
-/**
- * Refine a single annotation (for real-time use)
- * Returns both the refined text and a brief background context
- */
-export async function refineAnnotation(
-  content: string,
-  level: AnnotationLevel,
-  context?: string
-): Promise<{ refined: string; background: string }> {
-  const prompt = `Refine this ${level} annotation into a clearer, more actionable knowledge entry.
-
-Original annotation: ${content}
-${context ? `Document context: "${context}"` : ''}
-
-Provide:
-1. A refined version that preserves the original meaning but is clearer and more broadly applicable
-2. A brief background describing when/where this insight applies
-
-Output in this format:
-### Background
-[Brief context about when this knowledge applies]
-
-### Refined Comment
-[Your improved version]`;
-
-  try {
-    const response = await chatCompletion(
-      [
-        { role: 'system', content: 'You are a knowledge refinement specialist. Improve annotations while preserving their original insight and expert voice.' },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.3, maxTokens: 500 }
-    );
-
-    // Parse the simple markdown response
-    const backgroundMatch = response.match(/###\s*Background\s*\n([\s\S]*?)(?=###|$)/i);
-    const refinedMatch = response.match(/###\s*Refined Comment\s*\n([\s\S]*?)(?=###|$)/i);
 
     return {
-      refined: refinedMatch ? refinedMatch[1].trim() : content,
-      background: backgroundMatch ? backgroundMatch[1].trim() : context || '',
+      results: fallbackResults,
+      metadata: {
+        usedFallback: true,
+        fallbackReason: errorMessage,
+        usedDatabaseTemplate,
+      },
     };
-  } catch {
-    return { refined: content, background: context || '' };
   }
 }

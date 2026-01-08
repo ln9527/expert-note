@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { buildApiPath } from '@/lib/utils/pathHelper';
-import { SystemPrompt, KnowledgeEntryWithAnnotations, PromptVersion, ANNOTATION_COLORS, LEVEL_CONFIG, Tag } from '@/types';
+import { SystemPrompt, KnowledgeEntryWithAnnotations, PromptVersion, ANNOTATION_COLORS, LEVEL_CONFIG, Tag, Document } from '@/types';
 import { TemplateSelector } from '@/components/prompts';
 import TagFilter from '@/components/knowledge/TagFilter';
 
@@ -15,6 +15,7 @@ export default function PromptDetailPage() {
 
   const [prompt, setPrompt] = useState<SystemPrompt | null>(null);
   const [sourceKnowledge, setSourceKnowledge] = useState<KnowledgeEntryWithAnnotations[]>([]);
+  const [sourceDocuments, setSourceDocuments] = useState<Document[]>([]);
   const [versions, setVersions] = useState<PromptVersion[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +52,7 @@ export default function PromptDetailPage() {
 
         setPrompt(promptData.prompt);
         setSourceKnowledge(promptData.sourceKnowledge || []);
+        setSourceDocuments(promptData.sourceDocuments || []);
         setVersions(promptData.versions || []);
         setAllTags(tagsData.tags || []);
 
@@ -320,7 +322,7 @@ export default function PromptDetailPage() {
                   )}
                 </div>
                 <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">
-                  {prompt.templateType || 'No Template'}
+                  {prompt.templateType || 'No Guide'}
                 </span>
               </div>
 
@@ -344,11 +346,29 @@ export default function PromptDetailPage() {
               )}
 
               <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
-                <span>Version {prompt.version}</span>
+                <span className="flex items-center gap-1">
+                  Version {prompt.version}
+                  {prompt.basePromptId && (
+                    <span className="text-blue-600" title="Updated from another prompt">↑</span>
+                  )}
+                </span>
                 <span>Created: {new Date(prompt.createdAt).toLocaleDateString()}</span>
                 {prompt.updatedAt !== prompt.createdAt && (
                   <span>Updated: {new Date(prompt.updatedAt).toLocaleDateString()}</span>
                 )}
+              </div>
+
+              {/* Update button - Create new version */}
+              <div className="mt-4">
+                <Link
+                  href={`/prompts/generate?base=${prompt.id}`}
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Update this prompt (create v{prompt.version + 1})
+                </Link>
               </div>
             </>
           )}
@@ -373,12 +393,21 @@ export default function PromptDetailPage() {
         </div>
       </div>
 
+      {/* Sources Overview */}
+      {(sourceKnowledge.length > 0 || sourceDocuments.length > 0) && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Sources ({sourceKnowledge.length} knowledge entries, {sourceDocuments.length} documents)
+          </h2>
+        </div>
+      )}
+
       {/* Source Knowledge */}
       {sourceKnowledge.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Source Knowledge ({sourceKnowledge.length} entries)
-          </h2>
+          <h3 className="text-base font-semibold text-gray-900 mb-4">
+            Knowledge Entries ({sourceKnowledge.length})
+          </h3>
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {sourceKnowledge.map((entry) => (
               <div key={entry.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
@@ -425,6 +454,65 @@ export default function PromptDetailPage() {
                   </div>
                 )}
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Source Documents */}
+      {sourceDocuments.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">
+            Annotated Documents ({sourceDocuments.length})
+          </h3>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {sourceDocuments.map((doc) => (
+              <Link key={doc.id} href={`/documents/${doc.id}`}>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-300 hover:bg-gray-100 transition-colors cursor-pointer">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 mb-1">{doc.filename}</p>
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        {doc.annotationCounts && (
+                          <>
+                            <span className="flex items-center gap-1">
+                              <span className="text-red-600">🔴</span>
+                              {doc.annotationCounts.macro} macro
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="text-yellow-600">🟡</span>
+                              {doc.annotationCounts.meso} meso
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="text-green-600">🟢</span>
+                              {doc.annotationCounts.micro} micro
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {doc.tags && doc.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {doc.tags.map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="px-1.5 py-0.5 text-xs rounded"
+                              style={{
+                                backgroundColor: tag.color + '20',
+                                color: tag.color,
+                              }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>

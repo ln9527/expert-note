@@ -24,7 +24,7 @@ export default function KnowledgeDetailPage() {
   const [editedTags, setEditedTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [saving, setSaving] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  // Removed: deleteConfirm state - individual annotation deletion removed
   const [showBackgroundFull, setShowBackgroundFull] = useState(false);
 
   // Fetch knowledge entry details
@@ -105,25 +105,8 @@ export default function KnowledgeDetailPage() {
     setEditedTags(editedTags.filter((t) => t !== tag));
   };
 
-  // Handle annotation deletion
-  const handleDeleteAnnotation = async (annotationId: number) => {
-    try {
-      const res = await fetch(buildApiPath(`annotations/${annotationId}`), {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to delete annotation');
-      }
-
-      // Refresh the entry
-      await fetchEntry();
-      setDeleteConfirm(null);
-    } catch (err) {
-      console.error('Error deleting annotation:', err);
-      alert('Failed to delete annotation');
-    }
-  };
+  // Removed: handleDeleteAnnotation - knowledge entries should be deleted as atomic units
+  // Individual annotation deletion has been removed for cleaner design and data integrity
 
   // Handle download as Markdown
   const handleDownload = () => {
@@ -481,7 +464,6 @@ export default function KnowledgeDetailPage() {
           <div className="p-6">
             <AnnotationList
               annotations={entry.annotations}
-              onDelete={(annotationId) => setDeleteConfirm(annotationId)}
               showActions={true}
             />
           </div>
@@ -524,38 +506,7 @@ export default function KnowledgeDetailPage() {
         </div>
       </div>
 
-      {/* Delete confirmation modal */}
-      {deleteConfirm !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Delete Annotation?</h3>
-                <p className="text-sm text-gray-600">This action cannot be undone.</p>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDeleteAnnotation(deleteConfirm)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed: Delete annotation confirmation modal - individual annotation deletion removed for cleaner design */}
     </div>
   );
 }

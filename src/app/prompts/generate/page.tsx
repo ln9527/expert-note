@@ -1,24 +1,36 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { buildApiPath } from '@/lib/utils/pathHelper';
-import { KnowledgeEntryWithAnnotations, Tag, PromptTemplate } from '@/types';
-import { TemplateSelector, KnowledgeSelector, PromptPreview } from '@/components/prompts';
+import { KnowledgeEntryWithAnnotations, Tag, PromptTemplate, Document, SystemPrompt } from '@/types';
+import { TemplateSelector, KnowledgeSelector, DocumentSelector, BasePromptSelector, PromptPreview } from '@/components/prompts';
+import TagFilter from '@/components/knowledge/TagFilter';
 
 export default function PromptGeneratorPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Form state
   const [templateType, setTemplateType] = useState('');
   const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<string[]>([]);
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);  // NEW
+  const [basePromptId, setBasePromptId] = useState<string | null>(null);         // NEW
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);            // NEW
+  const [lockedSourceIds, setLockedSourceIds] = useState<{                      // NEW
+    knowledge: string[];
+    documents: string[];
+  }>({ knowledge: [], documents: [] });
   const [additionalInstructions, setAdditionalInstructions] = useState('');
   const [promptTitle, setPromptTitle] = useState('');
   const [promptDescription, setPromptDescription] = useState('');
   const [purpose, setPurpose] = useState('');
+  const [activeSourceTab, setActiveSourceTab] = useState<'knowledge' | 'documents'>('knowledge');  // NEW
 
   // Data state
   const [knowledgeEntries, setKnowledgeEntries] = useState<KnowledgeEntryWithAnnotations[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);                    // NEW
+  const [userPrompts, setUserPrompts] = useState<SystemPrompt[]>([]);            // NEW
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [generatedContent, setGeneratedContent] = useState('');
@@ -29,18 +41,24 @@ export default function PromptGeneratorPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch knowledge entries and templates
+  // Fetch all data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch knowledge entries and templates in parallel
-        const [knowledgeResponse, templatesResponse] = await Promise.all([
+        // Fetch all data in parallel
+        const [knowledgeResponse, templatesResponse, documentsResponse, promptsResponse, tagsResponse] = await Promise.all([
           fetch(buildApiPath('knowledge')),
           fetch(buildApiPath('prompt-templates?category=generation')),
+          fetch(buildApiPath('documents')),
+          fetch(buildApiPath('prompts')),
+          fetch(buildApiPath('tags')),
         ]);
 
         const knowledgeData = await knowledgeResponse.json();
         const templatesData = await templatesResponse.json();
+        const documentsData = await documentsResponse.json();
+        const promptsData = await promptsResponse.json();
+        const tagsData = await tagsResponse.json();
 
         if (!knowledgeData.success) {
           setError(knowledgeData.error || 'Failed to load knowledge entries');
@@ -50,12 +68,12 @@ export default function PromptGeneratorPage() {
         setKnowledgeEntries(knowledgeData.entries || []);
         setTemplates(templatesData.templates || []);
 
-        // Extract unique tags (tags are now Tag objects)
-        const tagMap = new Map<number, Tag>();
-        (knowledgeData.entries || []).forEach((entry: KnowledgeEntryWithAnnotations) => {
-          entry.tags?.forEach((tag) => tagMap.set(tag.id, tag));
-        });
-        setAvailableTags(Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
+        // Filter to only annotated documents
+        const annotatedDocs = (documentsData.documents || []).filter((d: Document) => d.status === 'annotated');
+        setDocuments(annotatedDocs);
+
+        setUserPrompts(promptsData.prompts || []);
+        setAvailableTags(tagsData.tags || []);
       } catch (err) {
         console.error('Failed to fetch data:', err);
         setError('Network error. Please try again.');
@@ -67,14 +85,64 @@ export default function PromptGeneratorPage() {
     fetchData();
   }, []);
 
+  // Handle base prompt from URL parameter
+  useEffect(() => {
+    const baseParam = searchParams.get('base');
+    if (baseParam && userPrompts.length > 0 && !basePromptId) {
+      // Auto-select the base prompt if it's in the URL
+      handleBasePromptSelected(baseParam);
+    }
+  }, [searchParams, userPrompts]);
+
+  // Handle base prompt selection
+  const handleBasePromptSelected = async (promptId: string | null) => {
+    setBasePromptId(promptId);
+
+    if (!promptId) {
+      setLockedSourceIds({ knowledge: [], documents: [] });
+      return;
+    }
+
+    try {
+      const res = await fetch(buildApiPath(`prompts/${promptId}`));
+      const data = await res.json();
+
+      if (data.success && data.prompt) {
+        const basePrompt = data.prompt as SystemPrompt;
+
+        setLockedSourceIds({
+          knowledge: basePrompt.sourceKnowledgeIds || [],
+          documents: basePrompt.sourceDocumentIds || []
+        });
+
+        // Pre-fill form fields
+        setPurpose(basePrompt.description || '');
+        const newVersion = (basePrompt.version || 1) + 1;
+        setPromptTitle(`${basePrompt.title} v${newVersion}`);
+
+        // Pre-select sources from base
+        setSelectedKnowledgeIds(basePrompt.sourceKnowledgeIds || []);
+        setSelectedDocumentIds(basePrompt.sourceDocumentIds || []);
+
+        // Inherit tags
+        setSelectedTagIds(basePrompt.tags?.map(t => t.id) || []);
+      }
+    } catch (err) {
+      console.error('Failed to load base prompt:', err);
+      setError('Failed to load base prompt details');
+    }
+  };
+
   const handleGenerate = async () => {
-    if (selectedKnowledgeIds.length === 0) {
-      setError('Please select at least one knowledge entry');
+    // Validation - at least one source required
+    const totalSources = selectedKnowledgeIds.length + selectedDocumentIds.length;
+    if (totalSources === 0 && !basePromptId) {
+      setError('Please select at least one knowledge entry or annotated document');
       return;
     }
 
     if (!templateType) {
-      setError('Please select a template type');
+      setError('Please select a generation guide');
       return;
     }
 
@@ -93,9 +161,11 @@ export default function PromptGeneratorPage() {
         body: JSON.stringify({
           templateType,
           knowledgeIds: selectedKnowledgeIds,
+          documentIds: selectedDocumentIds,          // NEW
+          basePromptId: basePromptId,                // NEW
           purpose: purpose.trim(),
           customInstructions: additionalInstructions,
-          saveToDatabase: false, // Don't auto-save, let user save manually
+          saveToDatabase: false,
         }),
       });
 
@@ -110,7 +180,6 @@ export default function PromptGeneratorPage() {
 
       // Auto-set title if empty
       if (!promptTitle) {
-        // Find the template name from our fetched templates
         const selectedTemplate = templates.find(t => (t.templateType || t.name) === templateType);
         const templateName = selectedTemplate?.name || templateType || 'Generated';
         setPromptTitle(`${templateName} Prompt`);
@@ -147,6 +216,9 @@ export default function PromptGeneratorPage() {
           content: generatedContent,
           templateType,
           sourceKnowledgeIds: selectedKnowledgeIds,
+          sourceDocumentIds: selectedDocumentIds,    // NEW
+          basePromptId,                              // NEW
+          tagIds: selectedTagIds,                    // NEW
         }),
       });
 
@@ -215,19 +287,105 @@ export default function PromptGeneratorPage() {
               </p>
             </div>
 
-            {/* Template Type */}
+            {/* Base Prompt Selector - OPTIONAL */}
+            <BasePromptSelector
+              prompts={userPrompts}
+              selectedPromptId={basePromptId}
+              onChange={handleBasePromptSelected}
+            />
+
+            {/* Generation Guide */}
             <TemplateSelector
               value={templateType}
               onChange={setTemplateType}
             />
 
-            {/* Knowledge Selector */}
-            <KnowledgeSelector
-              knowledgeEntries={knowledgeEntries}
-              selectedIds={selectedKnowledgeIds}
-              onChange={setSelectedKnowledgeIds}
-              availableTags={availableTags}
-            />
+            {/* Source Selection - Use Tabs for Knowledge vs Documents */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Sources <span className="text-red-500">*</span>
+                <span className="text-gray-500 font-normal ml-2">
+                  Select knowledge entries and/or annotated documents
+                </span>
+              </label>
+
+              {/* Tab Navigation */}
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSourceTab('knowledge')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeSourceTab === 'knowledge'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Knowledge Entries
+                    {selectedKnowledgeIds.length > 0 && (
+                      <span className="ml-2 py-0.5 px-2 rounded-full text-xs bg-blue-100 text-blue-600">
+                        {selectedKnowledgeIds.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSourceTab('documents')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeSourceTab === 'documents'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Annotated Documents
+                    {selectedDocumentIds.length > 0 && (
+                      <span className="ml-2 py-0.5 px-2 rounded-full text-xs bg-blue-100 text-blue-600">
+                        {selectedDocumentIds.length}
+                      </span>
+                    )}
+                  </button>
+                </nav>
+              </div>
+
+              {/* Tab Content */}
+              <div className="mt-4">
+                {activeSourceTab === 'knowledge' ? (
+                  <KnowledgeSelector
+                    knowledgeEntries={knowledgeEntries}
+                    selectedIds={selectedKnowledgeIds}
+                    onChange={setSelectedKnowledgeIds}
+                    availableTags={availableTags}
+                  />
+                ) : (
+                  <DocumentSelector
+                    documents={documents}
+                    selectedIds={selectedDocumentIds}
+                    onChange={setSelectedDocumentIds}
+                    lockedIds={lockedSourceIds.documents}
+                    availableTags={availableTags}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Tags for Generated Prompt - NEW */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Tags <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <p className="text-xs text-gray-500 -mt-2">
+                Organize this prompt with tags
+              </p>
+              <TagFilter
+                tags={availableTags}
+                selectedTags={selectedTagIds}
+                onChange={setSelectedTagIds}
+                onTagCreated={(newTag) => setAvailableTags(prev => [...prev, newTag])}
+                placeholder="Select or create tags..."
+                allowCreate={true}
+                dropdownPosition="down"
+              />
+            </div>
 
             {/* Additional Instructions */}
             <div className="space-y-2">
@@ -246,7 +404,7 @@ export default function PromptGeneratorPage() {
             {/* Generate Button */}
             <button
               onClick={handleGenerate}
-              disabled={generating || selectedKnowledgeIds.length === 0 || !templateType || !purpose.trim()}
+              disabled={generating || (selectedKnowledgeIds.length === 0 && selectedDocumentIds.length === 0 && !basePromptId) || !templateType || !purpose.trim()}
               className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {generating ? (

@@ -46,7 +46,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, content, templateType, sourceKnowledgeIds, tagIds } = body;
+    const {
+      title,
+      description,
+      content,
+      templateType,
+      sourceKnowledgeIds,
+      sourceDocumentIds,
+      basePromptId,
+      tagIds,
+    } = body;
 
     if (!title || typeof title !== 'string') {
       return NextResponse.json({ success: false, error: 'Title is required' }, { status: 400 });
@@ -68,6 +77,8 @@ export async function POST(request: NextRequest) {
       content: content.trim(),
       templateType: templateType || undefined,
       sourceKnowledgeIds: sourceKnowledgeIds || undefined,
+      sourceDocumentIds: sourceDocumentIds || undefined,
+      basePromptId: basePromptId || undefined,
       tagIds: validTagIds,
     });
 

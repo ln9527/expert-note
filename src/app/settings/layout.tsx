@@ -76,7 +76,7 @@ export default function SettingsLayout({
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  Prompt Templates
+                  Generation Guides
                 </Link>
               </li>
               <li>

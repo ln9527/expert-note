@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth/session';
 import { getDocumentById } from '@/lib/db/queries/documents';
 import { createKnowledgeEntry, getKnowledgeEntryWithAnnotations, AnnotationData } from '@/lib/db/queries/knowledge';
-import { extractKnowledge, ExtractionResult } from '@/lib/ai/extraction';
+import { extractKnowledge, ExtractionResult, ExtractionResponse } from '@/lib/ai/extraction';
 import { extractAnnotations } from '@/lib/utils/annotation';
 
 /**
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
     const entryTagIds: number[] = tagIds || document.tags.map(t => t.id);
 
     let annotations: AnnotationData[];
+    let metadata: ExtractionResponse['metadata'] | undefined;
 
     if (refineAnnotations) {
       // Use AI to refine annotations with full document context
@@ -101,20 +102,18 @@ export async function POST(request: NextRequest) {
         customInstructions: customInstructions?.trim() || undefined,
       };
 
-      let extractionResults: ExtractionResult[];
-      try {
-        extractionResults = await extractKnowledge(extractionInput);
-        console.log(`[Extract API] AI returned ${extractionResults.length} refined annotations with context`);
-      } catch (aiError) {
-        console.error('[Extract API] AI extraction failed:', aiError);
-        // Fall back to unrefined annotations but still include surrounding context
-        extractionResults = parsedAnnotations.map((a, index) => ({
-          level: a.level,
-          location: a.line ? `Line ${a.line}` : `Annotation ${index + 1}`,
-          background: `${entryBackground}\n\nSurrounding text:\n${a.surroundingContext.substring(0, 500)}`,
-          originalComment: a.content,
-          refinedComment: a.content,
-        }));
+      // Extract knowledge with AI - returns metadata about the extraction process
+      const extractionResponse: ExtractionResponse = await extractKnowledge(extractionInput);
+      const { results: extractionResults, metadata: extractionMetadata } = extractionResponse;
+      metadata = extractionMetadata;
+
+      console.log(`[Extract API] AI returned ${extractionResults.length} refined annotations with context`);
+
+      // Log if fallback was used
+      if (extractionMetadata.usedFallback) {
+        console.warn(`[Extract API] ⚠ AI refinement failed, using fallback annotations. Reason: ${extractionMetadata.fallbackReason}`);
+      } else if (extractionMetadata.usedDatabaseTemplate) {
+        console.log('[Extract API] ✓ Used database template (user-configured)');
       }
 
       // Map extraction results to annotation data
@@ -157,20 +156,29 @@ export async function POST(request: NextRequest) {
     // Fetch the complete entry with annotations
     const completeEntry = await getKnowledgeEntryWithAnnotations(entry.id);
 
-    return NextResponse.json(
-      {
-        success: true,
-        entry: completeEntry,
-        count: annotations.length,
-        extractionSummary: {
-          documentId,
-          documentFilename: document.filename,
-          annotationsExtracted: annotations.length,
-          refined: refineAnnotations,
-        },
+    // Prepare response with extraction metadata
+    const response: any = {
+      success: true,
+      entry: completeEntry,
+      count: annotations.length,
+      extractionSummary: {
+        documentId,
+        documentFilename: document.filename,
+        annotationsExtracted: annotations.length,
+        refined: refineAnnotations,
       },
-      { status: 201 }
-    );
+    };
+
+    // Add warning if AI fallback was used
+    if (refineAnnotations && metadata && metadata.usedFallback) {
+      response.warning = 'AI refinement failed - showing original annotations without AI enhancement';
+      response.metadata = {
+        usedFallback: true,
+        fallbackReason: metadata.fallbackReason,
+      };
+    }
+
+    return NextResponse.json(response, { status: 201 });
   } catch (error) {
     console.error('[API] POST /knowledge/extract error:', error);
     return NextResponse.json(

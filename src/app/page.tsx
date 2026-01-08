@@ -4,24 +4,34 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { buildApiPath } from '@/lib/utils/pathHelper';
-import { Document, SessionUser } from '@/types';
+import { Document, SessionUser, Tag, User } from '@/types';
 import { AppHeader } from '@/components/layout';
 import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
+import DocumentFilters from '@/components/documents/DocumentFilters';
 
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState('');
 
   // Delete modal state
   const [deletingDoc, setDeletingDoc] = useState<Document | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Check authentication and load data
+  // Filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [userFilter, setUserFilter] = useState<number | null>(null);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+
+  // Load initial data (user, tags, users)
   useEffect(() => {
-    async function loadData() {
+    async function loadInitialData() {
       try {
         // Check session
         const sessionRes = await fetch(buildApiPath('auth/session'));
@@ -34,25 +44,68 @@ export default function Dashboard() {
 
         setUser(sessionData.user);
 
-        // Load documents
-        const docsRes = await fetch(buildApiPath('documents'));
+        // Load tags
+        const tagsRes = await fetch(buildApiPath('tags'));
+        const tagsData = await tagsRes.json();
+        if (tagsData.success) {
+          setAllTags(tagsData.tags);
+        }
+
+        // Load users
+        const usersRes = await fetch(buildApiPath('users'));
+        const usersData = await usersRes.json();
+        if (usersData.success) {
+          setAllUsers(usersData.users);
+        }
+      } catch (err) {
+        console.error('Dashboard initial load error:', err);
+        setError('Network error. Please try again.');
+      }
+    }
+
+    loadInitialData();
+  }, [router]);
+
+  // Load documents with filters
+  useEffect(() => {
+    async function loadDocuments() {
+      if (!user) return;
+
+      try {
+        // Only show loading spinner on initial load
+        if (initialLoad) {
+          setLoading(true);
+        }
+
+        const queryParams = new URLSearchParams();
+
+        if (searchTerm) queryParams.set('search', searchTerm);
+        if (selectedTagIds.length > 0) queryParams.set('tags', selectedTagIds.join(','));
+        if (statusFilter !== 'all') queryParams.set('status', statusFilter);
+        if (userFilter) queryParams.set('createdBy', userFilter.toString());
+
+        const docsRes = await fetch(buildApiPath(`documents?${queryParams.toString()}`));
         const docsData = await docsRes.json();
 
         if (docsData.success) {
           setDocuments(docsData.documents);
+          setError('');
         } else {
           setError('Failed to load documents');
         }
       } catch (err) {
-        console.error('Dashboard load error:', err);
+        console.error('Documents load error:', err);
         setError('Network error. Please try again.');
       } finally {
-        setLoading(false);
+        if (initialLoad) {
+          setLoading(false);
+          setInitialLoad(false);
+        }
       }
     }
 
-    loadData();
-  }, [router]);
+    loadDocuments();
+  }, [user, searchTerm, selectedTagIds, statusFilter, userFilter, initialLoad]);
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
@@ -123,6 +176,13 @@ export default function Dashboard() {
     }
   };
 
+  const handleClearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedTagIds([]);
+    setStatusFilter('all');
+    setUserFilter(null);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -158,8 +218,33 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Filters */}
+        <DocumentFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedTagIds={selectedTagIds}
+          onTagsChange={setSelectedTagIds}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          userFilter={userFilter}
+          onUserChange={setUserFilter}
+          availableTags={allTags}
+          availableUsers={allUsers}
+          onClearAll={handleClearAllFilters}
+        />
+
+        {/* Result Count */}
+        {!loading && (
+          <div className="mb-4 text-sm text-gray-600">
+            Showing {documents.length} document{documents.length !== 1 ? 's' : ''}
+            {(searchTerm || selectedTagIds.length > 0 || statusFilter !== 'all' || userFilter) && (
+              <span className="ml-1 text-blue-600">(filtered)</span>
+            )}
+          </div>
+        )}
+
         {/* Documents List */}
-        {documents.length === 0 ? (
+        {documents.length === 0 && !loading ? (
           <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
             <div className="text-gray-400 mb-4">
               <svg
@@ -176,14 +261,35 @@ export default function Dashboard() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No documents yet</h3>
-            <p className="text-gray-500 mb-6">Get started by creating your first document.</p>
-            <Link
-              href="/documents/new"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            >
-              Create Document
-            </Link>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {searchTerm || selectedTagIds.length > 0 || statusFilter !== 'all' || userFilter
+                ? 'No documents match your filters'
+                : 'No documents yet'}
+            </h3>
+            <p className="text-gray-500 mb-6">
+              {searchTerm || selectedTagIds.length > 0 || statusFilter !== 'all' || userFilter
+                ? 'Try adjusting your filters or clear them to see all documents.'
+                : 'Get started by creating your first document.'}
+            </p>
+            {searchTerm || selectedTagIds.length > 0 || statusFilter !== 'all' || userFilter ? (
+              <button
+                onClick={handleClearAllFilters}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Clear Filters
+              </button>
+            ) : (
+              <Link
+                href="/documents/new"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Create Document
+              </Link>
+            )}
+          </div>
+        ) : loading ? (
+          <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
+            <div className="text-gray-500">Loading documents...</div>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm border overflow-hidden">

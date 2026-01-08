@@ -1,46 +1,39 @@
-# Knowledge Extraction Prompt System - Issue Report
+# LLM Prompt System - Comprehensive Issue Report
 
 **Date**: January 7, 2026
 **Status**: Needs Fix
 **Priority**: High
-**Affects**: Knowledge extraction quality, Settings configurability
+**Affects**: Knowledge extraction, Prompt generation, Settings configurability
 
 ---
 
 ## Executive Summary
 
-The knowledge extraction feature has a **prompt mismatch issue** that causes:
-1. Database-configured prompts to be **ignored**
+The LLM prompt system has multiple issues causing:
+1. Database-configured prompts to be **ignored** in both extraction and generation
 2. AI extraction to **fail silently** and fall back to raw annotations
-3. Settings UI to show a prompt that is **never actually used**
+3. Settings UI to show prompts that are **never actually used**
+4. **Dead code** that should be removed
 
 ---
 
-## Issue Description
+## Issue Overview
 
-When a user clicks "Extract Knowledge" on an annotated document, the system should:
-1. Send the document + annotations to an AI (Qwen via OpenRouter)
-2. AI refines annotations with context and interpretation
-3. Save refined knowledge entries
-
-**Actual behavior**: Extraction often falls back to raw annotations without AI refinement.
+| Feature | Hardcoded Prompt | DB Template | DB Used? | Issue |
+|---------|-----------------|-------------|----------|-------|
+| Knowledge Extraction | `extraction.ts:14-117` | `seed.sql:34-99` | **NO** | Compatibility check fails |
+| Prompt Generation | `generation.ts:6-25` | `seed.sql:102-179` | **NO** | Never tries to load |
+| Single Annotation Refine | `extraction.ts:330` | None | N/A | **DEAD CODE** |
 
 ---
 
-## Root Cause Analysis
+## Issue 1: Knowledge Extraction - Database Template Ignored
 
-### Problem 1: Prompt Format Mismatch
+### Problem
 
-There are **two different prompt formats** that don't match:
+The extraction system tries to load the database template but has a compatibility check that always fails:
 
-| Location | File | Format |
-|----------|------|--------|
-| Hardcoded | `src/lib/ai/extraction.ts:14-117` | `## Document Context` + `## 🔴 MACRO Annotations` |
-| Database | `sql/seed.sql:34-99` | `## Item N` (numbered sequentially) |
-
-### Problem 2: Database Prompt Never Used
-
-The code in `extraction.ts:159-163` has a compatibility check:
+**File**: `src/lib/ai/extraction.ts:159-163`
 
 ```typescript
 const template = await getDefaultTemplate('extraction');
@@ -50,62 +43,154 @@ if (template && template.content.includes('## Document Context')) {
 }
 ```
 
-**The database template does NOT contain `"## Document Context"`**, so it **always fails** this check.
+**The database template uses `## Item N` format, not `## Document Context`**, so it never passes the check.
 
-**Result**: The hardcoded prompt is ALWAYS used, making the Settings UI ineffective.
+### Evidence
 
-### Problem 3: Parser Expects Specific Format
+Downloaded knowledge file shows fallback format (raw annotations without AI refinement):
+```markdown
+**Context:** Extracted from: amr-theory-intro-v1
 
-The response parser in `openrouter.ts:191-255` expects:
-- `## 🔴 MACRO Annotations` section header
-- `### N. [title]` format for each annotation
-- `**Text referred to**:`, `**Expert comment**:`, `**Contextualized**:` fields
+Surrounding text: [...]
 
-If the AI doesn't output this exact format, parsing fails and falls back to raw annotations.
-
-### Problem 4: Silent Fallback Hides Failures
-
-When AI extraction fails, the code silently falls back to raw annotations (`extraction.ts:292-298`):
-
-```typescript
-// Return fallback results from original annotations
-return input.annotations.map((a, index) => ({
-  level: a.level,
-  location: a.lineNumber ? `Line ${a.lineNumber}` : `Annotation ${index + 1}`,
-  background: `${input.documentBackground}\n\nSurrounding text:\n${a.surroundingContext.substring(0, 500)}`,
-  originalComment: a.content,
-  refinedComment: a.content,  // <-- Same as original, no refinement!
-}));
+**Original:**
+> below include my comments...
 ```
 
-Users see "extraction succeeded" but get unrefined annotations.
+This matches the fallback code in `extraction.ts:292-298`.
+
+### Prompt Format Comparison
+
+| Aspect | Hardcoded (extraction.ts) | Database (seed.sql) |
+|--------|---------------------------|---------------------|
+| Structure | `## Document Context` + `## 🔴 MACRO Annotations` | `## Item N` (numbered) |
+| Annotation format | `**Text referred to**`, `**Expert comment**`, `**Contextualized**` | `**Level**`, `**Location**`, `### Context`, `### Original Comment`, `### Refined Insight` |
+| Grouping | By level (MACRO, MESO, MICRO) | Sequential |
 
 ---
 
-## Evidence
+## Issue 2: Prompt Generation - Never Loads Database Templates
 
-### Downloaded Knowledge Entry Shows Fallback Format
+### Problem
 
-File: `/Users/ningli/Downloads/knowledge-entry-a0158398.md`
+The generation system has hardcoded prompts and **never even tries** to load from database:
 
-```markdown
-### 🔴 Macro (High-level) (1)
+**File**: `src/lib/ai/generation.ts`
 
-#### 1. Line 2
+```typescript
+// Line 6-25: Hardcoded system prompt
+const GENERATION_SYSTEM_PROMPT = `You are a System Prompt architect...`;
 
-**Context:** Extracted from: amr-theory-intro-v1
+// Line 40-66: Hardcoded template types
+export const PROMPT_TEMPLATES = {
+  introduction: { ... },
+  methodology: { ... },
+  discussion: { ... },
+  academicCoach: { ... },
+  custom: { ... },
+} as const;
 
-Surrounding text:
-## A Contingent Theory of Human-AI Creative Collaboration...
-
-**Original:**
-> below include my comments, which is a bit ai feel like...
+// Line 130-136: Uses hardcoded prompt, never calls getDefaultTemplate()
+const response = await chatCompletion(
+  [
+    { role: 'system', content: GENERATION_SYSTEM_PROMPT },  // Always hardcoded!
+    { role: 'user', content: userPrompt },
+  ],
+  { temperature: 0.7, maxTokens: 3000 }
+);
 ```
 
-**Notice**:
-- `**Context:**` shows the fallback format (`Extracted from: X\n\nSurrounding text:`)
-- No `**Refined:**` section (because `refinedComment === originalComment`)
-- This matches the fallback code, NOT the AI output format
+**The database has generation templates** (`seed.sql:102-179`) but they are **completely ignored**.
+
+### Comparison
+
+| Template Type | Database (`seed.sql`) | Code (`generation.ts`) | Used? |
+|--------------|----------------------|------------------------|-------|
+| Default Generation | Lines 102-130 | `GENERATION_SYSTEM_PROMPT` | Hardcoded only |
+| Introduction Review | Lines 131-147 | `PROMPT_TEMPLATES.introduction` | Hardcoded only |
+| Methodology Review | Lines 148-164 | `PROMPT_TEMPLATES.methodology` | Hardcoded only |
+| Discussion Review | Lines 165-179 | `PROMPT_TEMPLATES.discussion` | Hardcoded only |
+
+---
+
+## Issue 3: Dead Code - `refineAnnotation()` Function
+
+### Problem
+
+The `refineAnnotation()` function is exported but **never called anywhere** in the codebase.
+
+**File**: `src/lib/ai/extraction.ts:306-347`
+
+```typescript
+/**
+ * Refine a single annotation (for real-time use)
+ * Returns both the refined text and a brief background context
+ */
+export async function refineAnnotation(
+  content: string,
+  level: AnnotationLevel,
+  context?: string
+): Promise<{ refined: string; background: string }> {
+  // ... implementation
+}
+```
+
+### Evidence
+
+```bash
+# Search for usage
+grep -r "refineAnnotation" src/
+
+# Results:
+src/lib/ai/index.ts:4:export { ..., refineAnnotation, ... }  # Exported
+src/lib/ai/extraction.ts:306:export async function refineAnnotation(  # Defined
+# NO actual usage anywhere!
+```
+
+### Recommendation
+
+**Remove this dead code** or implement the planned feature:
+- Delete `refineAnnotation()` from `extraction.ts`
+- Remove export from `index.ts`
+
+If the feature is needed later (real-time annotation refinement), it can be re-implemented.
+
+---
+
+## Issue 4: Silent Fallback Hides Failures
+
+### Problem
+
+When AI extraction fails, the code silently returns raw annotations without any indication to the user:
+
+**File**: `src/lib/ai/extraction.ts:288-299`
+
+```typescript
+} catch (error) {
+  console.error('[Extraction] Failed:', error);  // Only logged to server
+
+  // Return fallback results from original annotations
+  return input.annotations.map((a, index) => ({
+    level: a.level,
+    location: a.lineNumber ? `Line ${a.lineNumber}` : `Annotation ${index + 1}`,
+    background: `${input.documentBackground}\n\nSurrounding text:\n${a.surroundingContext.substring(0, 500)}`,
+    originalComment: a.content,
+    refinedComment: a.content,  // <-- Same as original!
+  }));
+}
+```
+
+User sees "Extraction successful" but gets unrefined annotations.
+
+---
+
+## Complete LLM Call Inventory
+
+| Location | Function | System Prompt Source | DB Integration |
+|----------|----------|---------------------|----------------|
+| `extraction.ts:272` | `extractKnowledge()` | Hardcoded (DB check fails) | Broken |
+| `extraction.ts:328` | `refineAnnotation()` | Hardcoded inline | **DEAD CODE** |
+| `generation.ts:130` | `generateSystemPrompt()` | Hardcoded only | Missing |
 
 ---
 
@@ -113,198 +198,184 @@ Surrounding text:
 
 | File | Role | Issue |
 |------|------|-------|
-| `src/lib/ai/extraction.ts` | Extraction logic + hardcoded prompt | Compatibility check ignores DB template |
-| `src/lib/ai/openrouter.ts` | Response parser | Expects specific markdown format |
-| `sql/seed.sql` | Database seed | Template format doesn't match hardcoded |
-| `src/app/settings/prompts/page.tsx` | Settings UI | Shows/edits unused template |
-| `src/lib/db/queries/promptTemplates.ts` | DB queries | Works correctly but template unused |
+| `src/lib/ai/extraction.ts` | Knowledge extraction | DB template ignored, dead code |
+| `src/lib/ai/generation.ts` | Prompt generation | Never loads DB templates |
+| `src/lib/ai/openrouter.ts` | LLM client + parser | Parser expects specific format |
+| `sql/seed.sql` | Database seeds | Templates seeded but unused |
+| `src/app/settings/prompts/page.tsx` | Settings UI | Shows templates that aren't used |
+| `src/lib/db/queries/promptTemplates.ts` | DB queries | Works correctly but not called |
 
 ---
 
 ## Recommended Fixes
 
-### Option A: Align Database Template with Hardcoded Format (Recommended)
+### Fix 1: Make Extraction Use Database Template
 
-Update `sql/seed.sql` to use the same format as the hardcoded prompt:
-
+**Option A**: Update database template to match expected format
 ```sql
 UPDATE prompt_templates
-SET content = 'You are an expert knowledge extraction specialist...
-
-## OUTPUT FORMAT
-
-## Document Context
-...
-
-## 🔴 MACRO Annotations
-...'
+SET content = '... ## Document Context ...'
 WHERE category = 'extraction' AND is_default = TRUE;
 ```
 
-**Pros**: Minimal code changes, Settings UI becomes functional
-**Cons**: Existing custom templates won't work
-
-### Option B: Remove Compatibility Check
-
-Change `extraction.ts:159-163` to always use database template if available:
-
+**Option B**: Remove compatibility check and update parser
 ```typescript
+// extraction.ts:159-163
 const template = await getDefaultTemplate('extraction');
 if (template) {
   basePrompt = template.content;
 }
+// Then update parser to handle both formats
 ```
 
-Then update the parser to handle multiple formats.
+### Fix 2: Make Generation Load Database Templates
 
-**Pros**: More flexible
-**Cons**: Requires significant parser changes
-
-### Option C: Add Format Selection to Settings
-
-Let users choose between "Document Context" format and "Item N" format in Settings.
-
-**Pros**: Maximum flexibility
-**Cons**: More complex UI/UX
-
----
-
-## Additional Improvements Needed
-
-### 1. Better Error Visibility
-
-Add logging or UI feedback when AI extraction fails:
+Add database loading to `generation.ts`:
 
 ```typescript
-// In extraction.ts, catch block
-console.error('[Extraction] AI call failed, using fallback:', error);
-// Consider: return { success: false, usedFallback: true, results: [...] }
-```
+import { getDefaultTemplate } from '@/lib/db/queries/promptTemplates';
 
-### 2. Validate AI Response Before Parsing
+export async function generateSystemPrompt(input: GenerationInput): Promise<string> {
+  // Try to load from database first
+  let systemPrompt = GENERATION_SYSTEM_PROMPT;
+  try {
+    const template = await getDefaultTemplate('generation', input.templateType);
+    if (template) {
+      systemPrompt = template.content;
+    }
+  } catch (error) {
+    console.warn('[Generation] Failed to load template from DB, using default');
+  }
 
-Check if response contains expected markers before attempting to parse:
-
-```typescript
-if (!response.includes('## Document Context') && !response.includes('## 🔴')) {
-  console.warn('[Extraction] AI response format unexpected, trying legacy parser');
+  // ... rest of function using systemPrompt
 }
 ```
 
-### 3. Test with Actual Documents
+### Fix 3: Remove Dead Code
 
-Create integration tests that verify:
-- AI is called with correct prompt
-- Response is parsed correctly
-- Refined comments differ from originals
+Delete `refineAnnotation()` function:
+
+```typescript
+// DELETE these lines from extraction.ts (306-347):
+export async function refineAnnotation(...) { ... }
+
+// UPDATE index.ts to remove export:
+export { extractKnowledge, type ExtractionInput, type ExtractionResult } from './extraction';
+// Remove: refineAnnotation
+```
+
+### Fix 4: Add User Feedback for Fallback
+
+```typescript
+// extraction.ts - change return type to include status
+interface ExtractionResponse {
+  results: ExtractionResult[];
+  usedFallback: boolean;
+  error?: string;
+}
+
+// API route should inform user if fallback was used
+if (response.usedFallback) {
+  return NextResponse.json({
+    ...response,
+    warning: 'AI refinement failed, showing original annotations'
+  });
+}
+```
 
 ---
 
-## Testing Steps
+## Testing Checklist
 
-1. **Verify current behavior**:
-   ```bash
-   # Check server logs during extraction
-   pm2 logs expert-note --lines 100 | grep -i extraction
-   ```
+After fixes, verify:
 
-2. **Test database template**:
-   ```sql
-   SELECT name, content FROM prompt_templates
-   WHERE category = 'extraction' AND is_default = TRUE;
-   ```
-
-3. **Test extraction with logging**:
-   - Add document with annotations
-   - Click "Extract Knowledge"
-   - Check server logs for `[Extraction]` and `[OpenRouter]` messages
-   - Verify if AI was called and response was parsed
+- [ ] Settings UI edits are reflected in extraction
+- [ ] Settings UI edits are reflected in generation
+- [ ] Extraction produces refined (not raw) annotations
+- [ ] Generation uses database templates when available
+- [ ] `refineAnnotation` is removed and no import errors
+- [ ] User is notified if fallback is used
 
 ---
 
-## Flow Diagram
+## Flow Diagrams
+
+### Current Extraction Flow (Broken)
 
 ```
 User clicks "Extract Knowledge"
          │
          ▼
 ┌─────────────────────────────┐
-│ POST /api/knowledge/extract │
-└─────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────┐
 │ getExtractionSystemPrompt() │
 │                             │
 │  1. Try load from database  │
-│  2. Check: has "## Document │◄── FAILS because DB template
-│     Context"?               │    uses "## Item N" format
-│  3. If no, use hardcoded    │
+│  2. Check: has "## Document │◄── ALWAYS FAILS
+│     Context"?               │    (DB uses "## Item N")
+│  3. Use hardcoded prompt    │
 └─────────────────────────────┘
          │
          ▼
+   [Hardcoded prompt used]
+         │
+         ▼
+   [AI call may fail]
+         │
+         ▼
+   [Silent fallback to raw annotations]
+```
+
+### Current Generation Flow (Broken)
+
+```
+User clicks "Generate Prompt"
+         │
+         ▼
 ┌─────────────────────────────┐
-│ Call OpenRouter (Qwen)      │
-│ with hardcoded prompt       │
+│ generateSystemPrompt()      │
+│                             │
+│  Uses GENERATION_SYSTEM_    │
+│  PROMPT constant            │◄── NEVER checks database
+│                             │
 └─────────────────────────────┘
          │
-         ├──── SUCCESS ────┐
-         │                 │
-         ▼                 ▼
-┌─────────────┐   ┌─────────────────────┐
-│ API Error   │   │ parseMarkdown...()  │
-│ or Timeout  │   │                     │
-└─────────────┘   │ Expects:            │
-         │        │ - ## 🔴 MACRO       │
-         │        │ - ### N. [title]    │
-         │        │ - **Text referred** │
-         │        └─────────────────────┘
-         │                 │
-         │                 ├── FORMAT MATCH ──► Refined results
-         │                 │
-         │                 ▼
-         │        ┌─────────────────────┐
-         │        │ Try legacy parser   │
-         │        │ (## Item N format)  │
-         │        └─────────────────────┘
-         │                 │
-         │                 ├── FORMAT MATCH ──► Refined results
-         │                 │
-         ▼                 ▼
-┌─────────────────────────────────────────┐
-│ FALLBACK: Return raw annotations        │
-│                                         │
-│ refinedComment = originalComment        │◄── USER SEES THIS
-│ background = "Extracted from: X\n..."   │    (No actual refinement)
-└─────────────────────────────────────────┘
+         ▼
+   [Hardcoded prompt always used]
+   [Database templates ignored]
 ```
 
 ---
 
-## Files to Modify (Fix Checklist)
+## File Modification Checklist
 
-- [ ] `src/lib/ai/extraction.ts` - Fix compatibility check or update hardcoded prompt
-- [ ] `sql/seed.sql` - Update database template to match expected format
-- [ ] `src/lib/ai/openrouter.ts` - Improve parser robustness or add format detection
-- [ ] `src/app/api/knowledge/extract/route.ts` - Add better error reporting
-- [ ] `src/app/settings/prompts/page.tsx` - Show warning if template format incompatible
+- [ ] `src/lib/ai/extraction.ts`
+  - [ ] Fix compatibility check OR update DB template
+  - [ ] Remove `refineAnnotation()` function (dead code)
+  - [ ] Add fallback notification
+
+- [ ] `src/lib/ai/generation.ts`
+  - [ ] Add `getDefaultTemplate('generation')` call
+  - [ ] Use database template when available
+
+- [ ] `src/lib/ai/index.ts`
+  - [ ] Remove `refineAnnotation` export
+
+- [ ] `sql/seed.sql`
+  - [ ] Update extraction template format (if Option A chosen)
+
+- [ ] `src/app/api/knowledge/extract/route.ts`
+  - [ ] Return fallback status to frontend
+
+- [ ] `src/app/settings/prompts/page.tsx`
+  - [ ] Add warning if template format is incompatible
 
 ---
 
-## References
+## Appendix A: All LLM Prompts in System
 
-- Hardcoded prompt: `src/lib/ai/extraction.ts:14-117`
-- Database template: `sql/seed.sql:34-99`
-- Prompt loading: `src/lib/ai/extraction.ts:153-179`
-- Response parser: `src/lib/ai/openrouter.ts:191-377`
-- API endpoint: `src/app/api/knowledge/extract/route.ts`
-- Settings UI: `src/app/settings/prompts/page.tsx`
+### 1. Knowledge Extraction System Prompt (Hardcoded - USED)
 
----
-
-## Appendix: Full Prompts
-
-### A. Hardcoded Prompt (Currently Used)
+**Location**: `src/lib/ai/extraction.ts:14-117`
 
 ```
 You are an expert knowledge extraction specialist. Your task is to transform expert annotations from a document into structured, reusable knowledge entries.
@@ -328,131 +399,162 @@ You MUST output in this EXACT markdown format:
 ## Document Context
 
 **Source**: [filename or document identifier]
-**Document Type**: [e.g., Academic paper introduction, Research proposal, Literature review, etc.]
-**Summary**: [2-3 sentences explaining what this document is about, its main argument/purpose]
-**Structure**: [Brief outline of how the document flows - what comes first, second, etc.]
-**Key Themes**: [List the main themes/topics discussed]
+**Document Type**: [e.g., Academic paper introduction, Research proposal, etc.]
+**Summary**: [2-3 sentences]
+**Structure**: [Brief outline]
+**Key Themes**: [List]
 
 ---
 
 ## 🔴 MACRO Annotations
 
-### 1. [Brief title describing what this comment addresses]
+### 1. [Brief title]
 
 **Text referred to**:
-> [Actual quoted text from document that the expert is commenting on - sufficient context to understand the comment, typically 1-3 sentences]
+> [Actual quoted text - 1-3 sentences]
 
 **Expert comment**:
-> [The original annotation text]
+> [Original annotation]
 
-**Contextualized**: [1-2 sentences interpreting what the expert means, staying close to their words]
+**Contextualized**: [1-2 sentence interpretation]
 
 ---
 
 ## 🟡 MESO Annotations
-
-### 1. [Brief title]
-
-**Text referred to**:
-> [Quoted text from document]
-
-**Expert comment**:
-> [Original annotation]
-
-**Contextualized**: [Interpretation]
-
----
+[same format]
 
 ## 🟢 MICRO Annotations
-
-### 1. [Brief title]
-
-**Text referred to**:
-> [Quoted text from document]
-
-**Expert comment**:
-> [Original annotation]
-
-**Contextualized**: [Interpretation]
-
----
+[same format]
 
 ## CRITICAL REQUIREMENTS
-
-1. **Document Context MUST be detailed** - Explain what the document is actually about, not generic descriptions
-2. **"Text referred to" MUST quote ACTUAL text** from the document, not generic descriptions like "the introduction section"
-3. **Quoted text must be SUFFICIENT** to understand the comment (typically 1-3 sentences)
-4. **"Contextualized" stays close to expert's words** - Brief interpretation only, do not over-explain
-5. **Use proper markdown**: `>` for blockquotes, `**` for bold, `---` for separators
-6. **Group annotations by level** (MACRO first, then MESO, then MICRO)
-7. **Number annotations within each level** starting from 1
-8. **Include ALL annotations** - do not skip any
-
-## ANNOTATION LEVELS
-
-- **MACRO (🔴)**: High-level principles affecting document structure, argumentation, or overall approach
-- **MESO (🟡)**: Pattern-level guidance about sections, paragraphs, or methodological elements
-- **MICRO (🟢)**: Specific edits, word choices, sentence-level improvements
+1. Document Context MUST be detailed
+2. "Text referred to" MUST quote ACTUAL text
+3. Quoted text must be SUFFICIENT (1-3 sentences)
+4. "Contextualized" stays close to expert's words
+5. Use proper markdown
+6. Group annotations by level
+7. Number annotations within each level
+8. Include ALL annotations
 ```
 
-### B. Database Template (Never Used)
+### 2. Knowledge Extraction Database Template (NEVER USED)
+
+**Location**: `sql/seed.sql:34-99`
 
 ```
 You are a knowledge extraction specialist. Your task is to transform expert annotations into structured, reusable knowledge entries that are meaningful even when read standalone.
 
 CRITICAL REQUIREMENTS:
 1. You MUST process EVERY annotation provided - do NOT skip or merge any
-2. Each knowledge item must be SELF-CONTAINED and understandable without the original document
-3. The context you provide is ESSENTIAL - it explains what the annotation refers to
+2. Each knowledge item must be SELF-CONTAINED
+3. The context you provide is ESSENTIAL
 
-For EACH annotation, you will create a knowledge item with:
-
-1. **CONTEXT**: A clear explanation of what part of the document this annotation refers to.
-   - For MACRO annotations: Describe the overall document section or theme being addressed
-   - For MESO annotations: Describe the specific paragraph(s) or pattern being discussed
-   - For MICRO annotations: Quote or describe the specific sentence(s) being commented on
-   The reader should understand WHAT is being annotated without seeing the original document.
-
-2. **ORIGINAL COMMENT**: The exact verbatim annotation text (preserve [[LEVEL: content]] format)
-
-3. **REFINED INSIGHT**: An enhanced version that:
-   - Preserves the original meaning and expert judgment
-   - Is clearer, more actionable, and broadly applicable
-   - Can stand alone as useful guidance
-   - Maintains the expert's voice and expertise
-
+For EACH annotation, create:
+1. **CONTEXT**: Clear explanation of what part of document this refers to
+2. **ORIGINAL COMMENT**: Exact verbatim annotation
+3. **REFINED INSIGHT**: Enhanced version
 4. **LEVEL**: MACRO, MESO, or MICRO
+5. **LOCATION**: Where in document
 
-5. **LOCATION**: Where in the document this annotation appears
-
-Output in Markdown format using this EXACT structure for EACH annotation:
-
+Output format:
 ## Item 1
-
 **Level:** MACRO
 **Location:** Introduction, paragraph 2
-
 ### Context
-This annotation appears in the introduction where the author is establishing the research gap...
-
+[explanation]
 ### Original Comment
-[[MACRO: The exact verbatim text from the annotation]]
-
+[[MACRO: verbatim text]]
 ### Refined Insight
-The improved, clearer, self-contained version of the insight that can be applied broadly.
+[improved version]
+---
+```
+
+### 3. Prompt Generation System Prompt (Hardcoded - USED)
+
+**Location**: `src/lib/ai/generation.ts:6-25`
+
+```
+You are a System Prompt architect specializing in creating AI instructions based on expert knowledge.
+
+Your task is to synthesize knowledge entries into effective System Prompts that capture expert judgment patterns.
+
+Structure your prompts with:
+1. **Role Definition**: Clear statement of the AI's role
+2. **Core Principles**: High-level guidelines from MACRO knowledge
+3. **Patterns & Approaches**: Pattern-level guidance from MESO knowledge
+4. **Specific Techniques**: Actionable suggestions from MICRO knowledge
+5. **Examples**: Where helpful, include brief examples
+
+Guidelines:
+- Prioritize MACRO knowledge as overarching principles
+- Use MESO knowledge as pattern-level guidance
+- Include relevant MICRO knowledge as specific techniques
+- Maintain the expert's voice and judgment style
+- Make prompts actionable and clear
+- Keep the prompt focused and not overly long
+
+Output a ready-to-use System Prompt in markdown format.
+```
+
+### 4. Prompt Generation Database Template (NEVER USED)
+
+**Location**: `sql/seed.sql:102-130`
+
+Same content as hardcoded - but never loaded from database.
+
+### 5. Single Annotation Refinement (DEAD CODE)
+
+**Location**: `src/lib/ai/extraction.ts:328-334`
+
+```
+System: You are a knowledge refinement specialist. Improve annotations while preserving their original insight and expert voice.
+
+User: Refine this ${level} annotation into a clearer, more actionable knowledge entry.
+
+Original annotation: ${content}
+Document context: "${context}"
+
+Provide:
+1. A refined version that preserves the original meaning but is clearer
+2. A brief background describing when/where this insight applies
+```
+
+**STATUS**: Dead code - exported but never called. Recommend removal.
 
 ---
 
-LEVEL GUIDELINES:
-- MACRO: High-level principles affecting document structure, argumentation, or overall approach
-- MESO: Pattern-level guidance about sections, paragraphs, or methodological elements
-- MICRO: Specific edits, word choices, sentence-level improvements
+## Appendix B: Database Schema
 
-MANDATORY OUTPUT RULES:
-1. Output ONE Item per input annotation (same count as input)
-2. Use ## Item N format (numbered sequentially starting at 1)
-3. Include --- separator between items
-4. Process annotations in the order given
-5. NEVER skip, merge, or summarize multiple annotations into one
-6. The ### Context section is REQUIRED and must explain what is being annotated
+**Table**: `prompt_templates`
+
+```sql
+CREATE TABLE prompt_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  category VARCHAR(50) NOT NULL CHECK (category IN ('extraction', 'generation')),
+  template_type VARCHAR(50),
+  content TEXT NOT NULL,
+  is_default BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_by INTEGER REFERENCES users(id),
+  version INTEGER DEFAULT 1,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
 ```
+
+---
+
+## References
+
+- Hardcoded extraction prompt: `src/lib/ai/extraction.ts:14-117`
+- Hardcoded generation prompt: `src/lib/ai/generation.ts:6-25`
+- Database extraction template: `sql/seed.sql:34-99`
+- Database generation templates: `sql/seed.sql:102-179`
+- Prompt loading (extraction): `src/lib/ai/extraction.ts:153-179`
+- Prompt loading (generation): **MISSING** - not implemented
+- Response parser: `src/lib/ai/openrouter.ts:191-377`
+- API endpoint: `src/app/api/knowledge/extract/route.ts`
+- Settings UI: `src/app/settings/prompts/page.tsx`
+- Dead code: `src/lib/ai/extraction.ts:306-347` (`refineAnnotation`)

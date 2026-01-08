@@ -43,8 +43,10 @@ export async function getDocuments(options: {
   includeDeleted?: boolean;
   status?: string;
   tagIds?: number[];
+  search?: string;
+  createdBy?: number;
 } = {}): Promise<Document[]> {
-  const { includeDeleted = false, status, tagIds } = options;
+  const { includeDeleted = false, status, tagIds, search, createdBy } = options;
 
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -62,6 +64,19 @@ export async function getDocuments(options: {
   if (tagIds && tagIds.length > 0) {
     conditions.push(`d.id IN (SELECT document_id FROM document_tags WHERE tag_id = ANY($${paramIndex++}))`);
     params.push(tagIds);
+  }
+
+  // Fuzzy search across filename and content
+  if (search) {
+    conditions.push(`(d.filename ILIKE $${paramIndex} OR d.content ILIKE $${paramIndex})`);
+    params.push(`%${search}%`);
+    paramIndex++;
+  }
+
+  // Filter by creator/uploader
+  if (createdBy !== undefined && createdBy !== null) {
+    conditions.push(`d.created_by = $${paramIndex++}`);
+    params.push(createdBy);
   }
 
   const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';

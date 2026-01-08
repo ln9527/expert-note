@@ -13,11 +13,12 @@ export interface SessionData {
 const sessionOptions = {
   password: process.env.SESSION_SECRET || 'complex_password_at_least_32_characters_long',
   cookieName: 'annote_session',
+  ttl: 60 * 60 * 2, // 2 hours session timeout (increased from default for better UX)
   cookieOptions: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'lax' as const,
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7, // 7 days cookie lifetime
   },
 };
 

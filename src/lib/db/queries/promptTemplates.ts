@@ -1,4 +1,4 @@
-// Prompt Template database queries
+// Generation Guide (user-facing: "Generation Guide" | code: "Prompt Template") database queries
 
 import { query, queryOne } from '../index';
 
@@ -57,7 +57,7 @@ export interface GetTemplatesOptions {
 }
 
 /**
- * Get all prompt templates with optional filtering
+ * Get all generation guides (code: prompt templates) with optional filtering
  */
 export async function getAllPromptTemplates(
   options: GetTemplatesOptions = {}
@@ -101,7 +101,7 @@ export async function getAllPromptTemplates(
 }
 
 /**
- * Get a single prompt template by ID
+ * Get a single generation guide (code: prompt template) by ID
  */
 export async function getPromptTemplateById(id: string): Promise<PromptTemplate | null> {
   const sql = `SELECT * FROM prompt_templates WHERE id = $1`;
@@ -156,7 +156,7 @@ export interface CreateTemplateData {
 }
 
 /**
- * Create a new prompt template
+ * Create a new generation guide (code: prompt template)
  */
 export async function createPromptTemplate(data: CreateTemplateData): Promise<PromptTemplate> {
   const {
@@ -199,7 +199,7 @@ export interface UpdateTemplateData {
 }
 
 /**
- * Update an existing prompt template
+ * Update an existing generation guide (code: prompt template)
  */
 export async function updatePromptTemplate(
   id: string,
@@ -248,7 +248,7 @@ export async function updatePromptTemplate(
 }
 
 /**
- * Delete a prompt template (only non-default templates can be deleted)
+ * Delete a generation guide (code: prompt template) - only non-default guides can be deleted
  */
 export async function deletePromptTemplate(id: string): Promise<boolean> {
   // Don't allow deleting default templates

@@ -13,7 +13,7 @@ interface RouteParams {
 
 /**
  * GET /api/prompt-templates/[id]
- * Get a single prompt template by ID
+ * Get a single generation guide (code: prompt template) by ID
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 /**
  * PUT /api/prompt-templates/[id]
- * Update a prompt template
+ * Update a generation guide (code: prompt template)
  *
  * Request body:
  * {
@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 /**
  * DELETE /api/prompt-templates/[id]
- * Delete a prompt template (only non-default templates)
+ * Delete a generation guide (code: prompt template) - only non-default guides can be deleted
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {

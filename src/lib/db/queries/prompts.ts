@@ -1,3 +1,21 @@
+/**
+ * System Prompt Generation Queries
+ *
+ * TERMINOLOGY NOTE:
+ * - "PromptTemplate" in code = "Generation Guide" in UI
+ * - "SystemPrompt" in code = "System Prompt" in UI (consistent)
+ *
+ * Generation Guides (prompt_templates table):
+ * → Guide the AI on HOW to generate system prompts
+ * → Configurable by users in Settings
+ *
+ * System Prompts (system_prompts table):
+ * → The GENERATED prompts (output)
+ * → Used to guide LLM behavior
+ *
+ * See /src/types/index.ts for full glossary.
+ */
+
 // System prompt database queries
 
 import { query, queryOne } from '../index';
@@ -11,6 +29,8 @@ export interface SystemPromptRow {
   content: string;
   template_type: string | null;
   source_knowledge_ids: string[] | null;
+  source_document_ids: string[] | null;
+  base_prompt_id: string | null;
   version: number;
   created_at: string;
   updated_at: string;
@@ -26,7 +46,11 @@ export interface SystemPrompt {
   content: string;
   templateType: string | null;
   sourceKnowledgeIds: string[];
+  sourceDocumentIds: string[];
+  basePromptId: string | null;
   version: number;
+  isDeleted: boolean;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   tags: Tag[];
@@ -47,7 +71,11 @@ function mapPromptRow(row: SystemPromptRow, tags: Tag[] = []): SystemPrompt {
     content: row.content,
     templateType: row.template_type,
     sourceKnowledgeIds: row.source_knowledge_ids || [],
+    sourceDocumentIds: row.source_document_ids || [],
+    basePromptId: row.base_prompt_id,
     version: row.version,
+    isDeleted: row.is_deleted || false,
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     tags,
@@ -245,6 +273,8 @@ export interface CreatePromptData {
   content: string;
   templateType?: string;
   sourceKnowledgeIds?: string[];
+  sourceDocumentIds?: string[];
+  basePromptId?: string;
   tagIds?: number[];
 }
 
@@ -259,14 +289,17 @@ export async function createPrompt(data: CreatePromptData): Promise<SystemPrompt
     content,
     templateType = null,
     sourceKnowledgeIds = [],
+    sourceDocumentIds = [],
+    basePromptId = null,
     tagIds = [],
   } = data;
 
   const sql = `
     INSERT INTO system_prompts (
-      user_id, title, description, content, template_type, source_knowledge_ids
+      user_id, title, description, content, template_type,
+      source_knowledge_ids, source_document_ids, base_prompt_id
     )
-    VALUES ($1, $2, $3, $4, $5, $6)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
   `;
 
@@ -277,6 +310,8 @@ export async function createPrompt(data: CreatePromptData): Promise<SystemPrompt
     content,
     templateType,
     sourceKnowledgeIds.length > 0 ? sourceKnowledgeIds : null,
+    sourceDocumentIds.length > 0 ? sourceDocumentIds : null,
+    basePromptId,
   ]);
 
   const prompt = row!;
@@ -296,6 +331,8 @@ export interface UpdatePromptData {
   content?: string;
   templateType?: string;
   sourceKnowledgeIds?: string[];
+  sourceDocumentIds?: string[];
+  basePromptId?: string;
   tagIds?: number[];
 }
 
@@ -335,6 +372,16 @@ export async function updatePrompt(
   if (data.sourceKnowledgeIds !== undefined) {
     updates.push(`source_knowledge_ids = $${paramIndex++}`);
     params.push(data.sourceKnowledgeIds.length > 0 ? data.sourceKnowledgeIds : null);
+  }
+
+  if (data.sourceDocumentIds !== undefined) {
+    updates.push(`source_document_ids = $${paramIndex++}`);
+    params.push(data.sourceDocumentIds.length > 0 ? data.sourceDocumentIds : null);
+  }
+
+  if (data.basePromptId !== undefined) {
+    updates.push(`base_prompt_id = $${paramIndex++}`);
+    params.push(data.basePromptId);
   }
 
   const sql = `

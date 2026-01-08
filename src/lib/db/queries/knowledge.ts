@@ -15,6 +15,7 @@ interface KnowledgeEntryRow {
   deleted_at: string | null;
   tags?: Tag[];
   annotation_count?: number;
+  source_document_name?: string;
 }
 
 interface AnnotationRow {
@@ -40,6 +41,7 @@ export interface KnowledgeEntry {
   updatedAt: Date;
   tags: Tag[];
   annotationCount: number;
+  sourceDocumentName?: string;
 }
 
 export interface KnowledgeAnnotation {
@@ -80,7 +82,8 @@ function mapKnowledgeRow(row: KnowledgeEntryRow): KnowledgeEntry {
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     tags: row.tags || [],
-    annotationCount: row.annotation_count || 0,
+    annotationCount: Number(row.annotation_count) || 0,
+    sourceDocumentName: row.source_document_name,
   };
 }
 
@@ -135,8 +138,10 @@ export async function getAllKnowledgeEntries(
          FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
         '[]'
       ) as tags,
-      (SELECT COUNT(*) FROM annotations WHERE knowledge_id = ke.id) as annotation_count
+      (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
+      d.filename as source_document_name
     FROM knowledge_entries ke
+    LEFT JOIN documents d ON ke.source_document_id = d.id
     ${whereClause}
     ORDER BY ke.updated_at DESC
     LIMIT $${paramIndex++} OFFSET $${paramIndex++}
@@ -161,8 +166,10 @@ export async function getKnowledgeEntryById(id: string, includeDeleted = false):
          FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
         '[]'
       ) as tags,
-      (SELECT COUNT(*) FROM annotations WHERE knowledge_id = ke.id) as annotation_count
+      (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
+      d.filename as source_document_name
     FROM knowledge_entries ke
+    LEFT JOIN documents d ON ke.source_document_id = d.id
     WHERE ke.id = $1 ${deleteFilter}
   `;
 
@@ -248,8 +255,10 @@ export async function createKnowledgeEntry(data: {
            FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
           '[]'
         ) as tags,
-        (SELECT COUNT(*) FROM annotations WHERE knowledge_id = ke.id) as annotation_count
+        (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
+        d.filename as source_document_name
       FROM knowledge_entries ke
+      LEFT JOIN documents d ON ke.source_document_id = d.id
       WHERE ke.id = $1
     `;
     const result = await client.query<KnowledgeEntryRow>(sql, [knowledgeId]);
@@ -342,8 +351,10 @@ export async function getDeletedKnowledgeEntries(): Promise<KnowledgeEntry[]> {
          FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
         '[]'
       ) as tags,
-      (SELECT COUNT(*) FROM annotations WHERE knowledge_id = ke.id) as annotation_count
+      (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
+      d.filename as source_document_name
     FROM knowledge_entries ke
+    LEFT JOIN documents d ON ke.source_document_id = d.id
     WHERE ke.is_deleted = TRUE
     ORDER BY ke.deleted_at DESC
   `;

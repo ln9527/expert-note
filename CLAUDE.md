@@ -47,6 +47,65 @@ npm run dev
 
 ---
 
+## ⚠️ Terminology: Generation Guides vs Templates
+
+**IMPORTANT:** To avoid confusion, read this section!
+
+### UI vs Code Terminology Mismatch
+
+The system uses different terms in the user interface vs code/database:
+
+| What Users See | What Code Says | Why |
+|----------------|----------------|-----|
+| **"Generation Guide"** | `PromptTemplate`, `prompt_templates` | UI clarity (changed Jan 2026) |
+| **"System Prompt"** | `SystemPrompt`, `system_prompts` | Consistent everywhere |
+
+### What Each Term Means
+
+#### Generation Guide (code: PromptTemplate)
+- **Purpose:** Guides/instructions for HOW to generate system prompts
+- **Example:** "Introduction Review Guide" tells AI to focus on research importance, gap identification, etc.
+- **Location:** Settings → Generation Guides page
+- **Database:** `prompt_templates` table
+- **Used in:** `/prompts/generate` page to select generation strategy
+
+#### System Prompt (code: SystemPrompt)
+- **Purpose:** The GENERATED prompt that guides LLM behavior
+- **Example:** "You are an expert academic writing reviewer specializing in..."
+- **Location:** Prompts page (list of generated prompts)
+- **Database:** `system_prompts` table
+- **Used in:** Actual LLM systems (Claude, GPT, etc.)
+
+### Why Not Rename Everything?
+
+We could rename `prompt_templates` → `generation_guides` in the database, but:
+1. **Risk:** Requires migration affecting 100+ code locations
+2. **Effort:** 6-8 hours of work + extensive testing
+3. **Benefit:** Clarity achieved with UI-only changes
+4. **Decision:** Deferred to future major version
+
+### For Future AI Agents
+
+When working with this codebase:
+- **If you see "template" in code** → Think "generation guide"
+- **Check UI labels** → They're authoritative for user-facing terms
+- **Read /docs/GLOSSARY.md** → Full terminology reference
+- **Read /src/types/index.ts** → Top of file has detailed glossary
+
+### Quick Reference
+
+```typescript
+// This code:
+const [templateType, setTemplateType] = useState('');
+fetch('/api/prompt-templates');
+
+// Refers to this UI:
+"Generation Guide" dropdown
+"Select a guide..."
+```
+
+---
+
 ## Annotation Format
 
 ```

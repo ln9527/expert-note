@@ -1,3 +1,55 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * TERMINOLOGY GLOSSARY - READ THIS FIRST TO AVOID CONFUSION
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * This system has terminology that differs between UI and code for historical reasons.
+ *
+ * ## GENERATION GUIDE vs TEMPLATE
+ *
+ * **User-Facing Term (UI):** "Generation Guide"
+ * **Code/Database Term:** PromptTemplate, prompt_templates table
+ *
+ * These refer to THE SAME THING:
+ * - Guides that tell the AI HOW to generate system prompts
+ * - Input to the generation process (not the output)
+ * - Example: "Introduction Review Guide" contains rules for generating intro prompts
+ *
+ * WHY THE MISMATCH?
+ * - Original database schema used "template" terminology
+ * - Users found this confusing (Jan 2026)
+ * - Changed UI to "Generation Guide" for clarity
+ * - Kept code/database names to avoid breaking changes
+ *
+ * ## COMPLETE TERMINOLOGY MAP
+ *
+ * | UI Label | Code/DB Name | Table | What It Is |
+ * |----------|--------------|-------|------------|
+ * | Generation Guide | PromptTemplate | prompt_templates | Guide for generating prompts |
+ * | System Prompt | SystemPrompt | system_prompts | Generated prompt (output) |
+ * | Document | Document | documents | Annotated markdown files |
+ * | Knowledge Entry | KnowledgeEntry | knowledge_entries | Extracted knowledge |
+ * | Annotation | Annotation | annotations | [[MACRO/MESO/MICRO: ...]] markers |
+ *
+ * ## FOR FUTURE AI AGENTS & DEVELOPERS
+ *
+ * When you see "template" in code:
+ * 1. It likely refers to a "Generation Guide"
+ * 2. Check if it's in prompt_templates table → definitely a guide
+ * 3. Check if it's about "generation" → definitely a guide
+ * 4. Check UI labels in the same file → they'll say "guide"
+ *
+ * When writing new code:
+ * 1. UI labels: Use "generation guide" or "guide"
+ * 2. Variables: Use existing "template" names for consistency
+ * 3. Comments: Explain the mismatch if it could confuse
+ *
+ * See /docs/GLOSSARY.md for full terminology reference.
+ * See CLAUDE.md for project-specific context.
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
 // Type definitions for Expert Note
 
 // Annotation level type
@@ -150,6 +202,7 @@ export interface KnowledgeEntry {
   updatedAt: Date;
   tags: Tag[];
   annotationCount: number;
+  sourceDocumentName?: string;
 }
 
 // Knowledge Annotation type - individual annotations within a knowledge entry
@@ -216,7 +269,11 @@ export interface SystemPrompt {
   content: string;
   templateType: string | null;
   sourceKnowledgeIds: string[];
+  sourceDocumentIds: string[];  // Direct document references (bypass knowledge extraction)
+  basePromptId: string | null;  // Reference to base prompt for versioning chain
   version: number;
+  isDeleted: boolean;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   tags: Tag[];  // Tags for filtering and organization
@@ -231,7 +288,7 @@ export interface PromptVersion {
   createdAt: Date;
 }
 
-// Prompt Template for extraction/generation
+// Generation Guide (user-facing term) / Prompt Template (code term) for extraction/generation
 export type PromptTemplateCategory = 'extraction' | 'generation';
 
 export interface PromptTemplate {

@@ -131,7 +131,7 @@ export default function PromptsListPage() {
 
   // Build filter options dynamically from templates
   const filterOptions: FilterOption[] = [
-    { value: 'all', label: 'All Templates' },
+    { value: 'all', label: 'All Guides' },
     ...templates.map(t => ({
       value: t.templateType || t.name,
       label: t.name,
@@ -215,7 +215,7 @@ export default function PromptsListPage() {
         </div>
       </div>
 
-      {/* Template filter bar */}
+      {/* Generation Guide filter bar */}
       <div className="flex flex-wrap items-center gap-2">
         {filterOptions.map((option) => (
           <button
@@ -235,7 +235,7 @@ export default function PromptsListPage() {
             href="/settings/prompts"
             className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap"
           >
-            + Create template in Settings
+            + Create guide in Settings
           </Link>
         )}
       </div>

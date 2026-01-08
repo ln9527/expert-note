@@ -7,7 +7,7 @@ import {
 
 /**
  * GET /api/prompt-templates
- * Get all prompt templates with optional filtering
+ * Get all generation guides (code: prompt templates) with optional filtering
  *
  * Query params:
  * - category: 'extraction' | 'generation'
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/prompt-templates
- * Create a new prompt template
+ * Create a new generation guide (code: prompt template)
  *
  * Request body:
  * {

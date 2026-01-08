@@ -201,9 +201,9 @@ export default function PromptTemplatesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Prompt Templates</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Prompt Generation Guides</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage system prompt templates for knowledge extraction and prompt generation.
+            Manage generation guides for knowledge extraction and prompt generation.
           </p>
         </div>
 
@@ -214,7 +214,7 @@ export default function PromptTemplatesPage() {
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Create Template
+          Create Guide
         </button>
       </div>
 
@@ -251,11 +251,11 @@ export default function PromptTemplatesPage() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No templates found</h3>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">No guides found</h3>
           <p className="mt-2 text-gray-500">
             {filter === 'all'
-              ? 'Get started by creating your first template.'
-              : `No ${filter} templates available.`}
+              ? 'Get started by creating your first guide.'
+              : `No ${filter} guides available.`}
           </p>
         </div>
       ) : (
@@ -360,7 +360,7 @@ export default function PromptTemplatesPage() {
             <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {editingTemplate ? 'Edit Template' : 'Create Template'}
+                  {editingTemplate ? 'Edit Guide' : 'Create Guide'}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -383,7 +383,7 @@ export default function PromptTemplatesPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter template name..."
+                    placeholder="Enter guide name..."
                   />
                 </div>
 
@@ -450,7 +450,7 @@ export default function PromptTemplatesPage() {
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                     rows={12}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                    placeholder="Enter the system prompt template..."
+                    placeholder="Enter the system prompt guide..."
                   />
                 </div>
               </div>
@@ -467,7 +467,7 @@ export default function PromptTemplatesPage() {
                   disabled={saving || !formData.name.trim() || !formData.content.trim()}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {saving ? 'Saving...' : editingTemplate ? 'Save Changes' : 'Create Template'}
+                  {saving ? 'Saving...' : editingTemplate ? 'Save Changes' : 'Create Guide'}
                 </button>
               </div>
             </div>

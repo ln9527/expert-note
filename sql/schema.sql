@@ -105,6 +105,28 @@ CREATE TABLE system_prompts (
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ═══════════════════════════════════════════════════════════════════
+-- TERMINOLOGY NOTE: "Prompt Templates" = "Generation Guides"
+-- ═══════════════════════════════════════════════════════════════════
+--
+-- This table stores "Generation Guides" (user-facing term).
+--
+-- A Generation Guide contains instructions for HOW to generate system prompts.
+-- It's NOT the generated prompt itself (those are in system_prompts table).
+--
+-- Example: "Introduction Review Guide" tells the AI:
+--   - Focus on research importance
+--   - Emphasize gap identification
+--   - Structure with 4 pillars
+--
+-- TERMINOLOGY MISMATCH:
+-- - Table name: prompt_templates (legacy)
+-- - UI labels: "Generation Guide" (clarity improvement, Jan 2026)
+-- - Both refer to the same concept
+--
+-- See /docs/GLOSSARY.md for full explanation.
+-- ═══════════════════════════════════════════════════════════════════
+
 -- 9. Prompt Templates (system templates for extraction/generation)
 -- These are the predefined/user-customizable templates that guide AI behavior
 CREATE TABLE prompt_templates (

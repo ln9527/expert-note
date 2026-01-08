@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth/session';
-import { createPrompt } from '@/lib/db/queries/prompts';
+import { createPrompt, getPromptById } from '@/lib/db/queries/prompts';
 import {
   getKnowledgeEntryWithAnnotations,
   KnowledgeEntryWithAnnotations,
 } from '@/lib/db/queries/knowledge';
+import { getDocumentById } from '@/lib/db/queries/documents';
 import {
   getAllPromptTemplates,
 } from '@/lib/db/queries/promptTemplates';
 import {
   generateSystemPrompt,
 } from '@/lib/ai/generation';
+import { extractAnnotations } from '@/lib/utils/annotation';
+import { KnowledgeAnnotation } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,19 +24,29 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      knowledgeIds,
+      knowledgeIds = [],
+      documentIds = [],
+      basePromptId,
       templateType,
       purpose,
       customInstructions,
       title,
       description,
+      tagIds = [],
       saveToDatabase = true,
     } = body;
 
-    // Validate required fields
-    if (!knowledgeIds || !Array.isArray(knowledgeIds) || knowledgeIds.length === 0) {
+    // Validate that at least one source is provided (knowledge or documents or base prompt)
+    if (
+      (!knowledgeIds || knowledgeIds.length === 0) &&
+      (!documentIds || documentIds.length === 0) &&
+      !basePromptId
+    ) {
       return NextResponse.json(
-        { success: false, error: 'At least one knowledge ID is required' },
+        {
+          success: false,
+          error: 'At least one knowledge ID, document ID, or base prompt ID is required',
+        },
         { status: 400 }
       );
     }
@@ -56,11 +69,27 @@ export async function POST(request: NextRequest) {
     // Use the provided templateType as-is (it's user-defined now)
     const validTemplateType = templateType || 'custom';
 
-    // Fetch all knowledge entries with annotations
+    // Collect all annotation sources
     const entriesWithAnnotations: KnowledgeEntryWithAnnotations[] = [];
     const documentBackgrounds: string[] = [];
+    let mergedSourceKnowledgeIds = [...knowledgeIds];
+    let mergedSourceDocumentIds = [...documentIds];
 
-    for (const knowledgeId of knowledgeIds) {
+    // 1. If base prompt is provided, merge its sources
+    if (basePromptId) {
+      const basePrompt = await getPromptById(basePromptId);
+      if (basePrompt) {
+        mergedSourceKnowledgeIds = [
+          ...new Set([...mergedSourceKnowledgeIds, ...basePrompt.sourceKnowledgeIds]),
+        ];
+        mergedSourceDocumentIds = [
+          ...new Set([...mergedSourceDocumentIds, ...basePrompt.sourceDocumentIds]),
+        ];
+      }
+    }
+
+    // 2. Process knowledge entries
+    for (const knowledgeId of mergedSourceKnowledgeIds) {
       const entry = await getKnowledgeEntryWithAnnotations(knowledgeId);
       if (entry) {
         entriesWithAnnotations.push(entry);
@@ -70,9 +99,45 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 3. Process documents directly (bypass knowledge extraction)
+    for (const documentId of mergedSourceDocumentIds) {
+      const document = await getDocumentById(documentId);
+      if (document) {
+        // Extract annotations from document content
+        const annotations = extractAnnotations(document.content);
+
+        // Create a pseudo-knowledge entry for compatibility with generation
+        const pseudoEntry: KnowledgeEntryWithAnnotations = {
+          id: `doc-${documentId}`,
+          sourceDocumentId: documentId,
+          background: `Document: ${document.filename}`,
+          createdAt: document.createdAt,
+          updatedAt: document.updatedAt,
+          tags: document.tags,
+          annotationCount: annotations.length,
+          annotations: annotations.map((ann, idx) => ({
+            id: `doc-${documentId}-ann-${idx}`,
+            knowledgeId: `doc-${documentId}`,
+            level: ann.level,
+            originalText: ann.content,
+            comment: ann.content,
+            refinedComment: null,
+            location: `Line ${ann.line}`,
+            backgroundContext: ann.surroundingContext,
+            positionLine: ann.line,
+            positionChar: ann.char,
+            createdAt: document.createdAt,
+          })) as KnowledgeAnnotation[],
+        };
+
+        entriesWithAnnotations.push(pseudoEntry);
+        documentBackgrounds.push(`Document: ${document.filename}`);
+      }
+    }
+
     if (entriesWithAnnotations.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'No valid knowledge entries found' },
+        { success: false, error: 'No valid knowledge entries or documents found' },
         { status: 404 }
       );
     }
@@ -112,7 +177,7 @@ export async function POST(request: NextRequest) {
     if (saveToDatabase) {
       const promptTitle = title?.trim() || `Generated Prompt - ${validTemplateType}`;
       const promptDescription = description?.trim() ||
-        `Generated from ${entriesWithAnnotations.length} knowledge entries using ${validTemplateType} template`;
+        `Generated from ${entriesWithAnnotations.length} sources using ${validTemplateType} template`;
 
       const prompt = await createPrompt({
         userId: String(user.userId),
@@ -120,7 +185,10 @@ export async function POST(request: NextRequest) {
         description: promptDescription,
         content: generatedContent,
         templateType: validTemplateType,
-        sourceKnowledgeIds: knowledgeIds,
+        sourceKnowledgeIds: mergedSourceKnowledgeIds,
+        sourceDocumentIds: mergedSourceDocumentIds,
+        basePromptId: basePromptId || undefined,
+        tagIds,
       });
 
       result.prompt = prompt;

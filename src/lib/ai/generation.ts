@@ -2,6 +2,7 @@
 
 import { chatCompletion } from './openrouter';
 import { KnowledgeEntryWithAnnotations, KnowledgeAnnotation, AnnotationLevel } from '@/types';
+import { getDefaultTemplate } from '@/lib/db/queries/promptTemplates';
 
 const GENERATION_SYSTEM_PROMPT = `You are a System Prompt architect specializing in creating AI instructions based on expert knowledge.
 
@@ -68,6 +69,32 @@ export const PROMPT_TEMPLATES = {
 export type TemplateType = keyof typeof PROMPT_TEMPLATES;
 
 /**
+ * Get the system prompt for generation
+ * PRIORITY: Database templates first, then hardcoded fallback
+ * This implements "DB as source of truth" architecture
+ */
+async function getGenerationSystemPrompt(templateType?: string): Promise<string> {
+  // Hardcoded prompt is the fallback only
+  let systemPrompt = GENERATION_SYSTEM_PROMPT;
+
+  // PRIORITY: Try to load from database FIRST
+  try {
+    const template = await getDefaultTemplate('generation', templateType || undefined);
+    if (template?.content) {
+      // Trust the database - use it without compatibility checks
+      systemPrompt = template.content;
+      console.log(`[Generation] ✓ Using database template (type: ${templateType || 'default'})`);
+    } else {
+      console.log('[Generation] ⚠ No database template found, using hardcoded default');
+    }
+  } catch (error) {
+    console.warn('[Generation] ⚠ Failed to load template from database, using hardcoded default:', error);
+  }
+
+  return systemPrompt;
+}
+
+/**
  * Generate a system prompt from knowledge entries
  */
 export async function generateSystemPrompt(input: GenerationInput): Promise<string> {
@@ -127,9 +154,12 @@ ${documentBackgrounds.map((bg, i) => `${i + 1}. ${bg}`).join('\n')}
 
 Generate a comprehensive, well-structured System Prompt based on this expert knowledge.`;
 
+  // Get system prompt from DB (prioritized) or hardcoded fallback
+  const systemPrompt = await getGenerationSystemPrompt(templateType);
+
   const response = await chatCompletion(
     [
-      { role: 'system', content: GENERATION_SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ],
     { temperature: 0.7, maxTokens: 3000 }

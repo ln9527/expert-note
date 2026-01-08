@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { KnowledgeEntry, Tag } from '@/types';
-import { KnowledgeCard, TagFilter } from '@/components/knowledge';
+import { KnowledgeCard, KnowledgeTable, TagFilter } from '@/components/knowledge';
 import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
+import ViewModeToggle from '@/components/common/ViewModeToggle';
 
 // Extended entry with optional fields from API
 interface ExtendedKnowledgeEntry extends KnowledgeEntry {
@@ -17,11 +18,20 @@ interface ExtendedKnowledgeEntry extends KnowledgeEntry {
   };
 }
 
+type ViewMode = 'table' | 'card';
+type SortColumn = 'source' | 'created' | 'updated';
+type SortDirection = 'asc' | 'desc';
+
 export default function KnowledgeListPage() {
   const [entries, setEntries] = useState<ExtendedKnowledgeEntry[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // View mode state
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('created');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Filters
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
@@ -30,6 +40,20 @@ export default function KnowledgeListPage() {
   // Delete modal state
   const [deletingEntry, setDeletingEntry] = useState<ExtendedKnowledgeEntry | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Load view mode preference from localStorage
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem('knowledgeViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'card') {
+      setViewMode(savedViewMode);
+    }
+  }, []);
+
+  // Save view mode preference to localStorage
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem('knowledgeViewMode', mode);
+  };
 
   // Fetch knowledge entries
   useEffect(() => {
@@ -99,12 +123,55 @@ export default function KnowledgeListPage() {
     });
   }, [entries, searchQuery, selectedTags]);
 
+  // Sort entries
+  const sortedEntries = useMemo(() => {
+    const sorted = [...filteredEntries];
+
+    sorted.sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+
+      switch (sortColumn) {
+        case 'source':
+          aVal = a.sourceDocumentName || a.background || '';
+          bVal = b.sourceDocumentName || b.background || '';
+          break;
+        case 'created':
+          aVal = new Date(a.createdAt).getTime();
+          bVal = new Date(b.createdAt).getTime();
+          break;
+        case 'updated':
+          aVal = new Date(a.updatedAt).getTime();
+          bVal = new Date(b.updatedAt).getTime();
+          break;
+        default:
+          return 0;
+      }
+
+      const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [filteredEntries, sortColumn, sortDirection]);
+
+  // Handle sort column change
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column as SortColumn);
+      setSortDirection('desc');
+    }
+  };
+
   // Get total entries count
   const totalEntries = entries.length;
 
   // Get total annotation count across all entries
+  // IMPORTANT: Use Number() to ensure addition, not string concatenation
   const totalAnnotations = useMemo(() => {
-    return entries.reduce((sum, entry) => sum + (entry.annotationCount || 0), 0);
+    return entries.reduce((sum, entry) => sum + Number(entry.annotationCount || 0), 0);
   }, [entries]);
 
   const handleDeleteClick = (entry: ExtendedKnowledgeEntry) => {
@@ -156,11 +223,14 @@ export default function KnowledgeListPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Page header */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Knowledge Entries</h2>
-        <p className="mt-1 text-gray-600">
-          Browse and search through your captured knowledge
-        </p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Knowledge Entries</h2>
+          <p className="mt-1 text-gray-600">
+            Browse and search through your captured knowledge
+          </p>
+        </div>
+        <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
       </div>
 
       {/* Filters */}
@@ -240,8 +310,8 @@ export default function KnowledgeListPage() {
         )}
       </div>
 
-      {/* Knowledge entries grid */}
-      {filteredEntries.length === 0 ? (
+      {/* Knowledge entries display - conditional based on view mode */}
+      {sortedEntries.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
           <div className="text-gray-400 mb-2">
             <svg
@@ -264,9 +334,17 @@ export default function KnowledgeListPage() {
               : 'No entries match your filters.'}
           </p>
         </div>
+      ) : viewMode === 'table' ? (
+        <KnowledgeTable
+          entries={sortedEntries}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          onDelete={handleDeleteClick}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredEntries.map((entry) => (
+          {sortedEntries.map((entry) => (
             <KnowledgeCard key={entry.id} entry={entry} onDelete={handleDeleteClick} />
           ))}
         </div>

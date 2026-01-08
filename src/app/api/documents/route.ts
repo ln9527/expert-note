@@ -14,8 +14,17 @@ export async function GET(request: NextRequest) {
     const tagsParam = searchParams.get('tags');
     const tagIds = tagsParam ? tagsParam.split(',').map(Number).filter(Boolean) : undefined;
     const includeDeleted = searchParams.get('includeDeleted') === 'true';
+    const search = searchParams.get('search') || undefined;
+    const createdByParam = searchParams.get('createdBy');
+    const createdBy = createdByParam ? parseInt(createdByParam) : undefined;
 
-    const documents = await getDocuments({ status, tagIds, includeDeleted });
+    const documents = await getDocuments({
+      status,
+      tagIds,
+      includeDeleted,
+      search,
+      createdBy
+    });
 
     return NextResponse.json({ success: true, documents });
   } catch (error) {
