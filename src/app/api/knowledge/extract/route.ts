@@ -22,7 +22,8 @@ import { extractAnnotations } from '@/lib/utils/annotation';
  *   tagIds?: number[],           // Optional: Tags to assign to the knowledge entry
  *   background?: string,         // Optional: Custom background, defaults to document filename
  *   refineAnnotations?: boolean, // Optional: Whether to refine annotations with AI (default: true)
- *   customInstructions?: string  // Optional: Custom instructions to guide the AI extraction
+ *   customInstructions?: string, // Optional: Custom instructions to guide the AI extraction
+ *   templateId?: string          // Optional: Extraction guide/template ID to use
  * }
  */
 export async function POST(request: NextRequest) {
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
       background: customBackground,
       refineAnnotations = true,
       customInstructions,
+      templateId,
     } = body;
 
     // Validate documentId
@@ -100,6 +102,7 @@ export async function POST(request: NextRequest) {
           lineNumber: a.line,
         })),
         customInstructions: customInstructions?.trim() || undefined,
+        templateId: templateId || undefined,  // Pass selected extraction guide
       };
 
       // Extract knowledge with AI - returns metadata about the extraction process

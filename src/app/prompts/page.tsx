@@ -1,17 +1,22 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { SystemPrompt, PromptTemplate, Tag } from '@/types';
-import { PromptCard, PromptUpload } from '@/components/prompts';
+import { PromptCard, PromptUpload, PromptsTable } from '@/components/prompts';
 import TagFilter from '@/components/knowledge/TagFilter';
 import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
+import ViewModeToggle from '@/components/common/ViewModeToggle';
 
 interface FilterOption {
   value: string;
   label: string;
 }
+
+type ViewMode = 'table' | 'card';
+type SortColumn = 'title' | 'created' | 'updated';
+type SortDirection = 'asc' | 'desc';
 
 export default function PromptsListPage() {
   const [prompts, setPrompts] = useState<SystemPrompt[]>([]);
@@ -23,6 +28,11 @@ export default function PromptsListPage() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // View mode state
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('created');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Delete modal state
   const [deletingPrompt, setDeletingPrompt] = useState<SystemPrompt | null>(null);
@@ -56,6 +66,20 @@ export default function PromptsListPage() {
       setError('Network error. Please try again.');
     }
   }, [selectedTags, searchQuery, filter]);
+
+  // Load view mode preference from localStorage
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem('promptsViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'card') {
+      setViewMode(savedViewMode);
+    }
+  }, []);
+
+  // Save view mode preference to localStorage
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem('promptsViewMode', mode);
+  };
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -91,6 +115,48 @@ export default function PromptsListPage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Sorting handler
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column as SortColumn);
+      setSortDirection('desc');
+    }
+  };
+
+  // Sort prompts
+  const sortedPrompts = useMemo(() => {
+    const sorted = [...prompts];
+
+    sorted.sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+
+      switch (sortColumn) {
+        case 'title':
+          aVal = a.title || '';
+          bVal = b.title || '';
+          break;
+        case 'created':
+          aVal = new Date(a.createdAt).getTime();
+          bVal = new Date(b.createdAt).getTime();
+          break;
+        case 'updated':
+          aVal = new Date(a.updatedAt).getTime();
+          bVal = new Date(b.updatedAt).getTime();
+          break;
+        default:
+          return 0;
+      }
+
+      const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [prompts, sortColumn, sortDirection]);
 
   const handleTagCreated = (newTag: Tag) => {
     setTags(prev => [...prev, newTag]);
@@ -150,6 +216,7 @@ export default function PromptsListPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
           <button
             onClick={() => setShowUploadModal(true)}
             className="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
@@ -281,9 +348,17 @@ export default function PromptsListPage() {
             </Link>
           </div>
         </div>
+      ) : viewMode === 'table' ? (
+        <PromptsTable
+          prompts={sortedPrompts}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          onDelete={handleDeleteClick}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {prompts.map((prompt) => (
+          {sortedPrompts.map((prompt) => (
             <PromptCard key={prompt.id} prompt={prompt} onDelete={handleDeleteClick} />
           ))}
         </div>

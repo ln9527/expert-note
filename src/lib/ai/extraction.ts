@@ -158,24 +158,41 @@ export interface LegacyExtractionResult {
 
 /**
  * Get the system prompt for extraction
- * PRIORITY: Database templates first, then hardcoded fallback
+ * PRIORITY: Specific template ID first, then default template, then hardcoded fallback
  * This implements "DB as source of truth" architecture
  */
-async function getExtractionSystemPrompt(customInstructions?: string): Promise<string> {
+async function getExtractionSystemPrompt(templateId?: string, customInstructions?: string): Promise<string> {
   // Hardcoded prompt is the fallback only
   let basePrompt = KNOWLEDGE_EXTRACTION_SYSTEM_PROMPT;
   let source = 'hardcoded (fallback)';
 
   // PRIORITY: Try to load from database FIRST
   try {
-    const template = await getDefaultTemplate('extraction');
-    if (template?.content) {
-      // Trust the database - use it without compatibility checks
-      basePrompt = template.content;
-      source = 'database';
-      console.log('[Extraction] ✓ Using database template (user-configurable)');
-    } else {
-      console.log('[Extraction] ⚠ No database template found, using hardcoded default');
+    let template = null;
+
+    // If specific template ID provided, use it
+    if (templateId) {
+      const { getPromptTemplateById } = await import('@/lib/db/queries/promptTemplates');
+      template = await getPromptTemplateById(templateId);
+      if (template?.content) {
+        basePrompt = template.content;
+        source = `database (template: ${template.name})`;
+        console.log(`[Extraction] ✓ Using specific template: ${template.name}`);
+      } else {
+        console.log(`[Extraction] ⚠ Template ${templateId} not found, falling back to default`);
+      }
+    }
+
+    // If no specific template or not found, use default
+    if (!template) {
+      template = await getDefaultTemplate('extraction');
+      if (template?.content) {
+        basePrompt = template.content;
+        source = 'database (default)';
+        console.log('[Extraction] ✓ Using default database template');
+      } else {
+        console.log('[Extraction] ⚠ No database template found, using hardcoded default');
+      }
     }
   } catch (error) {
     console.warn('[Extraction] ⚠ Failed to load template from database, using hardcoded default:', error);
@@ -278,9 +295,9 @@ export async function extractKnowledge(input: ExtractionInput): Promise<Extracti
 
   console.log(`[Extraction] Starting knowledge extraction for ${input.annotations.length} annotations`);
 
-  // Get the system prompt (with optional custom instructions)
+  // Get the system prompt (with optional template ID and custom instructions)
   // This will log whether DB template was used
-  const systemPrompt = await getExtractionSystemPrompt(input.customInstructions);
+  const systemPrompt = await getExtractionSystemPrompt(input.templateId, input.customInstructions);
   const usedDatabaseTemplate = systemPrompt !== KNOWLEDGE_EXTRACTION_SYSTEM_PROMPT;
 
   // Build the user prompt with full document content

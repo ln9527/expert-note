@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { buildApiPath } from '@/lib/utils/pathHelper';
-import { Document, Tag } from '@/types';
+import { Document, Tag, PromptTemplate } from '@/types';
 import MarkdownEditor from '@/components/editor/MarkdownEditor';
+import DocumentSwitcher from '@/components/documents/DocumentSwitcher';
 
 // Predefined colors for new tags
 const TAG_COLORS = [
@@ -38,6 +39,14 @@ export default function DocumentEditorPage() {
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
 
+  // Document switcher state
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [allDocuments, setAllDocuments] = useState<Document[]>([]);
+
+  // Extraction guide selector state
+  const [extractionGuides, setExtractionGuides] = useState<PromptTemplate[]>([]);
+  const [selectedGuideId, setSelectedGuideId] = useState<string>('');
+
   // New tag creation state
   const [showCreateTagModal, setShowCreateTagModal] = useState(false);
   const [newTagName, setNewTagName] = useState('');
@@ -52,13 +61,15 @@ export default function DocumentEditorPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [docRes, tagsRes] = await Promise.all([
+        const [docRes, tagsRes, guidesRes] = await Promise.all([
           fetch(buildApiPath(`documents/${documentId}`)),
           fetch(buildApiPath('tags')),
+          fetch(buildApiPath('prompt-templates?category=extraction')),
         ]);
 
         const docData = await docRes.json();
         const tagsData = await tagsRes.json();
+        const guidesData = await guidesRes.json();
 
         if (!docData.success) {
           setError(docData.error || 'Failed to load document');
@@ -73,6 +84,16 @@ export default function DocumentEditorPage() {
         if (tagsData.success) {
           setAllTags(tagsData.tags);
         }
+
+        // Load extraction guides and set default
+        if (guidesData.success && guidesData.templates) {
+          setExtractionGuides(guidesData.templates);
+          // Set default guide as selected
+          const defaultGuide = guidesData.templates.find((t: PromptTemplate) => t.isDefault);
+          if (defaultGuide) {
+            setSelectedGuideId(defaultGuide.id);
+          }
+        }
       } catch (err) {
         console.error('Load error:', err);
         setError('Network error. Please try again.');
@@ -83,6 +104,28 @@ export default function DocumentEditorPage() {
 
     loadData();
   }, [documentId]);
+
+  // Fetch all documents for switcher
+  useEffect(() => {
+    fetch(buildApiPath('documents'))
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setAllDocuments(data.documents || []);
+        }
+      })
+      .catch(err => console.error('Failed to load documents for switcher:', err));
+  }, []);
+
+  // Track current document in recent list
+  useEffect(() => {
+    if (document?.id) {
+      const saved = localStorage.getItem('recentDocuments');
+      const recent: string[] = saved ? JSON.parse(saved) : [];
+      const updated = [document.id, ...recent.filter(id => id !== document.id)].slice(0, 10);
+      localStorage.setItem('recentDocuments', JSON.stringify(updated));
+    }
+  }, [document?.id]);
 
   // Auto-save function
   const saveDocument = useCallback(
@@ -148,6 +191,12 @@ export default function DocumentEditorPage() {
     saveDocument();
   }, [saveDocument]);
 
+
+  // Handle document switch
+  const handleDocumentSwitch = (documentId: string) => {
+    router.push(`/documents/${documentId}`);
+    setSwitcherOpen(false);
+  };
   // Handle title edit
   const handleTitleSubmit = useCallback(() => {
     setEditingTitle(false);
@@ -229,7 +278,7 @@ export default function DocumentEditorPage() {
     setCustomInstructions('');
   };
 
-  // Extract knowledge with optional custom instructions
+  // Extract knowledge with optional custom instructions and selected guide
   const handleExtractKnowledge = async () => {
     setExtracting(true);
     setShowExtractModal(false);
@@ -240,6 +289,7 @@ export default function DocumentEditorPage() {
         body: JSON.stringify({
           documentId,
           customInstructions: customInstructions.trim() || undefined,
+          templateId: selectedGuideId || undefined,
         }),
       });
 
@@ -311,6 +361,19 @@ export default function DocumentEditorPage() {
     }
   }, [editingTitle]);
 
+
+  // Keyboard shortcut (Cmd+K) to toggle switcher
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSwitcherOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -350,7 +413,7 @@ export default function DocumentEditorPage() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Title Bar */}
         <div className="bg-white border-b px-3 py-2 flex items-center justify-between flex-shrink-0">
-          <div className="flex-1 mr-4">
+          <div className="flex-1 mr-4 relative">
             {editingTitle ? (
               <input
                 ref={titleInputRef}
@@ -368,13 +431,47 @@ export default function DocumentEditorPage() {
                 className="text-base font-medium w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             ) : (
-              <h2
-                onClick={() => setEditingTitle(true)}
-                className="text-base font-medium cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-              >
-                {title}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2
+                  onClick={() => setEditingTitle(true)}
+                  className="text-base font-medium cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                >
+                  {title}
+                </h2>
+
+                {/* Switcher Trigger Button */}
+                <button
+                  onClick={() => setSwitcherOpen(!switcherOpen)}
+                  className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Switch document (Cmd+K)"
+                >
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform ${
+                      switcherOpen ? 'rotate-180' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
             )}
+
+            {/* Document Switcher Dropdown */}
+            <DocumentSwitcher
+              documents={allDocuments}
+              currentDocumentId={document?.id || ''}
+              onDocumentSwitch={handleDocumentSwitch}
+              isOpen={switcherOpen}
+              onClose={() => setSwitcherOpen(false)}
+            />
           </div>
           <div className="flex items-center gap-3">
             <span
@@ -563,6 +660,29 @@ export default function DocumentEditorPage() {
               Actions
             </label>
             <div className="space-y-2">
+              {/* Extraction Guide Selector */}
+              {extractionGuides.length > 0 && (
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Extraction Guide
+                  </label>
+                  <select
+                    value={selectedGuideId}
+                    onChange={(e) => setSelectedGuideId(e.target.value)}
+                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs bg-white"
+                  >
+                    {extractionGuides.map((guide) => (
+                      <option key={guide.id} value={guide.id}>
+                        {guide.name} {guide.isDefault ? '(Default)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Choose which guide to use for extracting knowledge
+                  </p>
+                </div>
+              )}
+
               <button
                 onClick={openExtractModal}
                 disabled={extracting}
@@ -594,6 +714,10 @@ export default function DocumentEditorPage() {
               Shortcuts
             </label>
             <div className="text-xs text-gray-500 space-y-1">
+              <div className="flex justify-between">
+                <span>Switch document</span>
+                <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">Cmd+K</kbd>
+              </div>
               <div className="flex justify-between">
                 <span>Save</span>
                 <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">Cmd+S</kbd>
