@@ -9,6 +9,9 @@ interface KnowledgeEntryRow {
   id: string;
   source_document_id: string | null;
   background: string | null;
+  created_by: number | null;
+  is_shared: boolean;
+  allow_edit: boolean;
   created_at: string;
   updated_at: string;
   is_deleted: boolean;
@@ -16,6 +19,7 @@ interface KnowledgeEntryRow {
   tags?: Tag[];
   annotation_count?: number;
   source_document_name?: string;
+  creator?: { id: number; username: string; displayName: string | null; orgId: number | null } | null;
 }
 
 interface AnnotationRow {
@@ -37,11 +41,15 @@ export interface KnowledgeEntry {
   id: string;
   sourceDocumentId: string | null;
   background: string | null;
+  createdBy: number | null;
+  isShared: boolean;
+  allowEdit: boolean;
   createdAt: Date;
   updatedAt: Date;
   tags: Tag[];
   annotationCount: number;
   sourceDocumentName?: string;
+  creator?: { id: number; username: string; displayName: string | null; orgId: number | null } | null;
 }
 
 export interface KnowledgeAnnotation {
@@ -79,11 +87,15 @@ function mapKnowledgeRow(row: KnowledgeEntryRow): KnowledgeEntry {
     id: row.id,
     sourceDocumentId: row.source_document_id,
     background: row.background,
+    createdBy: row.created_by,
+    isShared: row.is_shared ?? false,
+    allowEdit: row.allow_edit ?? false,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     tags: row.tags || [],
     annotationCount: Number(row.annotation_count) || 0,
     sourceDocumentName: row.source_document_name,
+    creator: row.creator,
   };
 }
 
@@ -105,6 +117,12 @@ function mapAnnotationRow(row: AnnotationRow): KnowledgeAnnotation {
 
 /**
  * Get all knowledge entries with optional filtering
+ *
+ * Visibility rules:
+ * - Users see their own entries (created_by = userId)
+ * - Users see shared entries from same org (is_shared = true AND creator in same org)
+ * - Org owners see ALL entries in their org
+ * - Individual users only see their own entries
  */
 export async function getAllKnowledgeEntries(
   userId: string,
@@ -112,13 +130,34 @@ export async function getAllKnowledgeEntries(
     tagIds?: number[];
     limit?: number;
     offset?: number;
+    orgId?: number | null;  // User's organization
+    role?: string;          // User's role: owner, member, individual
   } = {}
 ): Promise<KnowledgeEntry[]> {
-  const { tagIds, limit = 50, offset = 0 } = options;
+  const { tagIds, limit = 50, offset = 0, orgId, role } = options;
 
-  const conditions: string[] = ['ke.is_deleted = FALSE'];
-  const params: unknown[] = [];
-  let paramIndex = 1;
+  // Build visibility conditions based on role
+  let visibilityCondition: string;
+  const params: unknown[] = [userId];
+  let paramIndex = 2;
+
+  if (role === 'owner' && orgId) {
+    // Owners see ALL entries in their org
+    params.push(orgId);
+    visibilityCondition = `(ke.created_by = $1 OR ke.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))`;
+  } else if (role === 'member' && orgId) {
+    // Members see own entries + shared entries from same org
+    params.push(orgId);
+    visibilityCondition = `(
+      ke.created_by = $1
+      OR (ke.is_shared = TRUE AND ke.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))
+    )`;
+  } else {
+    // Individuals and users without org: only own entries
+    visibilityCondition = `ke.created_by = $1`;
+  }
+
+  const conditions: string[] = ['ke.is_deleted = FALSE', visibilityCondition];
 
   // Filter by tags if provided
   if (tagIds && tagIds.length > 0) {
@@ -139,9 +178,13 @@ export async function getAllKnowledgeEntries(
         '[]'
       ) as tags,
       (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
-      d.filename as source_document_name
+      d.filename as source_document_name,
+      CASE WHEN u.id IS NOT NULL THEN
+        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
+      ELSE NULL END as creator
     FROM knowledge_entries ke
     LEFT JOIN documents d ON ke.source_document_id = d.id
+    LEFT JOIN users u ON ke.created_by = u.id
     ${whereClause}
     ORDER BY ke.updated_at DESC
     LIMIT $${paramIndex++} OFFSET $${paramIndex++}
@@ -204,16 +247,17 @@ export async function createKnowledgeEntry(data: {
   background: string;
   tagIds?: number[];
   annotations: AnnotationData[];
+  createdBy: number;  // Required: track who created the knowledge entry
 }): Promise<KnowledgeEntry> {
   return transaction(async (client: PoolClient) => {
-    const { sourceDocumentId, background, tagIds, annotations } = data;
+    const { sourceDocumentId, background, tagIds, annotations, createdBy } = data;
 
     // Insert knowledge entry and get full row back
     const entryResult = await client.query<KnowledgeEntryRow>(
-      `INSERT INTO knowledge_entries (source_document_id, background)
-       VALUES ($1, $2)
+      `INSERT INTO knowledge_entries (source_document_id, background, created_by)
+       VALUES ($1, $2, $3)
        RETURNING *`,
-      [sourceDocumentId || null, background]
+      [sourceDocumentId || null, background, createdBy]
     );
     const knowledgeId = entryResult.rows[0].id;
 
@@ -274,10 +318,12 @@ export async function updateKnowledgeEntry(
   data: {
     background?: string;
     tagIds?: number[];
+    isShared?: boolean;
+    allowEdit?: boolean;
   }
 ): Promise<KnowledgeEntry | null> {
   return transaction(async (client: PoolClient) => {
-    const { background, tagIds } = data;
+    const { background, tagIds, isShared, allowEdit } = data;
 
     // Build update query
     const updates: string[] = ['updated_at = NOW()'];
@@ -287,6 +333,16 @@ export async function updateKnowledgeEntry(
     if (background !== undefined) {
       updates.push(`background = $${paramIndex++}`);
       params.push(background);
+    }
+
+    if (isShared !== undefined) {
+      updates.push(`is_shared = $${paramIndex++}`);
+      params.push(isShared);
+    }
+
+    if (allowEdit !== undefined) {
+      updates.push(`allow_edit = $${paramIndex++}`);
+      params.push(allowEdit);
     }
 
     await client.query(
@@ -341,8 +397,9 @@ export async function permanentlyDeleteKnowledgeEntry(id: string): Promise<void>
 
 /**
  * Get all soft-deleted knowledge entries (trash)
+ * SECURITY: Now properly filters by user
  */
-export async function getDeletedKnowledgeEntries(): Promise<KnowledgeEntry[]> {
+export async function getDeletedKnowledgeEntries(userId: string): Promise<KnowledgeEntry[]> {
   const sql = `
     SELECT
       ke.*,
@@ -352,14 +409,18 @@ export async function getDeletedKnowledgeEntries(): Promise<KnowledgeEntry[]> {
         '[]'
       ) as tags,
       (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
-      d.filename as source_document_name
+      d.filename as source_document_name,
+      CASE WHEN u.id IS NOT NULL THEN
+        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
+      ELSE NULL END as creator
     FROM knowledge_entries ke
     LEFT JOIN documents d ON ke.source_document_id = d.id
-    WHERE ke.is_deleted = TRUE
+    LEFT JOIN users u ON ke.created_by = u.id
+    WHERE ke.is_deleted = TRUE AND ke.created_by = $1
     ORDER BY ke.deleted_at DESC
   `;
 
-  const rows = await query<KnowledgeEntryRow>(sql, []);
+  const rows = await query<KnowledgeEntryRow>(sql, [userId]);
   return rows.map(mapKnowledgeRow);
 }
 
@@ -464,16 +525,37 @@ export async function deleteAnnotation(annotationId: string): Promise<void> {
 
 /**
  * Get knowledge entries count (for pagination, excludes deleted)
+ * Uses same visibility rules as getAllKnowledgeEntries
  */
 export async function getKnowledgeEntriesCount(
   userId: string,
-  options: { tagIds?: number[] } = {}
+  options: {
+    tagIds?: number[];
+    orgId?: number | null;
+    role?: string;
+  } = {}
 ): Promise<number> {
-  const { tagIds } = options;
+  const { tagIds, orgId, role } = options;
 
-  const conditions: string[] = ['is_deleted = FALSE'];
-  const params: unknown[] = [];
-  let paramIndex = 1;
+  // Build visibility conditions (same as getAllKnowledgeEntries)
+  let visibilityCondition: string;
+  const params: unknown[] = [userId];
+  let paramIndex = 2;
+
+  if (role === 'owner' && orgId) {
+    params.push(orgId);
+    visibilityCondition = `(created_by = $1 OR created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))`;
+  } else if (role === 'member' && orgId) {
+    params.push(orgId);
+    visibilityCondition = `(
+      created_by = $1
+      OR (is_shared = TRUE AND created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))
+    )`;
+  } else {
+    visibilityCondition = `created_by = $1`;
+  }
+
+  const conditions: string[] = ['is_deleted = FALSE', visibilityCondition];
 
   if (tagIds && tagIds.length > 0) {
     conditions.push(

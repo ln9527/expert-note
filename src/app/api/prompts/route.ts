@@ -17,12 +17,15 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
+    // Use org-based visibility
     const result = await getAllPrompts(String(user.userId), {
       templateType,
       search,
       tagIds,
       limit,
       offset,
+      orgId: user.orgId,
+      role: user.role,
     });
 
     return NextResponse.json({

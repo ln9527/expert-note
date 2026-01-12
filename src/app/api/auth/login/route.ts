@@ -41,11 +41,13 @@ export async function POST(request: NextRequest) {
     // Update last login
     await updateLastLogin(user.userId);
 
-    // Create session
+    // Create session with org and role
     await createSession({
       userId: user.userId,
       username: user.username,
       displayName: user.displayName,
+      orgId: user.orgId,
+      role: user.role,
     });
 
     return NextResponse.json({
@@ -54,6 +56,8 @@ export async function POST(request: NextRequest) {
         id: user.userId,
         username: user.username,
         displayName: user.displayName,
+        orgId: user.orgId,
+        role: user.role,
       },
     });
   } catch (error) {

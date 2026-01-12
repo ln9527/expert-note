@@ -385,3 +385,26 @@ onAnnotationSubmit(level, content) {
 | Auth (MVP) | Hardcoded users |
 | Doc Organization | Tag-based |
 | Initial Focus | Paper writing domain |
+
+
+## additional features
+1. voice based annotation - expert speak and ai process voice to add note to documents - agents that work as a flow to use annotation label to make judgement and added to source documents 
+  keep raw as well as ai procssed voice
+  insert voice anytime anyplace to the note
+2. annotation label management - beyond macro meso micro which is paper based but later can be more finer grained
+  annotation template - create different types of annotation template with extraction guide template - that it is a pre-set skills that have annotation systems and how to extract those annotations into knowledge
+  template include annotation template, extraction template, prompt generation template
+3. beyond text - code, image, production plan etc
+4. mcp server that list prompt guide created and under what situations it used 
+5. create skills for claude code to download
+
+essentially it connects to knowledge into ai systems for production - create guide - that can be used in workflow, agent design etc - fit with current framework - like claude-skill, mcp, and any future tools vs knowledge
+
+backend agent systems to automate the process - combine ai general knowledge with specific knowledge extracted from the expert to do so
+
+
+6. barriers - agents to extract knowledge that allow users to provide their raw inputs that ai take care of knowledge extraction, create prompts, fine tune Q-A pairs... data for reinforce learning from human feedback - such as annotation based on ratings - ai automatically create data for different purpose of use
+7. agents that scan entire knowledge base to get workflow - or suggest workflows
+8. integrate with other ai tools - we only be part of the workflow
+9. situations - teacher - train teaching feedback, mba thesis feedback, doctoral thesis feedback... targeted user - teacher, grading, thesis etc.. that create prompts to grade students etc or provide checklists and comments to the users
+

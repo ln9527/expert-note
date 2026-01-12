@@ -27,15 +27,19 @@ export default function KnowledgeEditPage() {
   const [newTag, setNewTag] = useState('');
   const [editedAnnotations, setEditedAnnotations] = useState<Map<string, string>>(new Map());
 
+  // Permission state
+  const [canEdit, setCanEdit] = useState(true);
+
   // Fetch knowledge entry details
   const fetchEntry = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [entryRes, tagsRes] = await Promise.all([
+      const [entryRes, tagsRes, sessionRes] = await Promise.all([
         fetch(buildApiPath(`knowledge/${id}`)),
         fetch(buildApiPath('tags')),
+        fetch(buildApiPath('auth/session')),
       ]);
 
       if (!entryRes.ok) {
@@ -47,12 +51,27 @@ export default function KnowledgeEditPage() {
 
       const entryData = await entryRes.json();
       const tagsData = await tagsRes.json();
+      const sessionData = await sessionRes.json();
 
       const fetchedEntry = entryData.entry;
       setEntry(fetchedEntry);
       setBackground(fetchedEntry.background || '');
       setSelectedTags((fetchedEntry.tags || []).map((t: Tag) => t.name));
       setAllTags(tagsData.tags || []);
+
+      // Check edit permission
+      if (sessionData.authenticated && sessionData.user) {
+        const currentUserId = sessionData.user.userId;
+        const currentUserOrgId = sessionData.user.orgId;
+
+        const userCanEdit =
+          fetchedEntry.createdBy === currentUserId ||
+          (fetchedEntry.isShared && fetchedEntry.allowEdit &&
+           currentUserOrgId && fetchedEntry.creator?.orgId &&
+           currentUserOrgId === fetchedEntry.creator.orgId);
+
+        setCanEdit(userCanEdit);
+      }
 
       // Initialize edited annotations with current refined comments
       const annotationEdits = new Map<string, string>();
@@ -76,7 +95,7 @@ export default function KnowledgeEditPage() {
 
   // Handle save
   const handleSave = async () => {
-    if (!entry) return;
+    if (!entry || !canEdit) return;
 
     try {
       setSaving(true);
@@ -122,6 +141,7 @@ export default function KnowledgeEditPage() {
   };
 
   const handleAddTag = () => {
+    if (!canEdit) return;
     const trimmed = newTag.trim();
     if (trimmed && !selectedTags.includes(trimmed)) {
       setSelectedTags([...selectedTags, trimmed]);
@@ -130,10 +150,12 @@ export default function KnowledgeEditPage() {
   };
 
   const handleRemoveTag = (tag: string) => {
+    if (!canEdit) return;
     setSelectedTags(selectedTags.filter((t) => t !== tag));
   };
 
   const handleAnnotationChange = (annotationId: string, value: string) => {
+    if (!canEdit) return;
     setEditedAnnotations((prev) => {
       const newMap = new Map(prev);
       newMap.set(annotationId, value);
@@ -186,33 +208,49 @@ export default function KnowledgeEditPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Cancel
+            {canEdit ? 'Cancel' : 'Back'}
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Edit Knowledge Entry</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {canEdit ? 'Edit Knowledge Entry' : 'View Knowledge Entry'}
+          </h1>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
-        >
-          {saving ? (
-            <>
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Saving...
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Save Changes
-            </>
-          )}
-        </button>
+        {canEdit && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+          >
+            {saving ? (
+              <>
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Save Changes
+              </>
+            )}
+          </button>
+        )}
       </div>
+
+      {/* Read-Only Banner */}
+      {!canEdit && entry?.creator && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-2 text-sm text-blue-700">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span>View only - Shared by {entry.creator.displayName || entry.creator.username}</span>
+          </div>
+        </div>
+      )}
 
       {/* Background Section */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
@@ -229,7 +267,8 @@ export default function KnowledgeEditPage() {
             value={background}
             onChange={(e) => setBackground(e.target.value)}
             rows={4}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+            readOnly={!canEdit}
+            className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y ${!canEdit ? 'bg-gray-50 cursor-not-allowed' : ''}`}
             placeholder="Enter background context for this knowledge entry..."
           />
         </div>
@@ -253,49 +292,53 @@ export default function KnowledgeEditPage() {
                 className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
               >
                 {tagName}
-                <button
-                  onClick={() => handleRemoveTag(tagName)}
-                  className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                {canEdit && (
+                  <button
+                    onClick={() => handleRemoveTag(tagName)}
+                    className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </span>
             ))}
             {selectedTags.length === 0 && (
               <span className="text-sm text-gray-400 italic">No tags selected</span>
             )}
           </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddTag();
-                }
-              }}
-              placeholder="Add a tag..."
-              list="available-tags"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <datalist id="available-tags">
-              {allTags
-                .filter((t) => !selectedTags.includes(t.name))
-                .map((t) => (
-                  <option key={t.id} value={t.name} />
-                ))}
-            </datalist>
-            <button
-              onClick={handleAddTag}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Add
-            </button>
-          </div>
+          {canEdit && (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+                placeholder="Add a tag..."
+                list="available-tags"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <datalist id="available-tags">
+                {allTags
+                  .filter((t) => !selectedTags.includes(t.name))
+                  .map((t) => (
+                    <option key={t.id} value={t.name} />
+                  ))}
+              </datalist>
+              <button
+                onClick={handleAddTag}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Add
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -350,7 +393,8 @@ export default function KnowledgeEditPage() {
                       value={editedAnnotations.get(annotation.id) || ''}
                       onChange={(e) => handleAnnotationChange(annotation.id, e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y text-sm"
+                      readOnly={!canEdit}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y text-sm ${!canEdit ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                       placeholder="Enter refined comment..."
                     />
                   </div>
@@ -367,15 +411,17 @@ export default function KnowledgeEditPage() {
           href={`/knowledge/${id}`}
           className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
         >
-          Cancel
+          {canEdit ? 'Cancel' : 'Back'}
         </Link>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
-        >
-          {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        {canEdit && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 
 export default function LoginForm() {
@@ -98,9 +99,12 @@ export default function LoginForm() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
-            Default credentials: expert1 / expert123
-          </p>
+          <div className="mt-6 text-center text-sm">
+            <span className="text-gray-600">Don't have an account? </span>
+            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+              Register with invitation code
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -1,12 +1,14 @@
 // Session management using iron-session
 import { getIronSession, IronSession } from 'iron-session';
 import { cookies } from 'next/headers';
-import { Session } from '@/types';
+import { Session, UserRole } from '@/types';
 
 export interface SessionData {
   userId?: number;
   username?: string;
   displayName?: string | null;
+  orgId?: number | null;
+  role?: UserRole;
   isLoggedIn: boolean;
 }
 
@@ -38,11 +40,15 @@ export async function createSession(user: {
   userId: number;
   username: string;
   displayName: string | null;
+  orgId: number | null;
+  role: UserRole;
 }): Promise<void> {
   const session = await getSession();
   session.userId = user.userId;
   session.username = user.username;
   session.displayName = user.displayName;
+  session.orgId = user.orgId;
+  session.role = user.role;
   session.isLoggedIn = true;
   await session.save();
 }
@@ -63,6 +69,8 @@ export async function getSessionUser(): Promise<Session | null> {
     userId: session.userId,
     username: session.username!,
     displayName: session.displayName || session.username!,
+    orgId: session.orgId ?? null,
+    role: session.role ?? 'member',
   };
 }
 

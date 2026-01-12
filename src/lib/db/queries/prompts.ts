@@ -32,10 +32,18 @@ export interface SystemPromptRow {
   source_document_ids: string[] | null;
   base_prompt_id: string | null;
   version: number;
+  is_shared: boolean;
+  allow_edit: boolean;
   created_at: string;
   updated_at: string;
   is_deleted: boolean;
   deleted_at: string | null;
+  // Joined from users table
+  creator?: {
+    id: number;
+    username: string;
+    displayName: string | null;
+  } | null;
 }
 
 export interface SystemPrompt {
@@ -49,11 +57,18 @@ export interface SystemPrompt {
   sourceDocumentIds: string[];
   basePromptId: string | null;
   version: number;
+  isShared: boolean;
+  allowEdit: boolean;
   isDeleted: boolean;
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   tags: Tag[];
+  creator?: {
+    id: number;
+    username: string;
+    displayName: string | null;
+  } | null;
 }
 
 interface TagRow {
@@ -74,11 +89,14 @@ function mapPromptRow(row: SystemPromptRow, tags: Tag[] = []): SystemPrompt {
     sourceDocumentIds: row.source_document_ids || [],
     basePromptId: row.base_prompt_id,
     version: row.version,
+    isShared: row.is_shared ?? false,
+    allowEdit: row.allow_edit ?? false,
     isDeleted: row.is_deleted || false,
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     tags,
+    creator: row.creator || null,
   };
 }
 
@@ -88,6 +106,9 @@ export interface GetAllPromptsOptions {
   search?: string;
   limit?: number;
   offset?: number;
+  // Org visibility options
+  orgId?: number | null;
+  role?: string;
 }
 
 /**
@@ -139,17 +160,42 @@ export async function updatePromptTags(promptId: string, tagIds: number[]): Prom
 }
 
 /**
- * Get all prompts for a user with optional filtering and pagination
+ * Get all prompts with org-based visibility
+ *
+ * Visibility rules:
+ * - Users see their own prompts (user_id = userId)
+ * - Users see shared prompts from same org (is_shared = true AND creator in same org)
+ * - Org owners see ALL prompts in their org
+ * - Individual users only see their own prompts
  */
 export async function getAllPrompts(
   userId: string,
   options: GetAllPromptsOptions = {}
 ): Promise<{ prompts: SystemPrompt[]; total: number }> {
-  const { templateType, tagIds, search, limit = 50, offset = 0 } = options;
+  const { templateType, tagIds, search, limit = 50, offset = 0, orgId, role } = options;
 
-  const conditions: string[] = ['sp.user_id = $1', 'sp.is_deleted = FALSE'];
+  const conditions: string[] = ['sp.is_deleted = FALSE'];
   const params: unknown[] = [userId];
   let paramIndex = 2;
+
+  // Build visibility condition based on role
+  let visibilityCondition: string;
+  if (role === 'owner' && orgId) {
+    // Owners see ALL prompts in their org
+    params.push(orgId);
+    visibilityCondition = `(sp.user_id = $1 OR sp.user_id IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))`;
+  } else if (role === 'member' && orgId) {
+    // Members see own prompts + shared prompts from same org
+    params.push(orgId);
+    visibilityCondition = `(
+      sp.user_id = $1
+      OR (sp.is_shared = TRUE AND sp.user_id IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))
+    )`;
+  } else {
+    // Individuals and users without org: only own prompts
+    visibilityCondition = `sp.user_id = $1`;
+  }
+  conditions.push(visibilityCondition);
 
   if (templateType) {
     conditions.push(`sp.template_type = $${paramIndex++}`);
@@ -192,25 +238,32 @@ export async function getAllPrompts(
     `
     : `SELECT COUNT(*) as total FROM system_prompts sp WHERE ${whereClause}`;
 
-  const countParams = tagIds && tagIds.length > 0 ? params.slice(0, -1).concat([tagIds]) : params.slice(0, paramIndex - (tagIds?.length ? 1 : 0));
-  const countResult = await queryOne<{ total: string }>(countSql, params.slice(0, paramIndex - 1 + (tagIds?.length ? 1 : 0)));
+  const countResult = await queryOne<{ total: string }>(countSql, params);
   const total = parseInt(countResult?.total || '0', 10);
 
-  // Get paginated results with tags
+  // Get paginated results with creator info
   const sql = tagIds && tagIds.length > 0
     ? `
-      SELECT sp.*
+      SELECT sp.*,
+        CASE WHEN u.id IS NOT NULL THEN
+          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+        ELSE NULL END as creator
       FROM system_prompts sp
+      LEFT JOIN users u ON sp.user_id = u.id
       ${tagJoin}
       WHERE ${whereClause}
-      GROUP BY sp.id
+      GROUP BY sp.id, u.id, u.username, u.display_name
       ${tagHaving}
       ORDER BY sp.updated_at DESC
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}
     `
     : `
-      SELECT sp.*
+      SELECT sp.*,
+        CASE WHEN u.id IS NOT NULL THEN
+          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+        ELSE NULL END as creator
       FROM system_prompts sp
+      LEFT JOIN users u ON sp.user_id = u.id
       WHERE ${whereClause}
       ORDER BY sp.updated_at DESC
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}

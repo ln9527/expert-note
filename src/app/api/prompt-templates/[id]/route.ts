@@ -6,6 +6,10 @@ import {
   deletePromptTemplate,
   duplicatePromptTemplate,
 } from '@/lib/db/queries/promptTemplates';
+import { UserRole } from '@/types';
+
+// Admin roles that can manage generation guides
+const ADMIN_ROLES: UserRole[] = ['super_admin', 'owner'];
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -56,6 +60,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Only admin users can update generation guides
+    if (!ADMIN_ROLES.includes(user.role as UserRole)) {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { name, description, content, templateType, isActive } = body;
@@ -90,6 +99,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Only admin users can delete generation guides
+    if (!ADMIN_ROLES.includes(user.role as UserRole)) {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -127,6 +141,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Only admin users can duplicate generation guides
+    if (!ADMIN_ROLES.includes(user.role as UserRole)) {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
 
     const { id } = await params;

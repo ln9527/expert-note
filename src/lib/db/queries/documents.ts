@@ -12,6 +12,8 @@ interface DocumentRow {
   status: string;
   created_by: number | null;
   updated_by: number | null;
+  is_shared: boolean;
+  allow_edit: boolean;
   is_deleted: boolean;
   deleted_at: string | null;
   created_at: string;
@@ -30,6 +32,8 @@ function mapDocumentRow(row: DocumentRow): Document {
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     creator: row.creator || null,
+    isShared: row.is_shared ?? false,
+    allowEdit: row.allow_edit ?? false,
     isDeleted: row.is_deleted,
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
     createdAt: new Date(row.created_at),
@@ -39,14 +43,27 @@ function mapDocumentRow(row: DocumentRow): Document {
   };
 }
 
+/**
+ * Get documents with org-based visibility
+ *
+ * Visibility rules:
+ * - Users see their own documents (created_by = userId)
+ * - Users see shared documents from same org (is_shared = true AND creator in same org)
+ * - Org owners see ALL documents in their org
+ * - Individual users only see their own documents
+ */
 export async function getDocuments(options: {
   includeDeleted?: boolean;
   status?: string;
   tagIds?: number[];
   search?: string;
   createdBy?: number;
+  // Org visibility options
+  userId?: number;
+  orgId?: number | null;
+  role?: string;
 } = {}): Promise<Document[]> {
-  const { includeDeleted = false, status, tagIds, search, createdBy } = options;
+  const { includeDeleted = false, status, tagIds, search, createdBy, userId, orgId, role } = options;
 
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -54,6 +71,33 @@ export async function getDocuments(options: {
 
   if (!includeDeleted) {
     conditions.push(`d.is_deleted = FALSE`);
+  }
+
+  // Build visibility condition if userId is provided
+  if (userId !== undefined) {
+    params.push(userId);
+    let visibilityCondition: string;
+
+    if (role === 'owner' && orgId) {
+      // Owners see ALL documents in their org
+      params.push(orgId);
+      visibilityCondition = `(d.created_by = $${paramIndex++} OR d.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))`;
+    } else if (role === 'member' && orgId) {
+      // Members see own docs + shared docs from same org
+      params.push(orgId);
+      visibilityCondition = `(
+        d.created_by = $${paramIndex++}
+        OR (d.is_shared = TRUE AND d.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))
+      )`;
+    } else {
+      // Individuals and users without org: only own documents
+      visibilityCondition = `d.created_by = $${paramIndex++}`;
+    }
+    conditions.push(visibilityCondition);
+  } else if (createdBy !== undefined && createdBy !== null) {
+    // Legacy: Filter by specific creator (backwards compatibility)
+    conditions.push(`d.created_by = $${paramIndex++}`);
+    params.push(createdBy);
   }
 
   if (status) {
@@ -73,12 +117,6 @@ export async function getDocuments(options: {
     paramIndex++;
   }
 
-  // Filter by creator/uploader
-  if (createdBy !== undefined && createdBy !== null) {
-    conditions.push(`d.created_by = $${paramIndex++}`);
-    params.push(createdBy);
-  }
-
   const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
 
   const sql = `
@@ -95,7 +133,7 @@ export async function getDocuments(options: {
         'micro', COUNT(*) FILTER (WHERE level = 'MICRO')
       ) FROM annotations WHERE document_id = d.id) as annotation_counts,
       CASE WHEN u.id IS NOT NULL THEN
-        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
       ELSE NULL END as creator
     FROM documents d
     LEFT JOIN users u ON d.created_by = u.id
@@ -122,7 +160,7 @@ export async function getDocumentById(id: string): Promise<Document | null> {
         'micro', COUNT(*) FILTER (WHERE level = 'MICRO')
       ) FROM annotations WHERE document_id = d.id) as annotation_counts,
       CASE WHEN u.id IS NOT NULL THEN
-        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
       ELSE NULL END as creator
     FROM documents d
     LEFT JOIN users u ON d.created_by = u.id
@@ -207,11 +245,13 @@ export async function updateDocument(
     filename?: string;
     content?: string;
     tagIds?: number[];
+    isShared?: boolean;
+    allowEdit?: boolean;
     updatedBy: number;
   }
 ): Promise<Document> {
   return transaction(async (client: PoolClient) => {
-    const { filename, content, tagIds, updatedBy } = data;
+    const { filename, content, tagIds, isShared, allowEdit, updatedBy } = data;
 
     // Build update query
     const updates: string[] = ['updated_by = $2'];
@@ -226,6 +266,16 @@ export async function updateDocument(
     if (content !== undefined) {
       updates.push(`content = $${paramIndex++}`);
       params.push(content);
+    }
+
+    if (isShared !== undefined) {
+      updates.push(`is_shared = $${paramIndex++}`);
+      params.push(isShared);
+    }
+
+    if (allowEdit !== undefined) {
+      updates.push(`allow_edit = $${paramIndex++}`);
+      params.push(allowEdit);
     }
 
     await client.query(
@@ -310,8 +360,9 @@ export async function restoreDocument(id: string): Promise<Document | null> {
 
 /**
  * Get all soft-deleted documents (for trash)
+ * SECURITY: Now properly filters by user
  */
-export async function getDeletedDocuments(): Promise<Document[]> {
+export async function getDeletedDocuments(userId: number): Promise<Document[]> {
   const sql = `
     SELECT
       d.*,
@@ -326,14 +377,14 @@ export async function getDeletedDocuments(): Promise<Document[]> {
         'micro', COUNT(*) FILTER (WHERE level = 'MICRO')
       ) FROM annotations WHERE document_id = d.id) as annotation_counts,
       CASE WHEN u.id IS NOT NULL THEN
-        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
       ELSE NULL END as creator
     FROM documents d
     LEFT JOIN users u ON d.created_by = u.id
-    WHERE d.is_deleted = TRUE
+    WHERE d.is_deleted = TRUE AND d.created_by = $1
     ORDER BY d.deleted_at DESC
   `;
 
-  const rows = await query<DocumentRow>(sql, []);
+  const rows = await query<DocumentRow>(sql, [userId]);
   return rows.map(mapDocumentRow);
 }

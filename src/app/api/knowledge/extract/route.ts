@@ -154,6 +154,7 @@ export async function POST(request: NextRequest) {
       background: entryBackground,
       tagIds: entryTagIds,
       annotations,
+      createdBy: user.userId,  // SECURITY: Track who created this entry
     });
 
     // Fetch the complete entry with annotations

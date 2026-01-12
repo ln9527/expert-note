@@ -14,6 +14,7 @@ export interface TrashItem {
 /**
  * GET /api/trash
  * Get all soft-deleted items (documents, prompts, knowledge entries)
+ * SECURITY: Now properly filters all items by user
  */
 export async function GET() {
   try {
@@ -22,11 +23,11 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch all deleted items in parallel
+    // Fetch all deleted items in parallel - SECURITY: all filtered by user
     const [documents, prompts, knowledge] = await Promise.all([
-      getDeletedDocuments(),
+      getDeletedDocuments(user.userId),
       getDeletedPrompts(String(user.userId)),
-      getDeletedKnowledgeEntries(),
+      getDeletedKnowledgeEntries(String(user.userId)),
     ]);
 
     // Transform to unified TrashItem format
@@ -117,11 +118,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    // Empty entire trash
+    // Empty entire trash - SECURITY: all filtered by user
     const [documents, prompts, knowledge] = await Promise.all([
-      getDeletedDocuments(),
+      getDeletedDocuments(user.userId),
       getDeletedPrompts(String(user.userId)),
-      getDeletedKnowledgeEntries(),
+      getDeletedKnowledgeEntries(String(user.userId)),
     ]);
 
     // Delete all items in parallel

@@ -111,6 +111,9 @@ export async function POST(request: NextRequest) {
           id: `doc-${documentId}`,
           sourceDocumentId: documentId,
           background: `Document: ${document.filename}`,
+          createdBy: document.createdBy,  // Inherit from document
+          isShared: document.isShared,    // Inherit from document
+          allowEdit: document.allowEdit,  // Inherit from document
           createdAt: document.createdAt,
           updatedAt: document.updatedAt,
           tags: document.tags,

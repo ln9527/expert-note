@@ -1,16 +1,22 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { buildApiPath } from '@/lib/utils/pathHelper';
-import { PromptTemplate, PromptTemplateCategory } from '@/types';
+import { PromptTemplate, PromptTemplateCategory, UserRole } from '@/types';
 
 type FilterCategory = 'all' | PromptTemplateCategory;
 
+// Admin roles that can access generation guides
+const ADMIN_ROLES: UserRole[] = ['super_admin', 'owner'];
+
 export default function PromptTemplatesPage() {
+  const router = useRouter();
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<FilterCategory>('all');
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -23,6 +29,35 @@ export default function PromptTemplatesPage() {
     content: '',
   });
   const [saving, setSaving] = useState(false);
+
+  // Check admin access
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const response = await fetch(buildApiPath('auth/session'));
+        const data = await response.json();
+
+        if (!data.authenticated || !data.user) {
+          router.replace('/login');
+          return;
+        }
+
+        const userRole = data.user.role as UserRole;
+        if (!ADMIN_ROLES.includes(userRole)) {
+          // Not an admin, redirect to dashboard
+          router.replace('/');
+          return;
+        }
+
+        setIsAdmin(true);
+      } catch (err) {
+        console.error('Failed to check access:', err);
+        router.replace('/login');
+      }
+    };
+
+    checkAccess();
+  }, [router]);
 
   // Fetch templates
   const fetchTemplates = useCallback(async () => {
@@ -45,8 +80,11 @@ export default function PromptTemplatesPage() {
   }, []);
 
   useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
+    // Only fetch templates if user is confirmed admin
+    if (isAdmin) {
+      fetchTemplates();
+    }
+  }, [isAdmin, fetchTemplates]);
 
   // Filter templates
   const filteredTemplates = filter === 'all'
@@ -188,12 +226,18 @@ export default function PromptTemplatesPage() {
     }
   };
 
-  if (loading) {
+  // Show loading while checking access or loading templates
+  if (isAdmin === null || loading) {
     return (
       <div className="flex justify-center items-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
+  }
+
+  // This shouldn't render if not admin (redirect happens), but just in case
+  if (!isAdmin) {
+    return null;
   }
 
   return (

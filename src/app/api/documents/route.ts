@@ -18,12 +18,15 @@ export async function GET(request: NextRequest) {
     const createdByParam = searchParams.get('createdBy');
     const createdBy = createdByParam ? parseInt(createdByParam) : undefined;
 
+    // Use org-based visibility
     const documents = await getDocuments({
       status,
       tagIds,
       includeDeleted,
       search,
-      createdBy
+      userId: user.userId,
+      orgId: user.orgId,
+      role: user.role,
     });
 
     return NextResponse.json({ success: true, documents });

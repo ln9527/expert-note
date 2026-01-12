@@ -25,15 +25,21 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
-    // Get knowledge entries
+    // Get knowledge entries with org visibility
     const entries = await getAllKnowledgeEntries(String(user.userId), {
       tagIds,
       limit,
       offset,
+      orgId: user.orgId,
+      role: user.role,
     });
 
-    // Get total count for pagination
-    const totalCount = await getKnowledgeEntriesCount(String(user.userId), { tagIds });
+    // Get total count for pagination (also needs org visibility)
+    const totalCount = await getKnowledgeEntriesCount(String(user.userId), {
+      tagIds,
+      orgId: user.orgId,
+      role: user.role,
+    });
 
     return NextResponse.json({
       success: true,
@@ -125,6 +131,7 @@ export async function POST(request: NextRequest) {
         positionLine: ann.positionLine,
         positionChar: ann.positionChar,
       })),
+      createdBy: user.userId,  // SECURITY: Track who created this entry
     });
 
     return NextResponse.json({ success: true, entry }, { status: 201 });

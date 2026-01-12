@@ -115,12 +115,47 @@ export const LEVEL_CONFIG: Record<AnnotationLevel, LevelConfig> = {
   },
 };
 
+// User roles in the system
+export type UserRole = 'super_admin' | 'owner' | 'member' | 'individual';
+
 export interface User {
   userId: number;
   username: string;
   displayName: string;
+  phone: string | null;
+  orgId: number | null;
+  role: UserRole;
   isActive: boolean;
   lastLogin: Date | null;
+  createdAt: Date;
+}
+
+// Organization type
+export interface Organization {
+  id: number;
+  name: string;
+  description: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Organization with metadata (for admin UI)
+export interface OrganizationWithMeta extends Organization {
+  ownerCodeUsed: boolean;
+  memberCount: number;
+}
+
+// Invitation code types
+export type InvitationCodeType = 'individual' | 'org_owner' | 'org_member';
+
+export interface InvitationCode {
+  id: number;
+  code: string;
+  type: InvitationCodeType;
+  orgId: number | null;       // For org_member/org_owner: existing org to join
+  createdBy: number | null;
+  usedBy: number | null;
+  usedAt: Date | null;
   createdAt: Date;
 }
 
@@ -141,6 +176,7 @@ export interface CreatorInfo {
   id: number;
   username: string;
   displayName: string | null;
+  orgId: number | null;
 }
 
 export interface Document {
@@ -151,6 +187,8 @@ export interface Document {
   createdBy: number | null;
   updatedBy: number | null;
   creator: CreatorInfo | null;
+  isShared: boolean;
+  allowEdit: boolean;
   isDeleted: boolean;
   deletedAt: Date | null;
   createdAt: Date;
@@ -183,6 +221,8 @@ export interface SessionUser {
   userId: number;
   username: string;
   displayName: string;
+  orgId: number | null;
+  role: UserRole;
 }
 
 // Session type for auth module
@@ -190,6 +230,8 @@ export interface Session {
   userId: number;
   username: string;
   displayName: string | null;
+  orgId: number | null;
+  role: UserRole;
 }
 
 // Knowledge Entry type - matches database schema
@@ -198,11 +240,15 @@ export interface KnowledgeEntry {
   id: string;
   sourceDocumentId: string | null;
   background: string | null;
+  createdBy: number | null;
+  isShared: boolean;
+  allowEdit: boolean;
   createdAt: Date;
   updatedAt: Date;
   tags: Tag[];
   annotationCount: number;
   sourceDocumentName?: string;
+  creator?: CreatorInfo | null;
 }
 
 // Knowledge Annotation type - individual annotations within a knowledge entry
@@ -272,11 +318,14 @@ export interface SystemPrompt {
   sourceDocumentIds: string[];  // Direct document references (bypass knowledge extraction)
   basePromptId: string | null;  // Reference to base prompt for versioning chain
   version: number;
+  isShared: boolean;
+  allowEdit: boolean;
   isDeleted: boolean;
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   tags: Tag[];  // Tags for filtering and organization
+  creator?: CreatorInfo | null;
 }
 
 // Version history entry for system prompts

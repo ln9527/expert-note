@@ -39,6 +39,9 @@ export default function DocumentEditorPage() {
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
 
+  // Permission state
+  const [canEdit, setCanEdit] = useState(true);
+
   // Document switcher state
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [allDocuments, setAllDocuments] = useState<Document[]>([]);
@@ -61,25 +64,42 @@ export default function DocumentEditorPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [docRes, tagsRes, guidesRes] = await Promise.all([
+        const [docRes, tagsRes, guidesRes, sessionRes] = await Promise.all([
           fetch(buildApiPath(`documents/${documentId}`)),
           fetch(buildApiPath('tags')),
           fetch(buildApiPath('prompt-templates?category=extraction')),
+          fetch(buildApiPath('auth/session')),
         ]);
 
         const docData = await docRes.json();
         const tagsData = await tagsRes.json();
         const guidesData = await guidesRes.json();
+        const sessionData = await sessionRes.json();
 
         if (!docData.success) {
           setError(docData.error || 'Failed to load document');
           return;
         }
 
-        setDocument(docData.document);
-        setTitle(docData.document.filename);
-        setContent(docData.document.content);
-        setSelectedTagIds(docData.document.tags.map((t: Tag) => t.id));
+        const document = docData.document;
+        setDocument(document);
+        setTitle(document.filename);
+        setContent(document.content);
+        setSelectedTagIds(document.tags.map((t: Tag) => t.id));
+
+        // Check edit permission
+        if (sessionData.authenticated && sessionData.user) {
+          const currentUserId = sessionData.user.userId;
+          const currentUserOrgId = sessionData.user.orgId;
+
+          const userCanEdit =
+            document.createdBy === currentUserId ||
+            (document.isShared && document.allowEdit &&
+             currentUserOrgId && document.creator?.orgId &&
+             currentUserOrgId === document.creator.orgId);
+
+          setCanEdit(userCanEdit);
+        }
 
         if (tagsData.success) {
           setAllTags(tagsData.tags);
@@ -130,6 +150,8 @@ export default function DocumentEditorPage() {
   // Auto-save function
   const saveDocument = useCallback(
     async (newContent?: string, newTitle?: string, newTagIds?: number[]) => {
+      if (!canEdit) return; // Prevent save if read-only
+
       setSaving(true);
       setSaveStatus('saving');
 
@@ -161,7 +183,7 @@ export default function DocumentEditorPage() {
         setSaving(false);
       }
     },
-    [documentId, title, content, selectedTagIds]
+    [documentId, title, content, selectedTagIds, canEdit]
   );
 
   // Debounced save on content change
@@ -207,6 +229,7 @@ export default function DocumentEditorPage() {
 
   // Handle tag toggle
   const handleTagToggle = (tagId: number) => {
+    if (!canEdit) return; // Prevent changes if read-only
     const newTagIds = selectedTagIds.includes(tagId)
       ? selectedTagIds.filter((id) => id !== tagId)
       : [...selectedTagIds, tagId];
@@ -492,6 +515,18 @@ export default function DocumentEditorPage() {
           </div>
         </div>
 
+        {/* Read-Only Banner */}
+        {!canEdit && document?.creator && (
+          <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-blue-700">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <span>View only - Shared by {document.creator.displayName || document.creator.username}</span>
+            </div>
+          </div>
+        )}
+
         {/* Error Banner */}
         {error && (
           <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-red-700 text-sm">
@@ -511,6 +546,7 @@ export default function DocumentEditorPage() {
             initialContent={content}
             onChange={handleContentChange}
             onSave={handleManualSave}
+            readOnly={!canEdit}
           />
         </div>
       </div>
@@ -685,7 +721,7 @@ export default function DocumentEditorPage() {
 
               <button
                 onClick={openExtractModal}
-                disabled={extracting}
+                disabled={extracting || !canEdit}
                 className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {extracting ? 'Extracting...' : 'Extract Knowledge'}
@@ -699,12 +735,14 @@ export default function DocumentEditorPage() {
                 </svg>
                 Download
               </button>
-              <button
-                onClick={handleDelete}
-                className="w-full px-3 py-2 border border-red-300 text-red-600 text-sm rounded-lg hover:bg-red-50 transition-colors"
-              >
-                Delete Document
-              </button>
+              {canEdit && (
+                <button
+                  onClick={handleDelete}
+                  className="w-full px-3 py-2 border border-red-300 text-red-600 text-sm rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  Delete Document
+                </button>
+              )}
             </div>
           </div>
 

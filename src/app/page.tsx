@@ -21,6 +21,9 @@ export default function Dashboard() {
   const [deletingDoc, setDeletingDoc] = useState<Document | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Toggle state for share/edit operations
+  const [togglingDocId, setTogglingDocId] = useState<string | null>(null);
+
   // Filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
@@ -176,6 +179,76 @@ export default function Dashboard() {
     }
   };
 
+  const handleShareToggle = async (doc: Document, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // Only owners can toggle sharing
+    if (!user || doc.createdBy !== user.userId) return;
+
+    setTogglingDocId(doc.id);
+    try {
+      const res = await fetch(buildApiPath(`documents/${doc.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isShared: !doc.isShared,
+          // If disabling sharing, also disable edit permission
+          allowEdit: !doc.isShared ? false : doc.allowEdit
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // Update local state
+        setDocuments(documents.map(d =>
+          d.id === doc.id
+            ? { ...d, isShared: !doc.isShared, allowEdit: !doc.isShared ? false : doc.allowEdit }
+            : d
+        ));
+        setError('');
+      } else {
+        setError(data.error || 'Failed to update sharing settings');
+      }
+    } catch (err) {
+      console.error('Share toggle error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setTogglingDocId(null);
+    }
+  };
+
+  const handleEditToggle = async (doc: Document, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // Only owners can toggle edit permission, and only when document is shared
+    if (!user || doc.createdBy !== user.userId || !doc.isShared) return;
+
+    setTogglingDocId(doc.id);
+    try {
+      const res = await fetch(buildApiPath(`documents/${doc.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ allowEdit: !doc.allowEdit }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // Update local state
+        setDocuments(documents.map(d =>
+          d.id === doc.id ? { ...d, allowEdit: !doc.allowEdit } : d
+        ));
+        setError('');
+      } else {
+        setError(data.error || 'Failed to update edit permission');
+      }
+    } catch (err) {
+      console.error('Edit toggle error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setTogglingDocId(null);
+    }
+  };
+
   const handleClearAllFilters = () => {
     setSearchTerm('');
     setSelectedTagIds([]);
@@ -314,6 +387,12 @@ export default function Dashboard() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Updated
                   </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Sharing
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Edit
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -391,6 +470,60 @@ export default function Dashboard() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(doc.updatedAt)}
                     </td>
+                    {/* Sharing Column */}
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      {user && doc.createdBy === user.userId ? (
+                        // Owner: clickable toggle
+                        <button
+                          onClick={(e) => handleShareToggle(doc, e)}
+                          disabled={togglingDocId === doc.id}
+                          className={`text-xl ${
+                            togglingDocId === doc.id
+                              ? 'opacity-50 cursor-wait'
+                              : 'hover:scale-110 transition-transform'
+                          }`}
+                          title={doc.isShared ? 'Shared (click to make private)' : 'Private (click to share)'}
+                        >
+                          {doc.isShared ? '🔓' : '🔒'}
+                        </button>
+                      ) : (
+                        // Non-owner: read-only badge
+                        doc.isShared && (
+                          <span className="text-xl text-gray-400 cursor-default" title="Shared (read-only)">
+                            🔓
+                          </span>
+                        )
+                      )}
+                    </td>
+                    {/* Edit Column */}
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      {user && doc.createdBy === user.userId ? (
+                        // Owner: clickable toggle (only when shared)
+                        doc.isShared && (
+                          <button
+                            onClick={(e) => handleEditToggle(doc, e)}
+                            disabled={togglingDocId === doc.id}
+                            className={`text-xl ${
+                              togglingDocId === doc.id
+                                ? 'opacity-50 cursor-wait'
+                                : doc.allowEdit
+                                ? 'text-blue-600 hover:text-blue-800 hover:scale-110 transition-all'
+                                : 'text-gray-400 hover:text-blue-600 hover:scale-110 transition-all'
+                            }`}
+                            title={doc.allowEdit ? 'Members can edit (click to disable)' : 'Read-only for members (click to allow editing)'}
+                          >
+                            ✏️
+                          </button>
+                        )
+                      ) : (
+                        // Non-owner: read-only badge (only if shared and allowEdit is true)
+                        doc.isShared && doc.allowEdit && (
+                          <span className="text-xl text-gray-400 cursor-default" title="Can edit">
+                            ✏️
+                          </span>
+                        )
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
@@ -402,15 +535,18 @@ export default function Dashboard() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                           </svg>
                         </button>
-                        <button
-                          onClick={(e) => handleDeleteClick(doc, e)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        {/* Only show delete button for document owners */}
+                        {user && doc.createdBy === user.userId && (
+                          <button
+                            onClick={(e) => handleDeleteClick(doc, e)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

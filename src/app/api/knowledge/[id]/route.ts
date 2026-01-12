@@ -69,6 +69,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Check view permission
+    const isOwner = entry.createdBy === user.userId;
+    const creatorOrgId = entry.creator?.orgId;
+    const canView = isOwner ||
+                    (entry.isShared &&
+                     user.orgId &&
+                     creatorOrgId &&
+                     user.orgId === creatorOrgId);
+
+    if (!canView) {
+      return NextResponse.json(
+        { success: false, error: 'Knowledge entry not found' },
+        { status: 404 } // Return 404 to not reveal existence
+      );
+    }
+
     return NextResponse.json({ success: true, entry });
   } catch (error) {
     console.error('[API] GET /knowledge/[id] error:', error);
@@ -96,7 +112,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
     const body = await request.json();
-    const { background, tagIds, tags } = body;
+    const { background, tagIds, tags, isShared, allowEdit } = body;
 
     // Check if entry exists
     const existing = await getKnowledgeEntryById(id);
@@ -107,17 +123,48 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Check edit permission
+    const isOwner = existing.createdBy === user.userId;
+    const creatorOrgId = existing.creator?.orgId;
+    const canEdit = isOwner ||
+                    (existing.isShared &&
+                     existing.allowEdit &&
+                     user.orgId &&
+                     creatorOrgId &&
+                     user.orgId === creatorOrgId);
+
+    if (!canEdit) {
+      return NextResponse.json(
+        { success: false, error: 'You do not have permission to edit this knowledge entry' },
+        { status: 403 }
+      );
+    }
+
     // Resolve tag names to IDs if provided
     let resolvedTagIds = tagIds;
     if (tags && Array.isArray(tags)) {
       resolvedTagIds = await resolveTagNames(tags);
     }
 
-    // Update the entry
-    const entry = await updateKnowledgeEntry(id, {
+    // Build update data - only owner can change sharing settings
+    const updateData: {
+      background?: string;
+      tagIds?: number[];
+      isShared?: boolean;
+      allowEdit?: boolean;
+    } = {
       background,
       tagIds: resolvedTagIds,
-    });
+    };
+
+    // Only owner can modify sharing settings
+    if (isOwner) {
+      if (isShared !== undefined) updateData.isShared = isShared;
+      if (allowEdit !== undefined) updateData.allowEdit = allowEdit;
+    }
+
+    // Update the entry
+    const entry = await updateKnowledgeEntry(id, updateData);
 
     return NextResponse.json({ success: true, entry });
   } catch (error) {
@@ -154,6 +201,14 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Only creator can delete
+    if (existing.createdBy !== user.userId) {
+      return NextResponse.json(
+        { success: false, error: 'Only the creator can delete this knowledge entry' },
+        { status: 403 }
+      );
+    }
+
     if (permanent) {
       await permanentlyDeleteKnowledgeEntry(id);
     } else {
@@ -186,6 +241,23 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const { action } = body;
 
     if (action === 'restore') {
+      // First check if entry exists and verify ownership
+      const existing = await getKnowledgeEntryById(id, true); // true = include deleted
+      if (!existing) {
+        return NextResponse.json(
+          { success: false, error: 'Knowledge entry not found' },
+          { status: 404 }
+        );
+      }
+
+      // Only creator can restore
+      if (existing.createdBy !== user.userId) {
+        return NextResponse.json(
+          { success: false, error: 'Only the creator can restore this knowledge entry' },
+          { status: 403 }
+        );
+      }
+
       const entry = await restoreKnowledgeEntry(id);
       if (!entry) {
         return NextResponse.json(

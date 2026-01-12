@@ -4,6 +4,10 @@ import {
   getAllPromptTemplates,
   createPromptTemplate,
 } from '@/lib/db/queries/promptTemplates';
+import { UserRole } from '@/types';
+
+// Admin roles that can manage generation guides
+const ADMIN_ROLES: UserRole[] = ['super_admin', 'owner'];
 
 /**
  * GET /api/prompt-templates
@@ -62,6 +66,11 @@ export async function POST(request: NextRequest) {
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Only admin users can create generation guides
+    if (!ADMIN_ROLES.includes(user.role as UserRole)) {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
 
     const body = await request.json();
