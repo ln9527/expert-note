@@ -41,6 +41,7 @@ export default function DocumentEditorPage() {
 
   // Permission state
   const [canEdit, setCanEdit] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
 
   // Document switcher state
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -87,13 +88,18 @@ export default function DocumentEditorPage() {
         setContent(document.content);
         setSelectedTagIds(document.tags.map((t: Tag) => t.id));
 
-        // Check edit permission
+        // Check edit permission and ownership
         if (sessionData.authenticated && sessionData.user) {
           const currentUserId = sessionData.user.userId;
           const currentUserOrgId = sessionData.user.orgId;
 
+          // Owner check - only creator can delete
+          const userIsOwner = document.createdBy === currentUserId;
+          setIsOwner(userIsOwner);
+
+          // Edit check - owner OR shared with edit permission
           const userCanEdit =
-            document.createdBy === currentUserId ||
+            userIsOwner ||
             (document.isShared && document.allowEdit &&
              currentUserOrgId && document.creator?.orgId &&
              currentUserOrgId === document.creator.orgId);
@@ -735,7 +741,7 @@ export default function DocumentEditorPage() {
                 </svg>
                 Download
               </button>
-              {canEdit && (
+              {isOwner && (
                 <button
                   onClick={handleDelete}
                   className="w-full px-3 py-2 border border-red-300 text-red-600 text-sm rounded-lg hover:bg-red-50 transition-colors"

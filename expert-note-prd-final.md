@@ -394,6 +394,9 @@ onAnnotationSubmit(level, content) {
 2. annotation label management - beyond macro meso micro which is paper based but later can be more finer grained
   annotation template - create different types of annotation template with extraction guide template - that it is a pre-set skills that have annotation systems and how to extract those annotations into knowledge
   template include annotation template, extraction template, prompt generation template
+
+**extraction prompt** rules - extractiong - *high level principles*, *thinking and reasoning*, *rules*, *examples and tips*, *edge cases*
+
 3. beyond text - code, image, production plan etc
 4. mcp server that list prompt guide created and under what situations it used 
 5. create skills for claude code to download
@@ -407,4 +410,7 @@ backend agent systems to automate the process - combine ai general knowledge wit
 7. agents that scan entire knowledge base to get workflow - or suggest workflows
 8. integrate with other ai tools - we only be part of the workflow
 9. situations - teacher - train teaching feedback, mba thesis feedback, doctoral thesis feedback... targeted user - teacher, grading, thesis etc.. that create prompts to grade students etc or provide checklists and comments to the users
+
+
+
 

@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: Ready for Production Deployment
+**Status**: ✅ UI Tested & Security Fixed (Jan 12, 2026)
 
 ---
 
@@ -56,10 +56,17 @@ sql/
 
 ## Current Priorities
 
-1. **Manual Security Testing** - Run `PRE_DEPLOYMENT_CHECKLIST.md` tests
-2. **Production Deployment** - After tests pass
-3. **NULL Safety** - Add explicit checks for org_id comparisons
-4. **Prompts API Review** - Check for permission vulnerabilities
+1. **Commit & Deploy** - Push security fixes to production
+2. **UI Layout Fix** - ACTIONS column cut off on narrow viewports
+3. **Generation Guide Dropdown** - Investigate unresponsive behavior
+4. **NULL Safety** - Add explicit checks for org_id comparisons
+
+## Recent Testing (Jan 12, 2026)
+
+- ✅ UI Testing: 15/15 tests passed (multi-user sharing verified)
+- ✅ Security Fix: Delete buttons now hidden for non-owners
+- ✅ Backend: All DELETE APIs have ownership checks
+- 📄 Reports: `test-reports/ui-test-2026-01-12-comprehensive.md`
 
 ## Database
 
@@ -104,4 +111,4 @@ Never patch bugs. Find root causes: Reproduce -> Trace -> Understand -> Fix -> V
 
 ---
 
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-01-12

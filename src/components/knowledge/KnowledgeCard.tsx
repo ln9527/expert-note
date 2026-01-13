@@ -15,9 +15,10 @@ interface ExtendedKnowledgeEntry extends KnowledgeEntry {
 interface KnowledgeCardProps {
   entry: ExtendedKnowledgeEntry;
   onDelete?: (entry: ExtendedKnowledgeEntry) => void;
+  currentUserId?: number | null;
 }
 
-export default function KnowledgeCard({ entry, onDelete }: KnowledgeCardProps) {
+export default function KnowledgeCard({ entry, onDelete, currentUserId }: KnowledgeCardProps) {
   // Preview text - use background or fallback message
   const backgroundText = entry.background || 'No background description';
   const previewText = backgroundText.length > 200
@@ -84,7 +85,7 @@ export default function KnowledgeCard({ entry, onDelete }: KnowledgeCardProps) {
             <span className="text-xs text-gray-400 whitespace-nowrap">
               {formatDate(entry.createdAt)}
             </span>
-            {onDelete && (
+            {onDelete && currentUserId && entry.createdBy === currentUserId && (
               <button
                 onClick={handleDeleteClick}
                 className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"

@@ -1,43 +1,11 @@
--- Expert Note System - Seed Data
--- Run after schema.sql
+-- Migration: Update prompts for Tacit Knowledge logic
+-- This migration updates the default prompts in the LIVE database with the new Tacit Knowledge logic
 
--- 10 Hardcoded Users for MVP
--- Password: "password123" for all users (bcrypt hash)
--- Hash generated with: bcrypt.hashSync('password123', 10)
-INSERT INTO users (username, password_hash, display_name) VALUES
-  ('admin', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Administrator'),
-  ('ning', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Ning Li'),
-  ('expert1', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Expert One'),
-  ('expert2', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Expert Two'),
-  ('student1', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Student One'),
-  ('student2', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Student Two'),
-  ('student3', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Student Three'),
-  ('researcher1', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Researcher One'),
-  ('researcher2', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Researcher Two'),
-  ('guest', '$2b$10$nKSHx8ybouym2En4D.aBj.ZC6zqzchUOpsyp6G0fo56nSIdR6tJDC', 'Guest User');
-
--- Default Tags for Academic Writing Domain
-INSERT INTO tags (name, color) VALUES
-  ('introduction', '#EF4444'),      -- Red
-  ('literature-review', '#F97316'),  -- Orange
-  ('methodology', '#EAB308'),        -- Yellow
-  ('results', '#22C55E'),            -- Green
-  ('discussion', '#06B6D4'),         -- Cyan
-  ('conclusion', '#3B82F6'),         -- Blue
-  ('abstract', '#8B5CF6'),           -- Violet
-  ('references', '#EC4899'),         -- Pink
-  ('academic-writing', '#6B7280'),   -- Gray
-  ('AI-research', '#14B8A6');        -- Teal
-
--- Default Prompt Templates for Extraction and Generation
--- Extraction Template (Context-Aware Version)
-INSERT INTO prompt_templates (name, description, category, template_type, content, is_default, is_active) VALUES
-(
-  'Default Knowledge Extraction',
-  'Context-aware template for extracting knowledge from expert annotations with full document understanding',
-  'extraction',
-  NULL,
-  'You are an expert Knowledge Engineer and Intellectual Biographer. Your goal is to extract "Tacit Knowledge" from expert annotations on a document.
+-- 1. Update Knowledge Extraction Prompt
+UPDATE prompt_templates
+SET
+  description = 'Context-aware template for extracting Tacit Knowledge (Mental Models, Reasoning, Rules)',
+  content = 'You are an expert Knowledge Engineer and Intellectual Biographer. Your goal is to extract "Tacit Knowledge" from expert annotations on a document.
 
 You are not just copying comments; you are **reverse-engineering the expert''s mind**. You must reveal the hidden mental models, judgment criteria, and reasoning processes that led the expert to make those specific comments.
 
@@ -117,18 +85,16 @@ Produce a **Knowledge Artifact** in Markdown. It must be self-contained.
 2. **Context is King:** Never output a comment without the context (Trigger Text or Section Summary) that explains it.
 3. **Preserve Voice:** In the "Tacit Wisdom" section, maintain the authority and tone of the expert.
 4. **Dynamic Context:** If an expert comments on a specific phrase, quote it. If they comment on the "flow of the argument," summarize the argument''s flow. Adapt the context scope to the comment''s scope.',
-  TRUE,
-  TRUE
-);
+  -- Do NOT update version number as requested
+  updated_at = NOW()
+WHERE category = 'extraction' AND is_default = TRUE;
 
--- Generation Templates
-INSERT INTO prompt_templates (name, description, category, template_type, content, is_default, is_active) VALUES
-(
-  'Default Prompt Generation',
-  'Standard template for generating system prompts from knowledge entries',
-  'generation',
-  NULL,
-  'You are an expert System Prompt Architect. Your goal is to synthesize diverse inputs (annotated docs, extracted knowledge, user instructions) into a highly effective, executable System Prompt for a new AI agent.
+
+-- 2. Update Prompt Generation Prompt
+UPDATE prompt_templates
+SET
+  description = 'Inductive reasoning template for generating system prompts from Tacit Knowledge',
+  content = 'You are an expert System Prompt Architect. Your goal is to synthesize diverse inputs (annotated docs, extracted knowledge, user instructions) into a highly effective, executable System Prompt for a new AI agent.
 
 # LANGUAGE REQUIREMENT
 *   **Default:** The System Prompt you generate must be in the same language as the provided Knowledge Base / Expert Notes.
@@ -192,74 +158,11 @@ Construct the final System Prompt. Structure it logically to guide the AI from "
 *   **Balance Specificity vs. Generality:** Make the prompt general enough to handle new tasks, but specific enough to preserve the expert''s unique style.
 *   **Trust Your Synthesis:** Do not just list every rule found. Group them, merge them, and prioritize them.
 *   **Output Only the Prompt:** Your response must be the raw Markdown of the system prompt, ready to be used.',
-  TRUE,
-  TRUE
-),
-(
-  'Introduction Review Template',
-  'Specialized template for reviewing paper introductions',
-  'generation',
-  'introduction',
-  'You are a System Prompt architect specializing in academic writing review.
+  -- Do NOT update version number as requested
+  updated_at = NOW()
+WHERE category = 'generation' AND is_default = TRUE;
 
-Focus on creating prompts for introduction sections that emphasize:
-1. **Research Importance**: How to establish why the research matters
-2. **Gap Identification**: Clear articulation of research gaps
-3. **Contribution Clarity**: Explicit statement of contributions
-4. **Flow & Structure**: Logical progression from context to specific focus
-
-Output a ready-to-use System Prompt optimized for introduction review.',
-  FALSE,
-  TRUE
-),
-(
-  'Methodology Review Template',
-  'Specialized template for reviewing research methodology sections',
-  'generation',
-  'methodology',
-  'You are a System Prompt architect specializing in research methodology review.
-
-Focus on creating prompts for methodology sections that emphasize:
-1. **Method Clarity**: Clear explanation of research methods
-2. **Reproducibility**: Sufficient detail for replication
-3. **Justification**: Why specific methods were chosen
-4. **Alignment**: Methods match research questions
-
-Output a ready-to-use System Prompt optimized for methodology review.',
-  FALSE,
-  TRUE
-),
-(
-  'Discussion Review Template',
-  'Specialized template for reviewing discussion sections',
-  'generation',
-  'discussion',
-  'You are a System Prompt architect specializing in research discussion review.
-
-Focus on creating prompts for discussion sections that emphasize:
-1. **Interpretation Depth**: Meaningful analysis of results
-2. **Limitations**: Honest acknowledgment of constraints
-3. **Implications**: Practical and theoretical significance
-4. **Future Directions**: Suggestions for further research
-
-Output a ready-to-use System Prompt optimized for discussion review.',
-  FALSE,
-  TRUE
-),
-(
-  'Academic Writing Coach Template',
-  'General template for comprehensive academic writing guidance',
-  'generation',
-  'academicCoach',
-  'You are a System Prompt architect creating comprehensive academic writing coaches.
-
-Create prompts that provide holistic guidance across:
-1. **Structure**: Overall paper organization
-2. **Argumentation**: Logic and flow of arguments
-3. **Clarity**: Writing style and readability
-4. **Academic Conventions**: Citations, terminology, tone
-
-Output a ready-to-use System Prompt for an academic writing coach.',
-  FALSE,
-  TRUE
-);
+-- Verify the update
+SELECT id, name, version, updated_at
+FROM prompt_templates
+WHERE is_default = TRUE AND category IN ('extraction', 'generation');

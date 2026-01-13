@@ -41,6 +41,9 @@ export default function KnowledgeListPage() {
   const [deletingEntry, setDeletingEntry] = useState<ExtendedKnowledgeEntry | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Current user for ownership checks
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
   // Load view mode preference from localStorage
   useEffect(() => {
     const savedViewMode = localStorage.getItem('knowledgeViewMode');
@@ -62,14 +65,16 @@ export default function KnowledgeListPage() {
         setLoading(true);
         setError(null);
 
-        // Fetch knowledge entries and tags in parallel
-        const [entriesRes, tagsRes] = await Promise.all([
+        // Fetch knowledge entries, tags, and session in parallel
+        const [entriesRes, tagsRes, sessionRes] = await Promise.all([
           fetch(buildApiPath('knowledge')),
           fetch(buildApiPath('tags')),
+          fetch(buildApiPath('auth/session')),
         ]);
 
         const entriesData = await entriesRes.json();
         const tagsData = await tagsRes.json();
+        const sessionData = await sessionRes.json();
 
         if (!entriesRes.ok) {
           throw new Error(entriesData.error || 'Failed to fetch knowledge entries');
@@ -77,6 +82,11 @@ export default function KnowledgeListPage() {
 
         setEntries(entriesData.entries || []);
         setTags(tagsData.tags || []);
+
+        // Set current user ID for ownership checks
+        if (sessionData.authenticated && sessionData.user) {
+          setCurrentUserId(sessionData.user.userId);
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -341,11 +351,12 @@ export default function KnowledgeListPage() {
           sortDirection={sortDirection}
           onSort={handleSort}
           onDelete={handleDeleteClick}
+          currentUserId={currentUserId}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedEntries.map((entry) => (
-            <KnowledgeCard key={entry.id} entry={entry} onDelete={handleDeleteClick} />
+            <KnowledgeCard key={entry.id} entry={entry} onDelete={handleDeleteClick} currentUserId={currentUserId} />
           ))}
         </div>
       )}

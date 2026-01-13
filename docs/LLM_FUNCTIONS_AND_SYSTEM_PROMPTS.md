@@ -364,6 +364,14 @@ Users can create and edit templates in `/settings/prompts`, but:
 
 ---
 
+### ⚠️ CRITICAL SYSTEM RISK: HARDCODED FALLBACKS
+**Timestamp: 2026-01-13 16:00 (Tacit Knowledge Update)**
+
+The system currently uses a "Database-First" priority for System Prompts. However, if the database query fails or is empty, the logic **silently falls back** to hardcoded constants in `src/lib/ai/extraction.ts` and `src/lib/ai/generation.ts`.
+
+*   **Risk:** The hardcoded constants currently contain **legacy logic** that does not follow the "Tacit Knowledge / Intellectual Biographer" framework recently updated in the database.
+*   **Warning:** AI Agents must ensure that if the DB logic is changed, the hardcoded fallback constants are updated simultaneously to prevent "Logic Drift" during DB connectivity issues.
+
 ## File References
 
 | File | Purpose |

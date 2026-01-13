@@ -18,6 +18,7 @@ interface KnowledgeTableProps {
   sortDirection: 'asc' | 'desc';
   onSort: (column: string) => void;
   onDelete?: (entry: ExtendedKnowledgeEntry) => void;
+  currentUserId?: number | null;
 }
 
 export default function KnowledgeTable({
@@ -26,6 +27,7 @@ export default function KnowledgeTable({
   sortDirection,
   onSort,
   onDelete,
+  currentUserId,
 }: KnowledgeTableProps) {
   const formatDate = (date: Date | string) => {
     const d = new Date(date);
@@ -221,7 +223,7 @@ export default function KnowledgeTable({
                     >
                       Edit
                     </Link>
-                    {onDelete && (
+                    {onDelete && currentUserId && entry.createdBy === currentUserId && (
                       <button
                         onClick={(e) => handleDeleteClick(e, entry)}
                         className="text-red-600 hover:text-red-900 transition-colors opacity-0 group-hover:opacity-100"
@@ -300,7 +302,7 @@ export default function KnowledgeTable({
               >
                 Edit
               </Link>
-              {onDelete && (
+              {onDelete && currentUserId && entry.createdBy === currentUserId && (
                 <button
                   onClick={(e) => handleDeleteClick(e, entry)}
                   className="text-sm text-red-600 hover:text-red-900"

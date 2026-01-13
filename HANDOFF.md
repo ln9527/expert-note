@@ -1,14 +1,14 @@
 # Expert Note System - Handoff Document
 
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-01-12
 **For:** Next AI agent picking up this project
-**Context:** User management system with org-based sharing completed
+**Context:** Comprehensive UI testing completed + security fixes applied
 
 ---
 
 ## Current System State
 
-**Status:** ✅ Phase 4 Complete - User Management & Sharing System Operational
+**Status:** ✅ Phase 5 Complete - UI Tested & Security Hardened
 
 **Production URL:** https://spansurvey.net/annote
 **Local Dev:** http://localhost:3000
@@ -45,7 +45,29 @@
 
 ---
 
-## Recent Changes (Jan 9-11, 2026)
+## Recent Changes (Jan 12, 2026)
+
+### Comprehensive UI Testing
+- ✅ **15/15 tests passed** - Document creation, annotations, knowledge extraction, sharing
+- ✅ **Multi-user testing** - Verified sharing between ning (owner) and expert1 (member)
+- ✅ **Permission boundaries** - Members cannot see/use sharing controls
+- 📄 **Report:** `test-reports/ui-test-2026-01-12-comprehensive.md`
+
+### Security Fixes (Delete Button Visibility)
+- ✅ **Documents:** Delete button now hidden for non-owners (was showing to editors)
+- ✅ **Knowledge:** Delete button now hidden for non-owners
+- ✅ **Backend confirmed secure:** All DELETE APIs have ownership checks
+- 📄 **Report:** `test-reports/fix-report-2026-01-12-delete-visibility.md`
+
+### Files Modified
+- `src/app/documents/[id]/page.tsx` - Added `isOwner` state for delete visibility
+- `src/app/knowledge/page.tsx` - Added `currentUserId` for ownership checks
+- `src/components/knowledge/KnowledgeCard.tsx` - Added ownership check
+- `src/components/knowledge/KnowledgeTable.tsx` - Added ownership check
+
+---
+
+## Previous Changes (Jan 9-11, 2026)
 
 ### Security Fixes Applied
 - ✅ **Knowledge API permissions** - Added GET/PUT/DELETE permission checks
