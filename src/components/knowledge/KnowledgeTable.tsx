@@ -19,6 +19,9 @@ interface KnowledgeTableProps {
   onSort: (column: string) => void;
   onDelete?: (entry: ExtendedKnowledgeEntry) => void;
   currentUserId?: number | null;
+  onShareToggle?: (entry: ExtendedKnowledgeEntry) => void;
+  onEditToggle?: (entry: ExtendedKnowledgeEntry) => void;
+  togglingEntryId?: string | null;
 }
 
 export default function KnowledgeTable({
@@ -28,6 +31,9 @@ export default function KnowledgeTable({
   onSort,
   onDelete,
   currentUserId,
+  onShareToggle,
+  onEditToggle,
+  togglingEntryId,
 }: KnowledgeTableProps) {
   const formatDate = (date: Date | string) => {
     const d = new Date(date);
@@ -150,6 +156,18 @@ export default function KnowledgeTable({
                   {renderSortIcon('updated')}
                 </div>
               </th>
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Sharing
+              </th>
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Edit
+              </th>
               <th scope="col" className="relative px-6 py-3">
                 <span className="sr-only">Actions</span>
               </th>
@@ -208,6 +226,59 @@ export default function KnowledgeTable({
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                   {formatDate(entry.updatedAt)}
+                </td>
+                <td className="px-4 py-4 text-sm whitespace-nowrap">
+                  {currentUserId && entry.createdBy === currentUserId ? (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onShareToggle?.(entry);
+                      }}
+                      disabled={togglingEntryId === entry.id}
+                      className={`font-medium transition-colors ${
+                        togglingEntryId === entry.id
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : entry.isShared
+                          ? 'text-green-600 hover:text-green-800'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {togglingEntryId === entry.id ? '...' : entry.isShared ? 'Yes' : 'No'}
+                    </button>
+                  ) : (
+                    <span className={entry.isShared ? 'text-green-600' : 'text-gray-400'}>
+                      {entry.isShared ? 'Yes' : 'No'}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-4 text-sm whitespace-nowrap">
+                  {currentUserId && entry.createdBy === currentUserId ? (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEditToggle?.(entry);
+                      }}
+                      disabled={togglingEntryId === entry.id || !entry.isShared}
+                      className={`font-medium transition-colors ${
+                        !entry.isShared
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : togglingEntryId === entry.id
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : entry.allowEdit
+                          ? 'text-green-600 hover:text-green-800'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                      title={!entry.isShared ? 'Enable sharing first' : undefined}
+                    >
+                      {togglingEntryId === entry.id ? '...' : entry.allowEdit ? 'Yes' : 'No'}
+                    </button>
+                  ) : (
+                    <span className={entry.allowEdit ? 'text-green-600' : 'text-gray-400'}>
+                      {entry.allowEdit ? 'Yes' : 'No'}
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
@@ -290,6 +361,64 @@ export default function KnowledgeTable({
                 {/* Annotations */}
                 <div className="flex items-center gap-2">
                   {renderAnnotationBadges(entry)}
+                </div>
+
+                {/* Sharing Status */}
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Shared:</span>
+                    {currentUserId && entry.createdBy === currentUserId ? (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onShareToggle?.(entry);
+                        }}
+                        disabled={togglingEntryId === entry.id}
+                        className={`font-medium ${
+                          togglingEntryId === entry.id
+                            ? 'text-gray-400'
+                            : entry.isShared
+                            ? 'text-green-600'
+                            : 'text-gray-500'
+                        }`}
+                      >
+                        {togglingEntryId === entry.id ? '...' : entry.isShared ? 'Yes' : 'No'}
+                      </button>
+                    ) : (
+                      <span className={entry.isShared ? 'text-green-600' : 'text-gray-400'}>
+                        {entry.isShared ? 'Yes' : 'No'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Allow Edit:</span>
+                    {currentUserId && entry.createdBy === currentUserId ? (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onEditToggle?.(entry);
+                        }}
+                        disabled={togglingEntryId === entry.id || !entry.isShared}
+                        className={`font-medium ${
+                          !entry.isShared
+                            ? 'text-gray-300'
+                            : togglingEntryId === entry.id
+                            ? 'text-gray-400'
+                            : entry.allowEdit
+                            ? 'text-green-600'
+                            : 'text-gray-500'
+                        }`}
+                      >
+                        {togglingEntryId === entry.id ? '...' : entry.allowEdit ? 'Yes' : 'No'}
+                      </button>
+                    ) : (
+                      <span className={entry.allowEdit ? 'text-green-600' : 'text-gray-400'}>
+                        {entry.allowEdit ? 'Yes' : 'No'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </Link>

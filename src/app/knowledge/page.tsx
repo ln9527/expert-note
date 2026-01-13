@@ -44,6 +44,9 @@ export default function KnowledgeListPage() {
   // Current user for ownership checks
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
+  // Sharing toggle state
+  const [togglingEntryId, setTogglingEntryId] = useState<string | null>(null);
+
   // Load view mode preference from localStorage
   useEffect(() => {
     const savedViewMode = localStorage.getItem('knowledgeViewMode');
@@ -212,6 +215,67 @@ export default function KnowledgeListPage() {
     }
   };
 
+  // Handle share toggle
+  const handleShareToggle = async (entry: ExtendedKnowledgeEntry) => {
+    if (!currentUserId || entry.createdBy !== currentUserId) return;
+    setTogglingEntryId(entry.id);
+    try {
+      const res = await fetch(buildApiPath(`knowledge/${entry.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isShared: !entry.isShared,
+          // If disabling sharing, also disable edit permission
+          allowEdit: !entry.isShared ? false : entry.allowEdit,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEntries(entries.map(e =>
+          e.id === entry.id
+            ? { ...e, isShared: !entry.isShared, allowEdit: !entry.isShared ? false : entry.allowEdit }
+            : e
+        ));
+      } else {
+        console.error('Share toggle failed:', data.error);
+      }
+    } catch (err) {
+      console.error('Share toggle error:', err);
+    } finally {
+      setTogglingEntryId(null);
+    }
+  };
+
+  // Handle edit toggle
+  const handleEditToggle = async (entry: ExtendedKnowledgeEntry) => {
+    if (!currentUserId || entry.createdBy !== currentUserId) return;
+    if (!entry.isShared) return; // Can't enable edit if not shared
+    setTogglingEntryId(entry.id);
+    try {
+      const res = await fetch(buildApiPath(`knowledge/${entry.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          allowEdit: !entry.allowEdit,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEntries(entries.map(e =>
+          e.id === entry.id
+            ? { ...e, allowEdit: !entry.allowEdit }
+            : e
+        ));
+      } else {
+        console.error('Edit toggle failed:', data.error);
+      }
+    } catch (err) {
+      console.error('Edit toggle error:', err);
+    } finally {
+      setTogglingEntryId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -352,11 +416,22 @@ export default function KnowledgeListPage() {
           onSort={handleSort}
           onDelete={handleDeleteClick}
           currentUserId={currentUserId}
+          onShareToggle={handleShareToggle}
+          onEditToggle={handleEditToggle}
+          togglingEntryId={togglingEntryId}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedEntries.map((entry) => (
-            <KnowledgeCard key={entry.id} entry={entry} onDelete={handleDeleteClick} currentUserId={currentUserId} />
+            <KnowledgeCard
+              key={entry.id}
+              entry={entry}
+              onDelete={handleDeleteClick}
+              currentUserId={currentUserId}
+              onShareToggle={handleShareToggle}
+              onEditToggle={handleEditToggle}
+              togglingEntryId={togglingEntryId}
+            />
           ))}
         </div>
       )}

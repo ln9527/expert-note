@@ -365,7 +365,7 @@ export default function Dashboard() {
             <div className="text-gray-500">Loading documents...</div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -477,51 +477,46 @@ export default function Dashboard() {
                         <button
                           onClick={(e) => handleShareToggle(doc, e)}
                           disabled={togglingDocId === doc.id}
-                          className={`text-xl ${
+                          className={`text-sm font-medium ${
                             togglingDocId === doc.id
                               ? 'opacity-50 cursor-wait'
-                              : 'hover:scale-110 transition-transform'
-                          }`}
+                              : 'hover:underline'
+                          } ${doc.isShared ? 'text-green-600' : 'text-gray-500'}`}
                           title={doc.isShared ? 'Shared (click to make private)' : 'Private (click to share)'}
                         >
-                          {doc.isShared ? '🔓' : '🔒'}
+                          {doc.isShared ? 'Yes' : 'No'}
                         </button>
                       ) : (
-                        // Non-owner: read-only badge
-                        doc.isShared && (
-                          <span className="text-xl text-gray-400 cursor-default" title="Shared (read-only)">
-                            🔓
-                          </span>
-                        )
+                        // Non-owner: read-only text
+                        <span className={`text-sm ${doc.isShared ? 'text-green-600' : 'text-gray-500'}`}>
+                          {doc.isShared ? 'Yes' : 'No'}
+                        </span>
                       )}
                     </td>
                     {/* Edit Column */}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      {user && doc.createdBy === user.userId ? (
+                      {!doc.isShared ? (
+                        // Not shared: show dash
+                        <span className="text-sm text-gray-400">-</span>
+                      ) : user && doc.createdBy === user.userId ? (
                         // Owner: clickable toggle (only when shared)
-                        doc.isShared && (
-                          <button
-                            onClick={(e) => handleEditToggle(doc, e)}
-                            disabled={togglingDocId === doc.id}
-                            className={`text-xl ${
-                              togglingDocId === doc.id
-                                ? 'opacity-50 cursor-wait'
-                                : doc.allowEdit
-                                ? 'text-blue-600 hover:text-blue-800 hover:scale-110 transition-all'
-                                : 'text-gray-400 hover:text-blue-600 hover:scale-110 transition-all'
-                            }`}
-                            title={doc.allowEdit ? 'Members can edit (click to disable)' : 'Read-only for members (click to allow editing)'}
-                          >
-                            ✏️
-                          </button>
-                        )
+                        <button
+                          onClick={(e) => handleEditToggle(doc, e)}
+                          disabled={togglingDocId === doc.id}
+                          className={`text-sm font-medium ${
+                            togglingDocId === doc.id
+                              ? 'opacity-50 cursor-wait'
+                              : 'hover:underline'
+                          } ${doc.allowEdit ? 'text-green-600' : 'text-gray-500'}`}
+                          title={doc.allowEdit ? 'Members can edit (click to disable)' : 'Read-only for members (click to allow editing)'}
+                        >
+                          {doc.allowEdit ? 'Yes' : 'No'}
+                        </button>
                       ) : (
-                        // Non-owner: read-only badge (only if shared and allowEdit is true)
-                        doc.isShared && doc.allowEdit && (
-                          <span className="text-xl text-gray-400 cursor-default" title="Can edit">
-                            ✏️
-                          </span>
-                        )
+                        // Non-owner: read-only text
+                        <span className={`text-sm ${doc.allowEdit ? 'text-green-600' : 'text-gray-500'}`}>
+                          {doc.allowEdit ? 'Yes' : 'No'}
+                        </span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">

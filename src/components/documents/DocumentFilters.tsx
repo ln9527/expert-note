@@ -91,7 +91,6 @@ export default function DocumentFilters({
           <option value="all">All Status</option>
           <option value="raw">Raw</option>
           <option value="annotated">Annotated</option>
-          <option value="refined">Refined</option>
         </select>
 
         {/* Tag Filter */}

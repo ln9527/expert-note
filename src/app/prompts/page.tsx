@@ -38,6 +38,11 @@ export default function PromptsListPage() {
   const [deletingPrompt, setDeletingPrompt] = useState<SystemPrompt | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Current user ID for sharing controls
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  // Toggle state for share/edit operations
+  const [togglingPromptId, setTogglingPromptId] = useState<string | null>(null);
+
   const fetchPrompts = useCallback(async () => {
     try {
       const params = new URLSearchParams();
@@ -84,17 +89,23 @@ export default function PromptsListPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        // Fetch templates and tags initially
-        const [templatesResponse, tagsResponse] = await Promise.all([
+        // Fetch templates, tags, and session initially
+        const [templatesResponse, tagsResponse, sessionResponse] = await Promise.all([
           fetch(buildApiPath('prompt-templates?category=generation')),
           fetch(buildApiPath('tags')),
+          fetch(buildApiPath('auth/session')),
         ]);
 
         const templatesData = await templatesResponse.json();
         const tagsData = await tagsResponse.json();
+        const sessionData = await sessionResponse.json();
 
         setTemplates(templatesData.templates || []);
         setTags(tagsData.tags || []);
+
+        if (sessionData.authenticated) {
+          setCurrentUserId(sessionData.user.userId);
+        }
       } catch (err) {
         console.error('Failed to fetch initial data:', err);
       }
@@ -192,6 +203,72 @@ export default function PromptsListPage() {
       setError('Network error. Please try again.');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleShareToggle = async (prompt: SystemPrompt) => {
+    // Only owners can toggle sharing
+    if (!currentUserId || prompt.creator?.id !== currentUserId) return;
+
+    setTogglingPromptId(prompt.id);
+    try {
+      const res = await fetch(buildApiPath(`prompts/${prompt.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isShared: !prompt.isShared,
+          // If disabling sharing, also disable edit permission
+          allowEdit: !prompt.isShared ? false : prompt.allowEdit
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // Update local state
+        setPrompts(prompts.map(p =>
+          p.id === prompt.id
+            ? { ...p, isShared: !prompt.isShared, allowEdit: !prompt.isShared ? false : prompt.allowEdit }
+            : p
+        ));
+        setError('');
+      } else {
+        setError(data.error || 'Failed to update sharing settings');
+      }
+    } catch (err) {
+      console.error('Share toggle error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setTogglingPromptId(null);
+    }
+  };
+
+  const handleEditToggle = async (prompt: SystemPrompt) => {
+    // Only owners can toggle edit permission, and only when prompt is shared
+    if (!currentUserId || prompt.creator?.id !== currentUserId || !prompt.isShared) return;
+
+    setTogglingPromptId(prompt.id);
+    try {
+      const res = await fetch(buildApiPath(`prompts/${prompt.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ allowEdit: !prompt.allowEdit }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // Update local state
+        setPrompts(prompts.map(p =>
+          p.id === prompt.id ? { ...p, allowEdit: !prompt.allowEdit } : p
+        ));
+        setError('');
+      } else {
+        setError(data.error || 'Failed to update edit permission');
+      }
+    } catch (err) {
+      console.error('Edit toggle error:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setTogglingPromptId(null);
     }
   };
 
@@ -355,11 +432,23 @@ export default function PromptsListPage() {
           sortDirection={sortDirection}
           onSort={handleSort}
           onDelete={handleDeleteClick}
+          currentUserId={currentUserId}
+          onShareToggle={handleShareToggle}
+          onEditToggle={handleEditToggle}
+          togglingPromptId={togglingPromptId}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedPrompts.map((prompt) => (
-            <PromptCard key={prompt.id} prompt={prompt} onDelete={handleDeleteClick} />
+            <PromptCard
+              key={prompt.id}
+              prompt={prompt}
+              onDelete={handleDeleteClick}
+              currentUserId={currentUserId}
+              onShareToggle={handleShareToggle}
+              onEditToggle={handleEditToggle}
+              togglingPromptId={togglingPromptId}
+            />
           ))}
         </div>
       )}

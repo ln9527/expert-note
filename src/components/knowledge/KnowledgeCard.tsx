@@ -16,9 +16,12 @@ interface KnowledgeCardProps {
   entry: ExtendedKnowledgeEntry;
   onDelete?: (entry: ExtendedKnowledgeEntry) => void;
   currentUserId?: number | null;
+  onShareToggle?: (entry: ExtendedKnowledgeEntry) => void;
+  onEditToggle?: (entry: ExtendedKnowledgeEntry) => void;
+  togglingEntryId?: string | null;
 }
 
-export default function KnowledgeCard({ entry, onDelete, currentUserId }: KnowledgeCardProps) {
+export default function KnowledgeCard({ entry, onDelete, currentUserId, onShareToggle, onEditToggle, togglingEntryId }: KnowledgeCardProps) {
   // Preview text - use background or fallback message
   const backgroundText = entry.background || 'No background description';
   const previewText = backgroundText.length > 200
@@ -151,6 +154,64 @@ export default function KnowledgeCard({ entry, onDelete, currentUserId }: Knowle
             )}
           </div>
         )}
+
+        {/* Sharing status */}
+        <div className="flex items-center gap-4 mb-3 text-xs">
+          <div className="flex items-center gap-1">
+            <span className="text-gray-500">Shared:</span>
+            {currentUserId && entry.createdBy === currentUserId ? (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onShareToggle?.(entry);
+                }}
+                disabled={togglingEntryId === entry.id}
+                className={`font-medium ${
+                  togglingEntryId === entry.id
+                    ? 'text-gray-400'
+                    : entry.isShared
+                    ? 'text-green-600 hover:text-green-800'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {togglingEntryId === entry.id ? '...' : entry.isShared ? 'Yes' : 'No'}
+              </button>
+            ) : (
+              <span className={entry.isShared ? 'text-green-600' : 'text-gray-400'}>
+                {entry.isShared ? 'Yes' : 'No'}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-gray-500">Allow Edit:</span>
+            {currentUserId && entry.createdBy === currentUserId ? (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onEditToggle?.(entry);
+                }}
+                disabled={togglingEntryId === entry.id || !entry.isShared}
+                className={`font-medium ${
+                  !entry.isShared
+                    ? 'text-gray-300'
+                    : togglingEntryId === entry.id
+                    ? 'text-gray-400'
+                    : entry.allowEdit
+                    ? 'text-green-600 hover:text-green-800'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {togglingEntryId === entry.id ? '...' : entry.allowEdit ? 'Yes' : 'No'}
+              </button>
+            ) : (
+              <span className={entry.allowEdit ? 'text-green-600' : 'text-gray-400'}>
+                {entry.allowEdit ? 'Yes' : 'No'}
+              </span>
+            )}
+          </div>
+        </div>
 
         {/* Footer with total count */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">

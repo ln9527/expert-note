@@ -6,6 +6,10 @@ import Link from 'next/link';
 interface PromptCardProps {
   prompt: SystemPrompt;
   onDelete?: (prompt: SystemPrompt) => void;
+  currentUserId?: number | null;
+  onShareToggle?: (prompt: SystemPrompt) => void;
+  onEditToggle?: (prompt: SystemPrompt) => void;
+  togglingPromptId?: string | null;
 }
 
 // Default colors for dynamically generated template badges
@@ -40,7 +44,14 @@ function getTemplateColor(templateType: string): string {
   return DEFAULT_BADGE_COLORS[index];
 }
 
-export default function PromptCard({ prompt, onDelete }: PromptCardProps) {
+export default function PromptCard({
+  prompt,
+  onDelete,
+  currentUserId,
+  onShareToggle,
+  onEditToggle,
+  togglingPromptId,
+}: PromptCardProps) {
   // Display the template type as-is (user-created templates)
   const templateLabel = prompt.templateType || 'No Guide';
   const templateColor = prompt.templateType
@@ -69,7 +80,7 @@ export default function PromptCard({ prompt, onDelete }: PromptCardProps) {
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${templateColor}`}>
               {templateLabel}
             </span>
-            {onDelete && (
+            {onDelete && currentUserId && prompt.creator?.id === currentUserId && (
               <button
                 onClick={handleDeleteClick}
                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
@@ -111,6 +122,60 @@ export default function PromptCard({ prompt, onDelete }: PromptCardProps) {
             )}
           </div>
         )}
+
+        {/* Sharing Status */}
+        <div className="flex items-center gap-4 text-xs mb-3">
+          <div className="flex items-center gap-1">
+            <span className="text-gray-500">Shared:</span>
+            {currentUserId && prompt.creator?.id === currentUserId ? (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onShareToggle?.(prompt);
+                }}
+                disabled={togglingPromptId === prompt.id}
+                className={`font-medium ${
+                  togglingPromptId === prompt.id
+                    ? 'opacity-50 cursor-wait'
+                    : 'hover:underline'
+                } ${prompt.isShared ? 'text-green-600' : 'text-gray-500'}`}
+              >
+                {prompt.isShared ? 'Yes' : 'No'}
+              </button>
+            ) : (
+              <span className={prompt.isShared ? 'text-green-600' : 'text-gray-500'}>
+                {prompt.isShared ? 'Yes' : 'No'}
+              </span>
+            )}
+          </div>
+          {prompt.isShared && (
+            <div className="flex items-center gap-1">
+              <span className="text-gray-500">Edit:</span>
+              {currentUserId && prompt.creator?.id === currentUserId ? (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onEditToggle?.(prompt);
+                  }}
+                  disabled={togglingPromptId === prompt.id}
+                  className={`font-medium ${
+                    togglingPromptId === prompt.id
+                      ? 'opacity-50 cursor-wait'
+                      : 'hover:underline'
+                  } ${prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}`}
+                >
+                  {prompt.allowEdit ? 'Yes' : 'No'}
+                </button>
+              ) : (
+                <span className={prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}>
+                  {prompt.allowEdit ? 'Yes' : 'No'}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between text-xs text-gray-500">

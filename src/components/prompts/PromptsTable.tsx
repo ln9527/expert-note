@@ -9,6 +9,10 @@ interface PromptsTableProps {
   sortDirection: 'asc' | 'desc';
   onSort: (column: string) => void;
   onDelete?: (prompt: SystemPrompt) => void;
+  currentUserId?: number | null;
+  onShareToggle?: (prompt: SystemPrompt) => void;
+  onEditToggle?: (prompt: SystemPrompt) => void;
+  togglingPromptId?: string | null;
 }
 
 // Default colors for dynamically generated template badges
@@ -29,6 +33,10 @@ export default function PromptsTable({
   sortDirection,
   onSort,
   onDelete,
+  currentUserId,
+  onShareToggle,
+  onEditToggle,
+  togglingPromptId,
 }: PromptsTableProps) {
   const formatDate = (date: Date | string) => {
     const d = new Date(date);
@@ -132,6 +140,18 @@ export default function PromptsTable({
                   {renderSortIcon('updated')}
                 </div>
               </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Sharing
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Edit
+              </th>
               <th scope="col" className="relative px-6 py-3">
                 <span className="sr-only">Actions</span>
               </th>
@@ -211,6 +231,63 @@ export default function PromptsTable({
                   <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                     {formatDate(prompt.updatedAt)}
                   </td>
+                  {/* Sharing Column */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    {currentUserId && prompt.creator?.id === currentUserId ? (
+                      // Owner: clickable toggle
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onShareToggle?.(prompt);
+                        }}
+                        disabled={togglingPromptId === prompt.id}
+                        className={`text-sm font-medium ${
+                          togglingPromptId === prompt.id
+                            ? 'opacity-50 cursor-wait'
+                            : 'hover:underline'
+                        } ${prompt.isShared ? 'text-green-600' : 'text-gray-500'}`}
+                        title={prompt.isShared ? 'Shared (click to make private)' : 'Private (click to share)'}
+                      >
+                        {prompt.isShared ? 'Yes' : 'No'}
+                      </button>
+                    ) : (
+                      // Non-owner: read-only text
+                      <span className={`text-sm ${prompt.isShared ? 'text-green-600' : 'text-gray-500'}`}>
+                        {prompt.isShared ? 'Yes' : 'No'}
+                      </span>
+                    )}
+                  </td>
+                  {/* Edit Column */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    {!prompt.isShared ? (
+                      // Not shared: show dash
+                      <span className="text-sm text-gray-400">-</span>
+                    ) : currentUserId && prompt.creator?.id === currentUserId ? (
+                      // Owner: clickable toggle (only when shared)
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onEditToggle?.(prompt);
+                        }}
+                        disabled={togglingPromptId === prompt.id}
+                        className={`text-sm font-medium ${
+                          togglingPromptId === prompt.id
+                            ? 'opacity-50 cursor-wait'
+                            : 'hover:underline'
+                        } ${prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}`}
+                        title={prompt.allowEdit ? 'Members can edit (click to disable)' : 'Read-only for members (click to allow editing)'}
+                      >
+                        {prompt.allowEdit ? 'Yes' : 'No'}
+                      </button>
+                    ) : (
+                      // Non-owner: read-only text
+                      <span className={`text-sm ${prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}`}>
+                        {prompt.allowEdit ? 'Yes' : 'No'}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <Link
@@ -219,7 +296,7 @@ export default function PromptsTable({
                       >
                         View
                       </Link>
-                      {onDelete && (
+                      {onDelete && currentUserId && prompt.creator?.id === currentUserId && (
                         <button
                           onClick={(e) => handleDeleteClick(e, prompt)}
                           className="text-red-600 hover:text-red-900 transition-colors opacity-0 group-hover:opacity-100"
@@ -305,6 +382,60 @@ export default function PromptsTable({
                       <span className="text-blue-600" title="Updated from another prompt">↑</span>
                     )}
                   </div>
+
+                  {/* Sharing status for mobile */}
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">Shared:</span>
+                      {currentUserId && prompt.creator?.id === currentUserId ? (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onShareToggle?.(prompt);
+                          }}
+                          disabled={togglingPromptId === prompt.id}
+                          className={`font-medium ${
+                            togglingPromptId === prompt.id
+                              ? 'opacity-50 cursor-wait'
+                              : 'hover:underline'
+                          } ${prompt.isShared ? 'text-green-600' : 'text-gray-500'}`}
+                        >
+                          {prompt.isShared ? 'Yes' : 'No'}
+                        </button>
+                      ) : (
+                        <span className={prompt.isShared ? 'text-green-600' : 'text-gray-500'}>
+                          {prompt.isShared ? 'Yes' : 'No'}
+                        </span>
+                      )}
+                    </div>
+                    {prompt.isShared && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500">Edit:</span>
+                        {currentUserId && prompt.creator?.id === currentUserId ? (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onEditToggle?.(prompt);
+                            }}
+                            disabled={togglingPromptId === prompt.id}
+                            className={`font-medium ${
+                              togglingPromptId === prompt.id
+                                ? 'opacity-50 cursor-wait'
+                                : 'hover:underline'
+                            } ${prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}`}
+                          >
+                            {prompt.allowEdit ? 'Yes' : 'No'}
+                          </button>
+                        ) : (
+                          <span className={prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}>
+                            {prompt.allowEdit ? 'Yes' : 'No'}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </Link>
 
@@ -316,7 +447,7 @@ export default function PromptsTable({
                 >
                   View
                 </Link>
-                {onDelete && (
+                {onDelete && currentUserId && prompt.creator?.id === currentUserId && (
                   <button
                     onClick={(e) => handleDeleteClick(e, prompt)}
                     className="text-sm text-red-600 hover:text-red-900"
