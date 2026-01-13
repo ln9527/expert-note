@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ UI Tested & Security Fixed (Jan 12, 2026)
+**Status**: ✅ UI Enhanced & Prompts Updated (Jan 13, 2026)
 
 ---
 
@@ -56,17 +56,17 @@ sql/
 
 ## Current Priorities
 
-1. **Commit & Deploy** - Push security fixes to production
-2. **UI Layout Fix** - ACTIONS column cut off on narrow viewports
-3. **Generation Guide Dropdown** - Investigate unresponsive behavior
-4. **NULL Safety** - Add explicit checks for org_id comparisons
+1. **Test New Prompts** - Verify Tacit Knowledge extraction quality in production
+2. **NULL Safety** - Add explicit checks for org_id comparisons
+3. **Migration Cleanup** - Renumber duplicate migration files (005, 006, 007)
 
-## Recent Testing (Jan 12, 2026)
+## Recent Work (Jan 13, 2026)
 
-- ✅ UI Testing: 15/15 tests passed (multi-user sharing verified)
-- ✅ Security Fix: Delete buttons now hidden for non-owners
-- ✅ Backend: All DELETE APIs have ownership checks
-- 📄 Reports: `test-reports/ui-test-2026-01-12-comprehensive.md`
+- ✅ UI Enhancements: Table scroll, Yes/No text for sharing, removed "refined" status
+- ✅ Sharing Controls: Added to Knowledge entries and Prompts
+- ✅ Prompt Migration: Applied 007_update_default_prompts.sql to production
+- ✅ New Prompts Active: Tacit Knowledge extraction + Inductive reasoning generation
+- 📄 Reports: `test-reports/fix-report-2026-01-13-ui-issues.md`
 
 ## Database
 
@@ -78,7 +78,7 @@ psql -h localhost -U ningli -d annotservice
 SELECT username, role, org_id FROM users;
 ```
 
-**Latest Migration:** 007_org_creation_improvements.sql
+**Latest Migration:** 007_update_default_prompts.sql (Applied to production Jan 13, 2026)
 
 ## Production
 
@@ -111,4 +111,4 @@ Never patch bugs. Find root causes: Reproduce -> Trace -> Understand -> Fix -> V
 
 ---
 
-**Last Updated:** 2026-01-12
+**Last Updated:** 2026-01-13
