@@ -8,9 +8,6 @@
  * - File validation with magic byte checks
  */
 
-// pdf-parse is a CommonJS module
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse');
 import { PDFExtract } from 'pdf.js-extract';
 import type { PDFExtractPage, PDFExtractText } from 'pdf.js-extract';
 import mammoth from 'mammoth';
@@ -145,76 +142,13 @@ export function stripImageMarkdown(markdown: string): string {
 }
 
 /**
- * Convert PDF to Markdown
+ * Convert PDF to Markdown using coordinate-based extraction
  *
- * Uses pdf-parse as primary method (handles most PDFs well),
- * falls back to coordinate-based extraction for two-column layouts
+ * Uses pdf.js-extract for text extraction with X,Y coordinates,
+ * then reconstructs text with smart line/paragraph detection.
+ * Handles both single-column and two-column academic paper layouts.
  */
 export async function convertPdfToMarkdown(buffer: ArrayBuffer): Promise<ConversionResult> {
-  try {
-    // First try pdf-parse - it handles most PDFs well and preserves reading order
-    console.log('[FileConverter] Attempting pdf-parse extraction...');
-    const pdfBuffer = Buffer.from(buffer);
-    const pdfData = await pdfParse(pdfBuffer);
-    console.log('[FileConverter] pdf-parse succeeded, text length:', pdfData.text?.length || 0);
-
-    if (!pdfData.text || pdfData.text.trim().length === 0) {
-      console.log('[FileConverter] pdf-parse returned empty text, trying fallback...');
-      return convertPdfWithCoordinates(buffer);
-    }
-
-    // Clean up the extracted text
-    let markdown = pdfData.text
-      // Normalize line endings
-      .replace(/\r\n/g, '\n')
-      // Fix common PDF artifacts: spaces within words
-      .replace(/(\w)\s{2,}(\w)/g, '$1 $2')
-      // Handle hyphenated words at line breaks
-      .replace(/(\w)-\n(\w)/g, (_match: string, p1: string, p2: string) => {
-        // Check if lowercase continuation - likely word break
-        if (p2 === p2.toLowerCase()) {
-          return p1 + p2; // Remove hyphen, join
-        }
-        return p1 + '-' + p2; // Keep hyphen
-      })
-      // Convert multiple newlines to paragraph breaks
-      .replace(/\n{3,}/g, '\n\n')
-      // Single newlines within paragraphs → space (for flowing text)
-      .replace(/([^\n])\n([^\n])/g, (_match: string, p1: string, p2: string) => {
-        // Don't join if looks like a heading or list
-        if (/^[A-Z#\-\*\d]/.test(p2) && /[.!?:]$/.test(p1)) {
-          return p1 + '\n\n' + p2; // Keep as separate paragraphs
-        }
-        return p1 + ' ' + p2; // Join with space
-      })
-      .trim();
-
-    console.log('[FileConverter] pdf-parse extraction complete, markdown length:', markdown.length);
-    return {
-      success: true,
-      markdown: stripImageMarkdown(markdown),
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : '';
-    console.error('[FileConverter] pdf-parse failed:', errorMessage);
-    console.error('[FileConverter] Error stack:', errorStack);
-
-    if (errorMessage.includes('password') || errorMessage.includes('encrypted')) {
-      return { success: false, error: 'Password-protected PDFs are not supported' };
-    }
-
-    // Try fallback with coordinate-based extraction
-    console.log('[FileConverter] Trying coordinate-based fallback extraction...');
-    return convertPdfWithCoordinates(buffer);
-  }
-}
-
-/**
- * Fallback: Convert PDF using coordinate-based extraction
- * Better for two-column academic papers
- */
-async function convertPdfWithCoordinates(buffer: ArrayBuffer): Promise<ConversionResult> {
   try {
     const pdfExtract = new PDFExtract();
     const data = await pdfExtract.extractBuffer(Buffer.from(buffer));
@@ -246,7 +180,13 @@ async function convertPdfWithCoordinates(buffer: ArrayBuffer): Promise<Conversio
       markdown: stripImageMarkdown(markdown),
     };
   } catch (error) {
-    console.error('[FileConverter] Fallback PDF conversion error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[FileConverter] PDF conversion error:', errorMessage);
+
+    if (errorMessage.includes('password') || errorMessage.includes('encrypted')) {
+      return { success: false, error: 'Password-protected PDFs are not supported' };
+    }
+
     return { success: false, error: 'Failed to convert PDF. It may be corrupted.' };
   }
 }
