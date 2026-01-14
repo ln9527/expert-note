@@ -344,7 +344,7 @@ function reconstructColumnText(items: PDFExtractText[]): string {
  * Join lines handling hyphenation at line endings
  * Distinguishes between:
  * - Word-break hyphens: "experi-" + "ence" → "experience" (remove hyphen)
- * - Compound words: "one-" + "on-one" → "one-on-one" (keep hyphen)
+ * - Compound words: "experience-" + "based" → "experience-based" (keep hyphen)
  */
 function joinLinesWithHyphenation(lines: string[]): string {
   if (lines.length === 0) return '';
@@ -358,25 +358,24 @@ function joinLinesWithHyphenation(lines: string[]): string {
     // Check if previous line ends with hyphen
     if (result.endsWith('-')) {
       const firstWord = currentLine.split(/\s/)[0] || '';
-      const firstChar = firstWord[0] || '';
 
-      // Heuristics to detect word-break vs compound word:
-      // 1. If continuation starts with lowercase → likely word-break hyphen
-      // 2. If continuation is a common suffix → word-break
-      // 3. If continuation looks like a compound part → keep hyphen
-      const isWordBreak = (
-        /^[a-z]/.test(firstChar) &&
-        // Common suffixes that indicate word-break
-        /^(tion|ing|ed|ly|ment|ness|able|ible|ive|ance|ence|ity|ous|ful|less|ward|wise|ship|hood|dom|er|or|ist|ism|al|an|ian|ary|ory|ize|ise|fy|en|ate|ure|ice|age|ade|ade|ery|ry|cy|ty)/.test(firstWord.toLowerCase()) ||
-        // Short continuation that's not a standalone word
-        (firstWord.length <= 4 && !/^(and|the|for|but|not|you|all|can|had|her|was|one|our|out|are|has|his|how|its|may|new|now|old|see|two|way|who|boy|did|get|has|him|let|put|say|she|too|use)$/i.test(firstWord))
-      );
+      // A word-break hyphen is when:
+      // 1. The continuation is ONLY a suffix (not a standalone word)
+      // 2. Pure suffixes are short fragments that complete a word
+      //
+      // Examples of word-break: "experi-" + "ence", "personal-" + "ized"
+      // Examples of compound: "experience-" + "based", "one-" + "on-one"
+      //
+      // Key insight: if firstWord is a real English word, it's probably a compound
+      const pureSuffixes = /^(tion|tions|ing|ings|ed|ly|ment|ments|ness|ive|ance|ence|ity|ous|ful|less|ward|wise|ship|hood|dom|ism|ize|ise|fy|en|ure|ice|age|ery|ry|cy|ty|able|ible|ary|ory|ian|an|al)$/i;
+
+      const isWordBreak = pureSuffixes.test(firstWord);
 
       if (isWordBreak) {
         // Remove hyphen and join without space
         result = result.slice(0, -1) + currentLine;
       } else {
-        // Keep as-is with space (compound word like "one-on-one")
+        // Keep hyphen (compound word or just add space)
         result += ' ' + currentLine;
       }
     } else {
