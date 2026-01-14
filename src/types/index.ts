@@ -128,6 +128,26 @@ export interface User {
   isActive: boolean;
   lastLogin: Date | null;
   createdAt: Date;
+  deletedAt?: Date | null;
+}
+
+// Extended user type with organization name for admin views
+export interface UserWithOrg extends User {
+  orgName: string | null;
+}
+
+// User statistics for admin dashboard
+export interface UserStats {
+  totalOrgs: number;
+  totalUsers: number;
+  activeUsers: number;
+  deletedUsers: number;
+  byRole: {
+    super_admin: number;
+    owner: number;
+    member: number;
+    individual: number;
+  };
 }
 
 // Organization type

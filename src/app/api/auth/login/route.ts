@@ -28,6 +28,22 @@ export async function POST(request: NextRequest) {
 
     const { user, passwordHash } = result;
 
+    // Check if user is deleted
+    if (user.deletedAt) {
+      return NextResponse.json(
+        { success: false, error: 'This account has been deleted. Please contact an administrator.' },
+        { status: 403 }
+      );
+    }
+
+    // Check if user is disabled
+    if (!user.isActive) {
+      return NextResponse.json(
+        { success: false, error: 'Your account has been disabled. Please contact an administrator.' },
+        { status: 403 }
+      );
+    }
+
     // Verify password
     const isValid = await bcrypt.compare(password, passwordHash);
 
