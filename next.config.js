@@ -8,7 +8,7 @@ const nextConfig = {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
   // Externalize PDF/DOCX conversion packages to avoid worker resolution issues
-  serverExternalPackages: ['pdf.js-extract', 'canvas'],
+  serverExternalPackages: ['pdfjs-dist', 'canvas'],
   experimental: {
     serverActions: {
       bodySizeLimit: '25mb', // Increased to support PDF uploads (up to 20MB)
