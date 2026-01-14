@@ -56,11 +56,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'No organization assigned' }, { status: 400 });
     }
 
+    // Parse optional body for maxUses
+    let maxUses = 1; // Default to single-use
+    try {
+      const body = await request.json();
+      if (body.maxUses !== undefined) {
+        maxUses = parseInt(body.maxUses, 10);
+        if (isNaN(maxUses) || maxUses < 0) {
+          return NextResponse.json({ success: false, error: 'maxUses must be a non-negative integer' }, { status: 400 });
+        }
+      }
+    } catch {
+      // No body or invalid JSON is fine, use default maxUses
+    }
+
     // Create org_member code for owner's org
     const code = await createInvitationCode({
       type: 'org_member',
       orgId: user.orgId,
-      createdBy: user.userId
+      createdBy: user.userId,
+      maxUses,
     });
 
     return NextResponse.json({
@@ -112,9 +127,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Code not found' }, { status: 404 });
     }
 
-    // Additional safety check: don't delete already-used codes
-    if (code.usedBy !== null) {
-      return NextResponse.json({ success: false, error: 'Cannot delete a used code' }, { status: 400 });
+    // Additional safety check: don't delete codes that have been used
+    if (code.currentUses > 0) {
+      return NextResponse.json({ success: false, error: 'Cannot delete a code that has been used' }, { status: 400 });
     }
 
     await deleteInvitationCode(id);

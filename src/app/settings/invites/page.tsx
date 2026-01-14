@@ -15,7 +15,9 @@ export default function OwnerInvitationCodesPage() {
   // Filter state
   const [showUsed, setShowUsed] = useState(true);
 
-  // Creating state
+  // Create modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [maxUses, setMaxUses] = useState(1);
   const [creating, setCreating] = useState(false);
 
   // Check owner access
@@ -93,11 +95,14 @@ export default function OwnerInvitationCodesPage() {
       const response = await fetch(buildApiPath('invites'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maxUses }),
       });
 
       const data = await response.json();
 
       if (data.success) {
+        setShowCreateModal(false);
+        setMaxUses(1); // Reset for next time
         fetchCodes();
       } else {
         setError(data.error || 'Failed to create invitation code');
@@ -139,6 +144,19 @@ export default function OwnerInvitationCodesPage() {
     navigator.clipboard.writeText(code);
   };
 
+  // Check if code is available for use
+  const isCodeAvailable = (code: InvitationCode) => {
+    return code.maxUses === 0 || code.currentUses < code.maxUses;
+  };
+
+  // Format usage display
+  const formatUsage = (code: InvitationCode) => {
+    if (code.maxUses === 0) {
+      return `${code.currentUses}/∞`;
+    }
+    return `${code.currentUses}/${code.maxUses}`;
+  };
+
   // Loading state
   if (isOwner === null || loading) {
     return (
@@ -164,14 +182,13 @@ export default function OwnerInvitationCodesPage() {
         </div>
 
         <button
-          onClick={handleCreate}
-          disabled={creating}
-          className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={() => setShowCreateModal(true)}
+          className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          {creating ? 'Creating...' : 'Create Member Code'}
+          Create Member Code
         </button>
       </div>
 
@@ -184,7 +201,7 @@ export default function OwnerInvitationCodesPage() {
             onChange={(e) => setShowUsed(e.target.checked)}
             className="rounded border-gray-300"
           />
-          <span className="text-gray-700">Show used codes</span>
+          <span className="text-gray-700">Show fully used codes</span>
         </label>
       </div>
 
@@ -218,13 +235,10 @@ export default function OwnerInvitationCodesPage() {
                   Code
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Usage
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Used
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -232,55 +246,59 @@ export default function OwnerInvitationCodesPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {codes.map((code) => (
-                <tr key={code.id} className={code.usedBy ? 'bg-gray-50' : ''}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <code className="font-mono text-sm font-medium text-gray-900">
-                        {code.code}
-                      </code>
-                      {!code.usedBy && (
+              {codes.map((code) => {
+                const available = isCodeAvailable(code);
+                return (
+                  <tr key={code.id} className={!available ? 'bg-gray-50' : ''}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono text-sm font-medium text-gray-900">
+                          {code.code}
+                        </code>
+                        {available && (
+                          <button
+                            onClick={() => copyCode(code.code)}
+                            className="p-1 text-gray-400 hover:text-gray-600"
+                            title="Copy code"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {code.maxUses === 0 ? (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                          {formatUsage(code)}
+                        </span>
+                      ) : !available ? (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                          {formatUsage(code)} (Full)
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                          {formatUsage(code)}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(code.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {code.currentUses === 0 && (
                         <button
-                          onClick={() => copyCode(code.code)}
-                          className="p-1 text-gray-400 hover:text-gray-600"
-                          title="Copy code"
+                          onClick={() => handleDelete(code.id)}
+                          className="text-red-600 hover:text-red-900"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
+                          Delete
                         </button>
                       )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {code.usedBy ? (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
-                        Used
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                        Available
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(code.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {code.usedAt ? new Date(code.usedAt).toLocaleDateString() : '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {!code.usedBy && (
-                      <button
-                        onClick={() => handleDelete(code.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -300,6 +318,75 @@ export default function OwnerInvitationCodesPage() {
           </div>
         </div>
       </div>
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center p-4">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50"
+              onClick={() => setShowCreateModal(false)}
+            />
+
+            <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full">
+              <div className="px-6 py-4 border-b flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Create Member Code</h2>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Usage Limit
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      value={maxUses}
+                      onChange={(e) => setMaxUses(parseInt(e.target.value) || 0)}
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-500">
+                      {maxUses === 0 ? '(Unlimited)' : `(Can be used ${maxUses} time${maxUses !== 1 ? 's' : ''})`}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Set to 0 for unlimited uses</p>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <p className="text-sm text-gray-600">
+                    This code will allow new users to register and automatically join your organization as members.
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreate}
+                  disabled={creating}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {creating ? 'Creating...' : 'Create Code'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
