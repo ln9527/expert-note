@@ -8,7 +8,9 @@
  * - File validation with magic byte checks
  */
 
-import pdfParse from 'pdf-parse';
+// pdf-parse is a CommonJS module
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse');
 import { PDFExtract } from 'pdf.js-extract';
 import type { PDFExtractPage, PDFExtractText } from 'pdf.js-extract';
 import mammoth from 'mammoth';
