@@ -170,7 +170,7 @@ export async function convertPdfToMarkdown(buffer: ArrayBuffer): Promise<Convers
       // Fix common PDF artifacts: spaces within words
       .replace(/(\w)\s{2,}(\w)/g, '$1 $2')
       // Handle hyphenated words at line breaks
-      .replace(/(\w)-\n(\w)/g, (match, p1, p2) => {
+      .replace(/(\w)-\n(\w)/g, (_match: string, p1: string, p2: string) => {
         // Check if lowercase continuation - likely word break
         if (p2 === p2.toLowerCase()) {
           return p1 + p2; // Remove hyphen, join
@@ -180,7 +180,7 @@ export async function convertPdfToMarkdown(buffer: ArrayBuffer): Promise<Convers
       // Convert multiple newlines to paragraph breaks
       .replace(/\n{3,}/g, '\n\n')
       // Single newlines within paragraphs → space (for flowing text)
-      .replace(/([^\n])\n([^\n])/g, (match, p1, p2) => {
+      .replace(/([^\n])\n([^\n])/g, (_match: string, p1: string, p2: string) => {
         // Don't join if looks like a heading or list
         if (/^[A-Z#\-\*\d]/.test(p2) && /[.!?:]$/.test(p1)) {
           return p1 + '\n\n' + p2; // Keep as separate paragraphs
@@ -457,7 +457,7 @@ function postProcessPdfText(text: string): string {
     .replace(/(\w)- (\w)/g, '$1-$2') // Fix "one- on" → "one-on"
     .replace(/(\w) - (\w)/g, '$1-$2') // Fix "one - on" → "one-on"
     // Fix orphan hyphens at line breaks that weren't caught
-    .replace(/(\w)-\s*\n\s*([a-z])/g, (match, p1, p2) => {
+    .replace(/(\w)-\s*\n\s*([a-z])/g, (_match: string, p1: string, p2: string) => {
       // Only join if it looks like a broken word (lowercase continuation)
       return p1 + p2;
     })
