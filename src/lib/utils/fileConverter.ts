@@ -8,8 +8,8 @@
  * - File validation with magic byte checks
  */
 
-// @ts-expect-error - pdfjs-dist ESM build works at runtime
-import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
+// Use legacy build for Node.js server-side usage
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import mammoth from 'mammoth';
 import TurndownService from 'turndown';
 
