@@ -242,15 +242,24 @@ function processPageLayout(page: PDFExtractPage): string {
 /**
  * Reconstruct text from a column of PDF text items
  * Groups items by approximate Y position (lines) and sorts
+ *
+ * Key improvements:
+ * - Smart spacing: don't add space between adjacent characters
+ * - Hyphenation handling: rejoin words split across lines
+ * - Relaxed thresholds for line/paragraph detection
  */
 function reconstructColumnText(items: PDFExtractText[]): string {
   if (items.length === 0) return '';
 
+  // Calculate average font height for dynamic thresholds
+  const avgHeight = items.reduce((sum, item) => sum + (item.height || 10), 0) / items.length;
+  const lineThreshold = Math.max(avgHeight * 0.6, 8); // Same line if within 60% of font height
+  const paragraphThreshold = avgHeight * 1.8; // Paragraph break if > 1.8x font height gap
+
   // Sort by Y position (top to bottom), then X (left to right)
   const sortedItems = [...items].sort((a, b) => {
     const yDiff = a.y - b.y;
-    // Group items within 5 points vertically as same line
-    if (Math.abs(yDiff) < 5) {
+    if (Math.abs(yDiff) < lineThreshold) {
       return a.x - b.x;
     }
     return yDiff;
@@ -262,8 +271,7 @@ function reconstructColumnText(items: PDFExtractText[]): string {
   let lastY = sortedItems[0]?.y ?? 0;
 
   for (const item of sortedItems) {
-    // New line if Y position differs by more than line height threshold
-    if (Math.abs(item.y - lastY) > 5) {
+    if (Math.abs(item.y - lastY) > lineThreshold) {
       if (currentLine.length > 0) {
         lines.push(currentLine);
       }
@@ -273,12 +281,11 @@ function reconstructColumnText(items: PDFExtractText[]): string {
     lastY = item.y;
   }
 
-  // Don't forget the last line
   if (currentLine.length > 0) {
     lines.push(currentLine);
   }
 
-  // Build text from lines
+  // Build text from lines with smart spacing
   const paragraphs: string[] = [];
   let currentParagraph: string[] = [];
   let lastLineY = 0;
@@ -286,18 +293,37 @@ function reconstructColumnText(items: PDFExtractText[]): string {
   for (const line of lines) {
     // Sort items in line by X position
     line.sort((a, b) => a.x - b.x);
-    const lineText = line.map(item => item.str).join(' ').trim();
 
+    // Smart join: only add space if there's actual gap between items
+    let lineText = '';
+    for (let i = 0; i < line.length; i++) {
+      const item = line[i];
+      const prevItem = line[i - 1];
+
+      if (prevItem) {
+        const prevEnd = prevItem.x + (prevItem.width || 0);
+        const gap = item.x - prevEnd;
+        const avgCharWidth = (prevItem.width || 0) / Math.max(prevItem.str.length, 1);
+
+        // Add space only if gap is significant (> 30% of char width)
+        // This prevents spaces within words like "d ialogue"
+        if (gap > avgCharWidth * 0.3) {
+          lineText += ' ';
+        }
+      }
+      lineText += item.str;
+    }
+
+    lineText = lineText.trim();
     if (!lineText) continue;
 
-    // Detect paragraph breaks (larger Y gap between lines)
+    // Detect paragraph breaks
     const lineY = line[0]?.y ?? 0;
     const yGap = Math.abs(lineY - lastLineY);
 
-    if (lastLineY > 0 && yGap > 15) {
-      // Paragraph break detected
+    if (lastLineY > 0 && yGap > paragraphThreshold) {
       if (currentParagraph.length > 0) {
-        paragraphs.push(currentParagraph.join(' '));
+        paragraphs.push(joinLinesWithHyphenation(currentParagraph));
         currentParagraph = [];
       }
     }
@@ -306,12 +332,60 @@ function reconstructColumnText(items: PDFExtractText[]): string {
     lastLineY = lineY;
   }
 
-  // Don't forget the last paragraph
   if (currentParagraph.length > 0) {
-    paragraphs.push(currentParagraph.join(' '));
+    paragraphs.push(joinLinesWithHyphenation(currentParagraph));
   }
 
-  return paragraphs.join('\n\n');
+  // Post-process to clean up common PDF extraction issues
+  return postProcessPdfText(paragraphs.join('\n\n'));
+}
+
+/**
+ * Join lines handling hyphenation at line endings
+ * "experi-" + "ence" → "experience"
+ */
+function joinLinesWithHyphenation(lines: string[]): string {
+  if (lines.length === 0) return '';
+
+  let result = lines[0];
+
+  for (let i = 1; i < lines.length; i++) {
+    const prevEndsWithHyphen = result.endsWith('-');
+    const currentLine = lines[i];
+
+    if (prevEndsWithHyphen && currentLine.length > 0) {
+      // Check if this looks like a hyphenated word (lowercase continuation)
+      const firstChar = currentLine[0];
+      if (firstChar && firstChar === firstChar.toLowerCase() && /[a-z]/.test(firstChar)) {
+        // Remove hyphen and join without space
+        result = result.slice(0, -1) + currentLine;
+      } else {
+        // Keep hyphen, add space
+        result += ' ' + currentLine;
+      }
+    } else {
+      result += ' ' + currentLine;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Post-process extracted PDF text to fix common issues
+ */
+function postProcessPdfText(text: string): string {
+  return text
+    // Fix spaces within words (common PDF issue): "cust omer" → "customer"
+    // Only fix single letters followed by space and more letters
+    .replace(/\b([a-z])\s+([a-z]{2,})\b/gi, '$1$2')
+    // Fix orphan hyphens at end of lines that weren't caught
+    .replace(/(\w)-\s*\n\s*(\w)/g, '$1$2')
+    // Normalize multiple spaces to single space
+    .replace(/  +/g, ' ')
+    // Clean up excessive newlines
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /**
