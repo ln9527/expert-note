@@ -190,6 +190,7 @@ export default function TagFilter({
           >
             {tag.name}
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleRemoveTag(tag.id);
@@ -217,6 +218,7 @@ export default function TagFilter({
         {/* Clear all button */}
         {selectedTags.length > 0 && (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               handleClearAll();
@@ -238,6 +240,7 @@ export default function TagFilter({
           {/* Create new tag option - More prominent */}
           {allowCreate && !showCreateForm && (
             <button
+              type="button"
               onClick={() => {
                 setShowCreateForm(true);
                 setNewTagName(searchQuery);
@@ -330,6 +333,7 @@ export default function TagFilter({
               {searchQuery ? 'No tags found' : 'No tags available'}
               {allowCreate && searchQuery && (
                 <button
+                  type="button"
                   onClick={() => {
                     setShowCreateForm(true);
                     setNewTagName(searchQuery);
@@ -347,6 +351,7 @@ export default function TagFilter({
                 return (
                   <li key={tag.id}>
                     <button
+                      type="button"
                       onClick={() => handleToggleTag(tag.id)}
                       className={`
                         w-full px-4 py-2 text-left text-sm flex items-center gap-2
