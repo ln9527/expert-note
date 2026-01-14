@@ -92,7 +92,8 @@ SELECT username, role, org_id FROM users;
 
 ```bash
 # Deploy (after git push)
-ssh -i ningli.pem root@47.121.176.193 \
+# SSH key located at: ./ningli.pem (in project root)
+ssh -i /Users/ningli/Library/CloudStorage/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem root@47.121.176.193 \
   "cd /var/www/expert-note && git pull && export BASE_PATH=/annote && npm install && npm run build && pm2 restart expert-note"
 ```
 

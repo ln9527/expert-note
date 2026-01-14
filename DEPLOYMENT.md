@@ -7,7 +7,7 @@
 | Server IP | 47.121.176.193 |
 | Production URL | https://spansurvey.net/annote |
 | Port | 3006 |
-| SSH Command | `ssh -i /Users/ningli/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem root@47.121.176.193` |
+| SSH Command | `ssh -i /Users/ningli/Library/CloudStorage/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem root@47.121.176.193` |
 | App Location | `/var/www/expert-note` |
 | PM2 Process | `expert-note` |
 
@@ -69,7 +69,7 @@ All users have password: `password123`
 
 ### SSH to Server
 ```bash
-ssh -i /Users/ningli/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem root@47.121.176.193
+ssh -i /Users/ningli/Library/CloudStorage/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem root@47.121.176.193
 ```
 
 ### Update & Restart
