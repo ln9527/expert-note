@@ -8,6 +8,7 @@
  * - File validation with magic byte checks
  */
 
+import pdfParse from 'pdf-parse';
 import { PDFExtract } from 'pdf.js-extract';
 import type { PDFExtractPage, PDFExtractText } from 'pdf.js-extract';
 import mammoth from 'mammoth';
@@ -142,9 +143,74 @@ export function stripImageMarkdown(markdown: string): string {
 }
 
 /**
- * Convert PDF to Markdown with two-column layout detection
+ * Convert PDF to Markdown
+ *
+ * Uses pdf-parse as primary method (handles most PDFs well),
+ * falls back to coordinate-based extraction for two-column layouts
  */
 export async function convertPdfToMarkdown(buffer: ArrayBuffer): Promise<ConversionResult> {
+  try {
+    // First try pdf-parse - it handles most PDFs well and preserves reading order
+    const pdfBuffer = Buffer.from(buffer);
+    const pdfData = await pdfParse(pdfBuffer);
+
+    if (!pdfData.text || pdfData.text.trim().length === 0) {
+      return {
+        success: false,
+        error: 'No text could be extracted from PDF. It may be a scanned document.',
+      };
+    }
+
+    // Clean up the extracted text
+    let markdown = pdfData.text
+      // Normalize line endings
+      .replace(/\r\n/g, '\n')
+      // Fix common PDF artifacts: spaces within words
+      .replace(/(\w)\s{2,}(\w)/g, '$1 $2')
+      // Handle hyphenated words at line breaks
+      .replace(/(\w)-\n(\w)/g, (match, p1, p2) => {
+        // Check if lowercase continuation - likely word break
+        if (p2 === p2.toLowerCase()) {
+          return p1 + p2; // Remove hyphen, join
+        }
+        return p1 + '-' + p2; // Keep hyphen
+      })
+      // Convert multiple newlines to paragraph breaks
+      .replace(/\n{3,}/g, '\n\n')
+      // Single newlines within paragraphs → space (for flowing text)
+      .replace(/([^\n])\n([^\n])/g, (match, p1, p2) => {
+        // Don't join if looks like a heading or list
+        if (/^[A-Z#\-\*\d]/.test(p2) && /[.!?:]$/.test(p1)) {
+          return p1 + '\n\n' + p2; // Keep as separate paragraphs
+        }
+        return p1 + ' ' + p2; // Join with space
+      })
+      .trim();
+
+    return {
+      success: true,
+      markdown: stripImageMarkdown(markdown),
+    };
+  } catch (error) {
+    console.error('[FileConverter] PDF conversion error:', error);
+
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (errorMessage.includes('password') || errorMessage.includes('encrypted')) {
+      return { success: false, error: 'Password-protected PDFs are not supported' };
+    }
+
+    // Try fallback with coordinate-based extraction
+    console.log('[FileConverter] Trying fallback extraction...');
+    return convertPdfWithCoordinates(buffer);
+  }
+}
+
+/**
+ * Fallback: Convert PDF using coordinate-based extraction
+ * Better for two-column academic papers
+ */
+async function convertPdfWithCoordinates(buffer: ArrayBuffer): Promise<ConversionResult> {
   try {
     const pdfExtract = new PDFExtract();
     const data = await pdfExtract.extractBuffer(Buffer.from(buffer));
@@ -169,7 +235,6 @@ export async function convertPdfToMarkdown(buffer: ArrayBuffer): Promise<Convers
       };
     }
 
-    // Join pages with double newlines
     const markdown = pageTexts.join('\n\n---\n\n');
 
     return {
@@ -177,14 +242,7 @@ export async function convertPdfToMarkdown(buffer: ArrayBuffer): Promise<Convers
       markdown: stripImageMarkdown(markdown),
     };
   } catch (error) {
-    console.error('[FileConverter] PDF conversion error:', error);
-
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
-    if (errorMessage.includes('password') || errorMessage.includes('encrypted')) {
-      return { success: false, error: 'Password-protected PDFs are not supported' };
-    }
-
+    console.error('[FileConverter] Fallback PDF conversion error:', error);
     return { success: false, error: 'Failed to convert PDF. It may be corrupted.' };
   }
 }
