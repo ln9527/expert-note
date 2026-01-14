@@ -342,7 +342,9 @@ function reconstructColumnText(items: PDFExtractText[]): string {
 
 /**
  * Join lines handling hyphenation at line endings
- * "experi-" + "ence" → "experience"
+ * Distinguishes between:
+ * - Word-break hyphens: "experi-" + "ence" → "experience" (remove hyphen)
+ * - Compound words: "one-" + "on-one" → "one-on-one" (keep hyphen)
  */
 function joinLinesWithHyphenation(lines: string[]): string {
   if (lines.length === 0) return '';
@@ -350,17 +352,31 @@ function joinLinesWithHyphenation(lines: string[]): string {
   let result = lines[0];
 
   for (let i = 1; i < lines.length; i++) {
-    const prevEndsWithHyphen = result.endsWith('-');
-    const currentLine = lines[i];
+    const currentLine = lines[i].trim();
+    if (!currentLine) continue;
 
-    if (prevEndsWithHyphen && currentLine.length > 0) {
-      // Check if this looks like a hyphenated word (lowercase continuation)
-      const firstChar = currentLine[0];
-      if (firstChar && firstChar === firstChar.toLowerCase() && /[a-z]/.test(firstChar)) {
+    // Check if previous line ends with hyphen
+    if (result.endsWith('-')) {
+      const firstWord = currentLine.split(/\s/)[0] || '';
+      const firstChar = firstWord[0] || '';
+
+      // Heuristics to detect word-break vs compound word:
+      // 1. If continuation starts with lowercase → likely word-break hyphen
+      // 2. If continuation is a common suffix → word-break
+      // 3. If continuation looks like a compound part → keep hyphen
+      const isWordBreak = (
+        /^[a-z]/.test(firstChar) &&
+        // Common suffixes that indicate word-break
+        /^(tion|ing|ed|ly|ment|ness|able|ible|ive|ance|ence|ity|ous|ful|less|ward|wise|ship|hood|dom|er|or|ist|ism|al|an|ian|ary|ory|ize|ise|fy|en|ate|ure|ice|age|ade|ade|ery|ry|cy|ty)/.test(firstWord.toLowerCase()) ||
+        // Short continuation that's not a standalone word
+        (firstWord.length <= 4 && !/^(and|the|for|but|not|you|all|can|had|her|was|one|our|out|are|has|his|how|its|may|new|now|old|see|two|way|who|boy|did|get|has|him|let|put|say|she|too|use)$/i.test(firstWord))
+      );
+
+      if (isWordBreak) {
         // Remove hyphen and join without space
         result = result.slice(0, -1) + currentLine;
       } else {
-        // Keep hyphen, add space
+        // Keep as-is with space (compound word like "one-on-one")
         result += ' ' + currentLine;
       }
     } else {
@@ -373,14 +389,19 @@ function joinLinesWithHyphenation(lines: string[]): string {
 
 /**
  * Post-process extracted PDF text to fix common issues
+ * More conservative approach to avoid breaking valid text
  */
 function postProcessPdfText(text: string): string {
   return text
-    // Fix spaces within words (common PDF issue): "cust omer" → "customer"
-    // Only fix single letters followed by space and more letters
-    .replace(/\b([a-z])\s+([a-z]{2,})\b/gi, '$1$2')
-    // Fix orphan hyphens at end of lines that weren't caught
-    .replace(/(\w)-\s*\n\s*(\w)/g, '$1$2')
+    // Fix common PDF artifacts: spaces within clearly broken words
+    // More specific patterns to avoid false positives
+    .replace(/(\w)- (\w)/g, '$1-$2') // Fix "one- on" → "one-on"
+    .replace(/(\w) - (\w)/g, '$1-$2') // Fix "one - on" → "one-on"
+    // Fix orphan hyphens at line breaks that weren't caught
+    .replace(/(\w)-\s*\n\s*([a-z])/g, (match, p1, p2) => {
+      // Only join if it looks like a broken word (lowercase continuation)
+      return p1 + p2;
+    })
     // Normalize multiple spaces to single space
     .replace(/  +/g, ' ')
     // Clean up excessive newlines
