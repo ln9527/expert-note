@@ -380,3 +380,47 @@ export interface PromptTemplate {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// BULK UPLOAD TYPES
+// ═══════════════════════════════════════════════════════════════════
+
+// Status of a file in bulk upload
+export type BulkUploadFileStatus = 'pending' | 'uploading' | 'success' | 'failed' | 'skipped';
+
+// A file being uploaded in bulk
+export interface BulkUploadFile {
+  file: File;
+  relativePath: string;  // Original path for display (includes folder structure)
+  status: BulkUploadFileStatus;
+  error?: string;
+  documentId?: string;   // Set after successful upload
+}
+
+// Result of a bulk upload batch
+export interface BulkUploadResult {
+  success: boolean;
+  results: {
+    successful: Array<{
+      filename: string;
+      documentId: string;
+      relativePath: string;
+    }>;
+    failed: Array<{
+      filename: string;
+      error: string;
+      relativePath: string;
+    }>;
+    skipped: Array<{
+      filename: string;
+      reason: string;
+      relativePath: string;
+    }>;
+  };
+  summary: {
+    total: number;
+    succeeded: number;
+    failed: number;
+    skipped: number;
+  };
+}
