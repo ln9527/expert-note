@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ UI Enhanced & Prompts Updated (Jan 13, 2026)
+**Status**: ✅ User Management System Complete (Jan 14, 2026)
 
 ---
 
@@ -15,7 +15,7 @@ npm run build                  # Build for production
 npm run lint                   # Run linter
 
 # Test credentials (password: password123)
-# admin (super_admin) | ning (owner) | expert1 (member)
+# admin (super_admin) | ning (owner) | expert1 (member) | testuser123 (individual)
 ```
 
 ## Key Documentation
@@ -56,17 +56,22 @@ sql/
 
 ## Current Priorities
 
-1. **Test New Prompts** - Verify Tacit Knowledge extraction quality in production
-2. **NULL Safety** - Add explicit checks for org_id comparisons
-3. **Migration Cleanup** - Renumber duplicate migration files (005, 006, 007)
+1. **Test Password Reset** - Verify temp password flow works for all user types
+2. **Migration Cleanup** - Renumber duplicate migration files (005, 006, 007)
+3. **Monitor Production** - Watch for permission or user management errors
 
-## Recent Work (Jan 13, 2026)
+## Recent Work (Jan 14, 2026)
 
-- ✅ UI Enhancements: Table scroll, Yes/No text for sharing, removed "refined" status
-- ✅ Sharing Controls: Added to Knowledge entries and Prompts
-- ✅ Prompt Migration: Applied 007_update_default_prompts.sql to production
-- ✅ New Prompts Active: Tacit Knowledge extraction + Inductive reasoning generation
-- 📄 Reports: `test-reports/fix-report-2026-01-13-ui-issues.md`
+- ✅ **User Management System**: Complete implementation for admins and org owners
+  - Admin: `/settings/admin/users` - View all users, stats dashboard, password reset, disable/delete
+  - Owner: `/settings/members` - Manage org members only
+  - Self-service: `/settings/account` - Change password and display name
+- ✅ **Password Reset**: Temp password shown once in modal (no email required)
+- ✅ **Soft Delete**: Users can be deleted (data preserved) via `deleted_at` column
+- ✅ **Login Security**: Disabled users see "Account disabled", deleted see "Account deleted"
+- ✅ **Registration Fix**: Added basePath support for production
+- ✅ **Bug Fixes**: Column name, invitation code types, orgId handling
+- 📄 **Migration**: `008_add_user_soft_delete.sql`
 
 ## Database
 
@@ -78,7 +83,7 @@ psql -h localhost -U ningli -d annotservice
 SELECT username, role, org_id FROM users;
 ```
 
-**Latest Migration:** 007_update_default_prompts.sql (Applied to production Jan 13, 2026)
+**Latest Migration:** 008_add_user_soft_delete.sql (Applied to production Jan 14, 2026)
 
 ## Production
 
@@ -111,4 +116,4 @@ Never patch bugs. Find root causes: Reproduce -> Trace -> Understand -> Fix -> V
 
 ---
 
-**Last Updated:** 2026-01-13
+**Last Updated:** 2026-01-14

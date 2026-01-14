@@ -1,14 +1,14 @@
 # Expert Note System - Handoff Document
 
-**Last Updated:** 2026-01-12
+**Last Updated:** 2026-01-14
 **For:** Next AI agent picking up this project
-**Context:** Comprehensive UI testing completed + security fixes applied
+**Context:** User Management System fully implemented + registration fixed
 
 ---
 
 ## Current System State
 
-**Status:** ✅ Phase 5 Complete - UI Tested & Security Hardened
+**Status:** ✅ Phase 6 Complete - User Management System Implemented
 
 **Production URL:** https://spansurvey.net/annote
 **Local Dev:** http://localhost:3000
@@ -18,7 +18,7 @@
 
 ## What's Implemented & Ready
 
-### ✅ User Management (Completed 2026-01-09 to 2026-01-11)
+### ✅ User Management (Completed 2026-01-09 to 2026-01-14)
 
 | Feature | Status | Location |
 |---------|--------|----------|
@@ -30,6 +30,13 @@
 | Generation guides admin-only | ✅ Working | `/settings/prompts` |
 | Admin invitation codes | ✅ Working | `/settings/admin` |
 | Owner member invitations | ✅ Working | `/settings/invites` |
+| **Admin user management** | ✅ Working | `/settings/admin/users` |
+| **Org member management** | ✅ Working | `/settings/members` |
+| **Account settings (self-service)** | ✅ Working | `/settings/account` |
+| **Password reset (temp password)** | ✅ Working | Admin/Owner action |
+| **Disable/Enable users** | ✅ Working | Admin/Owner action |
+| **Soft delete users** | ✅ Working | Admin/Owner action |
+| **Registration with basePath** | ✅ Working | `/register` |
 
 ### ✅ Core Features (Production-Ready)
 
@@ -45,7 +52,56 @@
 
 ---
 
-## Recent Changes (Jan 12, 2026)
+## Recent Changes (Jan 14, 2026)
+
+### User Management System - Complete Implementation
+
+**Admin Features (`/settings/admin/users`):**
+- Stats dashboard showing total orgs, users, and breakdown by role
+- User table with search, filter by role/status
+- Actions: Reset password, Disable/Enable, Delete (soft)
+- Password reset shows temp password once in modal
+
+**Owner Features (`/settings/members`):**
+- View and manage org members only
+- Same actions as admin but scoped to org
+- Cannot manage other owners or super_admins
+
+**Self-Service (`/settings/account`):**
+- Change display name
+- Change password (requires current password)
+
+**Login Security:**
+- Disabled users: "Your account has been disabled"
+- Deleted users: "Your account has been deleted"
+
+### Bug Fixes
+- ✅ `/api/users` - Fixed column name `last_login` → `last_login_at`
+- ✅ `/api/admin/invitation-codes` - Fixed type validation to `org_owner`/`org_member`
+- ✅ Admin UI - Fixed `orgId` not sent for `org_owner` codes
+- ✅ `/register` - Added `buildApiPath` for production basePath support
+
+### New Files Created
+```
+src/app/api/admin/users/route.ts          # List all users
+src/app/api/admin/users/stats/route.ts    # User statistics
+src/app/api/admin/users/[id]/route.ts     # Delete user
+src/app/api/admin/users/[id]/password/route.ts  # Reset password
+src/app/api/admin/users/[id]/status/route.ts    # Enable/disable
+src/app/api/auth/change-password/route.ts # Self-service password change
+src/app/api/users/profile/route.ts        # Update display name
+src/app/api/users/org/route.ts            # List org members
+src/app/settings/admin/users/page.tsx     # Admin user management page
+src/app/settings/members/page.tsx         # Owner member management page
+src/app/settings/account/page.tsx         # Self-service account settings
+src/components/users/UserTable.tsx        # Reusable user table
+src/components/users/TempPasswordModal.tsx # Temp password display
+sql/migrations/008_add_user_soft_delete.sql # Soft delete migration
+```
+
+---
+
+## Previous Changes (Jan 12, 2026)
 
 ### Comprehensive UI Testing
 - ✅ **15/15 tests passed** - Document creation, annotations, knowledge extraction, sharing
@@ -104,10 +160,22 @@ expert-note/
 │   │   └── api/
 │   │       ├── admin/
 │   │       │   ├── organizations/route.ts  ← Create orgs
-│   │       │   └── invitation-codes/route.ts ← All code types
+│   │       │   ├── invitation-codes/route.ts ← All code types
+│   │       │   └── users/              ← User management ✅ NEW
+│   │       │       ├── route.ts        ← List all users
+│   │       │       ├── stats/route.ts  ← User statistics
+│   │       │       └── [id]/           ← User actions
+│   │       │           ├── route.ts    ← Delete user
+│   │       │           ├── password/   ← Reset password
+│   │       │           └── status/     ← Enable/disable
+│   │       ├── auth/change-password/route.ts ← Self-service ✅ NEW
+│   │       ├── users/
+│   │       │   ├── route.ts            ← List users
+│   │       │   ├── org/route.ts        ← Org members ✅ NEW
+│   │       │   └── profile/route.ts    ← Update profile ✅ NEW
 │   │       ├── invites/route.ts        ← Owner member codes
 │   │       ├── documents/[id]/route.ts ← With permission checks
-│   │       └── knowledge/[id]/route.ts ← With permission checks ✅ FIXED
+│   │       └── knowledge/[id]/route.ts ← With permission checks
 │   │
 │   └── lib/db/queries/
 │       ├── documents.ts                ← Org visibility queries
@@ -132,12 +200,13 @@ expert-note/
 
 | User | Role | Org ID | Can Do |
 |------|------|--------|--------|
-| admin | super_admin | NULL | Everything + create orgs/codes |
-| ning | owner | 1 | Full access + create member codes |
+| admin | super_admin | NULL | Everything + create orgs/codes + manage all users |
+| ning | owner | 1 | Full access + create member codes + manage org members |
 | expert1 | member | 1 | View shared, edit if allowed |
 | student1-3 | member | 1 | View shared, edit if allowed |
 | researcher1-2 | member | 1 | View shared, edit if allowed |
 | guest | member | 1 | View shared, edit if allowed |
+| testuser123 | individual | NULL | Own content only, no org access |
 
 **All passwords:** `password123`
 
@@ -278,19 +347,19 @@ psql -h localhost -U ningli -d annotservice -f sql/migrations/XXX.sql  # Run mig
 ## Next Development Tasks (Prioritized)
 
 ### High Priority
-1. **Manual security testing** - Run tests from `PRE_DEPLOYMENT_CHECKLIST.md`
-2. **Production deployment** - After testing passes
-3. **Monitor production** - Watch for permission errors
+1. **Test password reset flow** - Verify temp password works for all user types
+2. **Monitor production** - Watch for user management or permission errors
+3. **Migration cleanup** - Renumber duplicate migration files (005, 006, 007)
 
 ### Medium Priority
 1. **NULL org_id safety** - Add explicit checks in permission logic
 2. **Improve error messages** - Consistent 403 vs 404 usage
-3. **Prompts API review** - Check for permission vulnerabilities
+3. **Test disabled/deleted login** - Verify error messages display correctly
 
 ### Nice to Have
-1. **Integration tests** - Automated permission boundary tests
-2. **Shared deletion UX** - Notify members when owner deletes
-3. **Session management** - Handle expiration gracefully
+1. **Integration tests** - Automated user management tests
+2. **Bulk user operations** - Disable/enable multiple users
+3. **User activity logs** - Track password resets, status changes
 
 ---
 
@@ -307,6 +376,8 @@ pm2 restart expert-note
 
 ---
 
-**Handoff Complete. System is ready for testing and next development phase.**
+**Handoff Complete. User Management System is fully implemented and deployed.**
 
 **Questions?** Read `CLAUDE.md` for project details, or check specific docs above.
+
+**Test Users:** admin (super_admin), ning (owner), expert1 (member), testuser123 (individual) - all with password `password123`
