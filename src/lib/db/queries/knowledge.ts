@@ -174,7 +174,7 @@ export async function getAllKnowledgeEntries(
       ke.*,
       COALESCE(
         (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
-         FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
+         FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id AND t.is_deleted = FALSE),
         '[]'
       ) as tags,
       (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
@@ -206,7 +206,7 @@ export async function getKnowledgeEntryById(id: string, includeDeleted = false):
       ke.*,
       COALESCE(
         (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
-         FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
+         FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id AND t.is_deleted = FALSE),
         '[]'
       ) as tags,
       (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
@@ -296,7 +296,7 @@ export async function createKnowledgeEntry(data: {
         ke.*,
         COALESCE(
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
-           FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
+           FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id AND t.is_deleted = FALSE),
           '[]'
         ) as tags,
         (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
@@ -405,7 +405,7 @@ export async function getDeletedKnowledgeEntries(userId: string): Promise<Knowle
       ke.*,
       COALESCE(
         (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
-         FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id),
+         FROM knowledge_tags kt JOIN tags t ON kt.tag_id = t.id WHERE kt.knowledge_id = ke.id AND t.is_deleted = FALSE),
         '[]'
       ) as tags,
       (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,

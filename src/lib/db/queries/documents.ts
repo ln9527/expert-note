@@ -124,7 +124,7 @@ export async function getDocuments(options: {
       d.*,
       COALESCE(
         (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
-         FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id),
+         FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id AND t.is_deleted = FALSE),
         '[]'
       ) as tags,
       (SELECT json_build_object(
@@ -151,7 +151,7 @@ export async function getDocumentById(id: string): Promise<Document | null> {
       d.*,
       COALESCE(
         (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
-         FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id),
+         FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id AND t.is_deleted = FALSE),
         '[]'
       ) as tags,
       (SELECT json_build_object(
@@ -219,7 +219,7 @@ export async function createDocument(data: {
         d.*,
         COALESCE(
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
-           FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id),
+           FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id AND t.is_deleted = FALSE),
           '[]'
         ) as tags,
         (SELECT json_build_object(
@@ -319,7 +319,7 @@ export async function updateDocument(
         d.*,
         COALESCE(
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
-           FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id),
+           FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id AND t.is_deleted = FALSE),
           '[]'
         ) as tags,
         (SELECT json_build_object(
@@ -368,7 +368,7 @@ export async function getDeletedDocuments(userId: number): Promise<Document[]> {
       d.*,
       COALESCE(
         (SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
-         FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id),
+         FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id AND t.is_deleted = FALSE),
         '[]'
       ) as tags,
       (SELECT json_build_object(

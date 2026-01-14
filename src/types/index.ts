@@ -189,6 +189,9 @@ export interface Tag {
   id: number;
   name: string;
   color: string;
+  createdBy: number | null;  // NULL = global/system tag
+  isDeleted: boolean;
+  deletedAt: Date | null;
 }
 
 export interface AnnotationCounts {

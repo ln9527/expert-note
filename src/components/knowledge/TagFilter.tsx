@@ -2,12 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { buildApiPath } from '@/lib/utils/pathHelper';
-
-interface Tag {
-  id: number;
-  name: string;
-  color: string;
-}
+import { Tag } from '@/types';
 
 interface TagFilterProps {
   tags: Tag[];

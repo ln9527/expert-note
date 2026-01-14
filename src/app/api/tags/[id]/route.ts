@@ -1,7 +1,7 @@
 // Tag update and delete API routes
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth/session';
-import { getTagById, updateTag, deleteTag } from '@/lib/db/queries/tags';
+import { getTagById, updateTag, deleteTag, canDeleteTag } from '@/lib/db/queries/tags';
 
 // GET /api/tags/[id] - Get a single tag
 export async function GET(
@@ -100,7 +100,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/tags/[id] - Delete a tag
+// DELETE /api/tags/[id] - Delete a tag (soft delete)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -132,12 +132,28 @@ export async function DELETE(
       );
     }
 
-    // Delete the tag (cascade will remove associations)
+    // Check if user has permission to delete this tag
+    const canDelete = await canDeleteTag(tagId, session.userId, session.role);
+    if (!canDelete) {
+      // Determine appropriate error message
+      if (existingTag.createdBy === null) {
+        return NextResponse.json(
+          { success: false, error: 'Global tags can only be deleted by administrators' },
+          { status: 403 }
+        );
+      }
+      return NextResponse.json(
+        { success: false, error: 'You can only delete tags you created' },
+        { status: 403 }
+      );
+    }
+
+    // Soft delete the tag
     await deleteTag(tagId);
 
     return NextResponse.json({
       success: true,
-      message: 'Tag deleted successfully. All associations have been removed.'
+      message: 'Tag deleted successfully.'
     });
   } catch (error) {
     console.error('Error deleting tag:', error);

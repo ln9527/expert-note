@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Tag name is required' }, { status: 400 });
     }
 
-    const tag = await createTag(name.trim(), color);
+    const tag = await createTag(name.trim(), color, user.userId);
     return NextResponse.json({ success: true, tag }, { status: 201 });
   } catch (error) {
     console.error('[API] POST /tags error:', error);

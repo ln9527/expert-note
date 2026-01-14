@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { buildApiPath } from '@/lib/utils/pathHelper';
-import { Tag } from '@/types';
+import { Tag, SessionUser } from '@/types';
 
 // Predefined color palette
 const TAG_COLORS = [
@@ -19,6 +19,7 @@ const TAG_COLORS = [
 ];
 
 export default function TagManagementPage() {
+  const [user, setUser] = useState<SessionUser | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,26 +40,58 @@ export default function TagManagementPage() {
   const [deletingTag, setDeletingTag] = useState<Tag | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Load all tags
+  // Load user session and tags
   useEffect(() => {
-    loadTags();
+    loadData();
   }, []);
 
-  const loadTags = async () => {
+  const loadData = async () => {
     try {
-      const res = await fetch(buildApiPath('tags'));
-      const data = await res.json();
-      if (data.success) {
-        setTags(data.tags);
+      // Fetch session and tags in parallel
+      const [sessionRes, tagsRes] = await Promise.all([
+        fetch(buildApiPath('auth/session')),
+        fetch(buildApiPath('tags')),
+      ]);
+
+      const sessionData = await sessionRes.json();
+      if (sessionData.authenticated) {
+        setUser(sessionData.user);
+      }
+
+      const tagsData = await tagsRes.json();
+      if (tagsData.success) {
+        setTags(tagsData.tags);
       } else {
-        setError(data.error || 'Failed to load tags');
+        setError(tagsData.error || 'Failed to load tags');
       }
     } catch (err) {
-      console.error('Failed to load tags:', err);
+      console.error('Failed to load data:', err);
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to check if user can delete a tag
+  const canDeleteTag = (tag: Tag): boolean => {
+    if (!user) return false;
+    // super_admin can delete any tag
+    if (user.role === 'super_admin') return true;
+    // Global tags (createdBy = null) can only be deleted by super_admin
+    if (tag.createdBy === null) return false;
+    // Users can only delete tags they created
+    return tag.createdBy === user.userId;
+  };
+
+  // Helper function to get ownership label
+  const getOwnershipLabel = (tag: Tag): { text: string; className: string } => {
+    if (tag.createdBy === null) {
+      return { text: 'System', className: 'bg-gray-100 text-gray-600' };
+    }
+    if (user && tag.createdBy === user.userId) {
+      return { text: 'Yours', className: 'bg-blue-100 text-blue-700' };
+    }
+    return { text: 'Shared', className: 'bg-purple-100 text-purple-700' };
   };
 
   // Create a new tag
@@ -339,6 +372,10 @@ export default function TagManagementPage() {
                       style={{ backgroundColor: tag.color }}
                     />
                     <span className="font-medium text-gray-900">{tag.name}</span>
+                    {/* Ownership badge */}
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${getOwnershipLabel(tag).className}`}>
+                      {getOwnershipLabel(tag).text}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -347,12 +384,26 @@ export default function TagManagementPage() {
                     >
                       Edit
                     </button>
-                    <button
-                      onClick={() => setDeletingTag(tag)}
-                      className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      Delete
-                    </button>
+                    {canDeleteTag(tag) ? (
+                      <button
+                        onClick={() => setDeletingTag(tag)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        title="Delete tag"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <span
+                        className="p-1.5 text-gray-300 cursor-not-allowed"
+                        title={tag.createdBy === null ? "System tag - admin only" : "Created by another user"}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </span>
+                    )}
                   </div>
                 </>
               )}

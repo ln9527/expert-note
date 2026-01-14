@@ -75,6 +75,20 @@ interface TagRow {
   id: number;
   name: string;
   color: string;
+  created_by: number | null;
+  is_deleted: boolean;
+  deleted_at: string | null;
+}
+
+function mapTagRow(row: TagRow): Tag {
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    createdBy: row.created_by,
+    isDeleted: row.is_deleted,
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
+  };
 }
 
 function mapPromptRow(row: SystemPromptRow, tags: Tag[] = []): SystemPrompt {
@@ -112,22 +126,18 @@ export interface GetAllPromptsOptions {
 }
 
 /**
- * Get tags for a specific prompt
+ * Get tags for a specific prompt (excludes deleted tags)
  */
 export async function getPromptTags(promptId: string): Promise<Tag[]> {
   const sql = `
-    SELECT t.id, t.name, t.color
+    SELECT t.id, t.name, t.color, t.created_by, t.is_deleted, t.deleted_at
     FROM tags t
     INNER JOIN prompt_tags pt ON t.id = pt.tag_id
-    WHERE pt.prompt_id = $1
+    WHERE pt.prompt_id = $1 AND t.is_deleted = FALSE
     ORDER BY t.name
   `;
   const rows = await query<TagRow>(sql, [promptId]);
-  return rows.map(row => ({
-    id: row.id,
-    name: row.name,
-    color: row.color,
-  }));
+  return rows.map(mapTagRow);
 }
 
 /**
@@ -279,10 +289,10 @@ export async function getAllPrompts(
 
   const promptIds = rows.map(r => r.id);
   const tagsSql = `
-    SELECT pt.prompt_id, t.id, t.name, t.color
+    SELECT pt.prompt_id, t.id, t.name, t.color, t.created_by, t.is_deleted, t.deleted_at
     FROM prompt_tags pt
     INNER JOIN tags t ON pt.tag_id = t.id
-    WHERE pt.prompt_id = ANY($1::uuid[])
+    WHERE pt.prompt_id = ANY($1::uuid[]) AND t.is_deleted = FALSE
     ORDER BY t.name
   `;
   const tagRows = await query<TagRow & { prompt_id: string }>(tagsSql, [promptIds]);
@@ -293,11 +303,7 @@ export async function getAllPrompts(
     if (!tagsByPrompt.has(row.prompt_id)) {
       tagsByPrompt.set(row.prompt_id, []);
     }
-    tagsByPrompt.get(row.prompt_id)!.push({
-      id: row.id,
-      name: row.name,
-      color: row.color,
-    });
+    tagsByPrompt.get(row.prompt_id)!.push(mapTagRow(row));
   }
 
   const prompts = rows.map(row => mapPromptRow(row, tagsByPrompt.get(row.id) || []));
@@ -511,10 +517,10 @@ export async function getDeletedPrompts(userId: string): Promise<SystemPrompt[]>
   // Get tags for all prompts
   const promptIds = rows.map(r => r.id);
   const tagsSql = `
-    SELECT pt.prompt_id, t.id, t.name, t.color
+    SELECT pt.prompt_id, t.id, t.name, t.color, t.created_by, t.is_deleted, t.deleted_at
     FROM prompt_tags pt
     INNER JOIN tags t ON pt.tag_id = t.id
-    WHERE pt.prompt_id = ANY($1::uuid[])
+    WHERE pt.prompt_id = ANY($1::uuid[]) AND t.is_deleted = FALSE
     ORDER BY t.name
   `;
   const tagRows = await query<TagRow & { prompt_id: string }>(tagsSql, [promptIds]);
@@ -524,11 +530,7 @@ export async function getDeletedPrompts(userId: string): Promise<SystemPrompt[]>
     if (!tagsByPrompt.has(row.prompt_id)) {
       tagsByPrompt.set(row.prompt_id, []);
     }
-    tagsByPrompt.get(row.prompt_id)!.push({
-      id: row.id,
-      name: row.name,
-      color: row.color,
-    });
+    tagsByPrompt.get(row.prompt_id)!.push(mapTagRow(row));
   }
 
   return rows.map(row => mapPromptRow(row, tagsByPrompt.get(row.id) || []));
@@ -555,10 +557,10 @@ export async function getPromptsByTemplateType(
   if (promptIds.length === 0) return [];
 
   const tagsSql = `
-    SELECT pt.prompt_id, t.id, t.name, t.color
+    SELECT pt.prompt_id, t.id, t.name, t.color, t.created_by, t.is_deleted, t.deleted_at
     FROM prompt_tags pt
     INNER JOIN tags t ON pt.tag_id = t.id
-    WHERE pt.prompt_id = ANY($1::uuid[])
+    WHERE pt.prompt_id = ANY($1::uuid[]) AND t.is_deleted = FALSE
     ORDER BY t.name
   `;
   const tagRows = await query<TagRow & { prompt_id: string }>(tagsSql, [promptIds]);
@@ -568,11 +570,7 @@ export async function getPromptsByTemplateType(
     if (!tagsByPrompt.has(row.prompt_id)) {
       tagsByPrompt.set(row.prompt_id, []);
     }
-    tagsByPrompt.get(row.prompt_id)!.push({
-      id: row.id,
-      name: row.name,
-      color: row.color,
-    });
+    tagsByPrompt.get(row.prompt_id)!.push(mapTagRow(row));
   }
 
   return rows.map(row => mapPromptRow(row, tagsByPrompt.get(row.id) || []));
