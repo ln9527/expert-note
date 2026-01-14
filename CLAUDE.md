@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ User Management System Complete (Jan 14, 2026)
+**Status**: ✅ Multi-Use Codes & Table Actions Complete (Jan 14, 2026)
 
 ---
 
@@ -58,20 +58,33 @@ sql/
 
 1. **Test Password Reset** - Verify temp password flow works for all user types
 2. **Migration Cleanup** - Renumber duplicate migration files (005, 006, 007)
-3. **Monitor Production** - Watch for permission or user management errors
+3. **Add Toast Notifications** - Show feedback when copy/download actions occur
+4. **Monitor Production** - Watch for permission or user management errors
 
 ## Recent Work (Jan 14, 2026)
 
+### Session 3 (Current) - Table Actions & Multi-Use Codes
+- ✅ **Org Owner Invitations Page**: Fixed 4 issues to match admin page functionality
+  - Added create modal with Usage Limit input
+  - Updated table columns: CODE | USAGE | CREATED | ACTIONS
+  - Added TYPE column (blue "Owner" / green "Member" badges)
+  - Download exports as markdown with metadata
+  - Delete only available for unused codes
+- ✅ **Knowledge Entries Table**: Added download/delete icon buttons
+  - Matches Documents table pattern
+  - Download exports entry with background, tags, created date
+  - Delete only available for creator
+- ✅ **Prompts Table**: Added download/delete icon buttons
+  - Download exports prompt with title, description, version, tags, content
+  - Delete only available for creator (owner)
+- ✅ **Deployment Docs**: Updated SSH key path to full absolute path
+- 📄 **Commits**: 4 commits (30580ab, 16951d9, 52cfa4c, 55ffebc)
+
+### Session 2 (Jan 14) - User Management System
 - ✅ **User Management System**: Complete implementation for admins and org owners
-  - Admin: `/settings/admin/users` - View all users, stats dashboard, password reset, disable/delete
-  - Owner: `/settings/members` - Manage org members only
-  - Self-service: `/settings/account` - Change password and display name
-- ✅ **Password Reset**: Temp password shown once in modal (no email required)
+- ✅ **Password Reset**: Temp password shown once in modal
 - ✅ **Soft Delete**: Users can be deleted (data preserved) via `deleted_at` column
-- ✅ **Login Security**: Disabled users see "Account disabled", deleted see "Account deleted"
-- ✅ **Registration Fix**: Added basePath support for production
-- ✅ **Bug Fixes**: Column name, invitation code types, orgId handling
-- 📄 **Migration**: `008_add_user_soft_delete.sql`
+- ✅ **Login Security**: Disabled/deleted users see appropriate messages
 
 ## Database
 
@@ -117,4 +130,4 @@ Never patch bugs. Find root causes: Reproduce -> Trace -> Understand -> Fix -> V
 
 ---
 
-**Last Updated:** 2026-01-14
+**Last Updated:** 2026-01-14 (Session 3: Table Actions & Multi-Use Codes)
