@@ -153,14 +153,14 @@ export function stripImageMarkdown(markdown: string): string {
 export async function convertPdfToMarkdown(buffer: ArrayBuffer): Promise<ConversionResult> {
   try {
     // First try pdf-parse - it handles most PDFs well and preserves reading order
+    console.log('[FileConverter] Attempting pdf-parse extraction...');
     const pdfBuffer = Buffer.from(buffer);
     const pdfData = await pdfParse(pdfBuffer);
+    console.log('[FileConverter] pdf-parse succeeded, text length:', pdfData.text?.length || 0);
 
     if (!pdfData.text || pdfData.text.trim().length === 0) {
-      return {
-        success: false,
-        error: 'No text could be extracted from PDF. It may be a scanned document.',
-      };
+      console.log('[FileConverter] pdf-parse returned empty text, trying fallback...');
+      return convertPdfWithCoordinates(buffer);
     }
 
     // Clean up the extracted text
@@ -189,21 +189,23 @@ export async function convertPdfToMarkdown(buffer: ArrayBuffer): Promise<Convers
       })
       .trim();
 
+    console.log('[FileConverter] pdf-parse extraction complete, markdown length:', markdown.length);
     return {
       success: true,
       markdown: stripImageMarkdown(markdown),
     };
   } catch (error) {
-    console.error('[FileConverter] PDF conversion error:', error);
-
     const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('[FileConverter] pdf-parse failed:', errorMessage);
+    console.error('[FileConverter] Error stack:', errorStack);
 
     if (errorMessage.includes('password') || errorMessage.includes('encrypted')) {
       return { success: false, error: 'Password-protected PDFs are not supported' };
     }
 
     // Try fallback with coordinate-based extraction
-    console.log('[FileConverter] Trying fallback extraction...');
+    console.log('[FileConverter] Trying coordinate-based fallback extraction...');
     return convertPdfWithCoordinates(buffer);
   }
 }
@@ -304,9 +306,9 @@ function processPageLayout(page: PDFExtractPage): string {
  * Groups items by approximate Y position (lines) and sorts
  *
  * Key improvements:
- * - Smart spacing: don't add space between adjacent characters
+ * - Conservative spacing: only add space when gap is clearly a word boundary
  * - Hyphenation handling: rejoin words split across lines
- * - Relaxed thresholds for line/paragraph detection
+ * - Handles PDFs that store text character-by-character
  */
 function reconstructColumnText(items: PDFExtractText[]): string {
   if (items.length === 0) return '';
@@ -354,24 +356,42 @@ function reconstructColumnText(items: PDFExtractText[]): string {
     // Sort items in line by X position
     line.sort((a, b) => a.x - b.x);
 
-    // Smart join: only add space if there's actual gap between items
+    // Smart join: very conservative about adding spaces
+    // Many PDFs store text with separate items for kerning purposes
     let lineText = '';
     for (let i = 0; i < line.length; i++) {
       const item = line[i];
+      const text = item.str;
       const prevItem = line[i - 1];
 
       if (prevItem) {
+        const prevText = prevItem.str;
         const prevEnd = prevItem.x + (prevItem.width || 0);
         const gap = item.x - prevEnd;
-        const avgCharWidth = (prevItem.width || 0) / Math.max(prevItem.str.length, 1);
 
-        // Add space only if gap is significant (> 30% of char width)
-        // This prevents spaces within words like "d ialogue"
-        if (gap > avgCharWidth * 0.3) {
+        // Calculate expected space width based on font size
+        // A typical space is about 25-30% of the em-width (font height)
+        const fontSize = item.height || avgHeight || 10;
+        const expectedSpaceWidth = fontSize * 0.25;
+
+        // Also calculate average character width for this item
+        const avgCharWidth = (prevItem.width || 0) / Math.max(prevText.length, 1);
+
+        // Conditions to add a space:
+        // 1. Previous item ends with a space already
+        // 2. Gap is >= expected space width (0.25 * font size)
+        // 3. Gap is > full average character width (clearly separated)
+        const prevEndsWithSpace = prevText.endsWith(' ');
+        const currentStartsWithSpace = text.startsWith(' ');
+        const hasWordBoundaryGap = gap >= expectedSpaceWidth || gap > avgCharWidth;
+
+        // Don't add space if either side already has one
+        if (!prevEndsWithSpace && !currentStartsWithSpace && hasWordBoundaryGap) {
           lineText += ' ';
         }
       }
-      lineText += item.str;
+      // Add the text, trimming any excessive internal spaces
+      lineText += text;
     }
 
     lineText = lineText.trim();
@@ -448,23 +468,50 @@ function joinLinesWithHyphenation(lines: string[]): string {
 
 /**
  * Post-process extracted PDF text to fix common issues
- * More conservative approach to avoid breaking valid text
+ * Handles common PDF extraction artifacts while preserving valid text
  */
 function postProcessPdfText(text: string): string {
   return text
-    // Fix common PDF artifacts: spaces within clearly broken words
-    // More specific patterns to avoid false positives
-    .replace(/(\w)- (\w)/g, '$1-$2') // Fix "one- on" → "one-on"
-    .replace(/(\w) - (\w)/g, '$1-$2') // Fix "one - on" → "one-on"
+    // Fix spaces around hyphens in compound words
+    .replace(/(\w)- (\w)/g, '$1-$2') // "one- on" → "one-on"
+    .replace(/(\w) - (\w)/g, '$1-$2') // "one - on" → "one-on"
+
     // Fix orphan hyphens at line breaks that weren't caught
     .replace(/(\w)-\s*\n\s*([a-z])/g, (_match: string, p1: string, p2: string) => {
-      // Only join if it looks like a broken word (lowercase continuation)
       return p1 + p2;
     })
+
+    // Fix single-character word fragments (common PDF artifact)
+    // Pattern: lowercase letter + space + lowercase letters
+    // "d ialogue" → "dialogue", "cust omer" → "customer"
+    .replace(/\b([a-z])\s+([a-z]{3,})\b/g, (_match: string, p1: string, p2: string) => {
+      // Only join if the combined word is likely correct (starts with a common prefix)
+      // This prevents breaking valid patterns like "a house"
+      const combined = p1 + p2;
+      // Check if this looks like a real word (common starting patterns)
+      const commonPrefixes = /^(dia|cust|prod|cons|comp|cont|comm|conf|conv|corr|coll|conc|conn)/i;
+      if (commonPrefixes.test(combined)) {
+        return combined;
+      }
+      return p1 + ' ' + p2; // Keep original
+    })
+
+    // Fix fragments where a word is split like "custo mer"
+    .replace(/\b([a-z]{2,})\s([a-z]{2,3})\b/g, (_match: string, p1: string, p2: string) => {
+      // Common word endings that should be joined
+      const wordEndings = /^(er|ed|ing|tion|sion|ment|ness|ity|ous|ive|ary|ory|al|ly|ty)$/i;
+      if (wordEndings.test(p2)) {
+        return p1 + p2;
+      }
+      return p1 + ' ' + p2; // Keep original
+    })
+
     // Normalize multiple spaces to single space
     .replace(/  +/g, ' ')
+
     // Clean up excessive newlines
     .replace(/\n{3,}/g, '\n\n')
+
     .trim();
 }
 
