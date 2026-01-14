@@ -75,9 +75,9 @@ export async function GET(request: NextRequest) {
  *
  * Request body:
  * {
- *   type: 'individual' | 'org_creator' | 'org_invite',
- *   orgId?: number,    // Required for org_invite
- *   orgName?: string,  // Required for org_creator
+ *   type: 'individual' | 'org_owner' | 'org_member',
+ *   orgId?: number,    // Required for org_owner/org_member
+ *   maxUses?: number,  // How many times the code can be used (0 = unlimited, default 1)
  * }
  */
 export async function POST(request: NextRequest) {
@@ -91,12 +91,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { type, orgId, orgName } = body;
+    const { type, orgId, maxUses = 1 } = body;
 
     // Validate type
     if (!type || !['individual', 'org_owner', 'org_member'].includes(type)) {
       return NextResponse.json(
         { success: false, error: 'Invalid code type. Must be: individual, org_owner, or org_member' },
+        { status: 400 }
+      );
+    }
+
+    // Validate maxUses
+    if (typeof maxUses !== 'number' || maxUses < 0 || !Number.isInteger(maxUses)) {
+      return NextResponse.json(
+        { success: false, error: 'maxUses must be a non-negative integer (0 for unlimited)' },
         { status: 400 }
       );
     }
@@ -113,6 +121,7 @@ export async function POST(request: NextRequest) {
       type: type as InvitationCodeType,
       orgId: (type === 'org_member' || type === 'org_owner') ? orgId : undefined,
       createdBy: authResult.user.userId,
+      maxUses,
     });
 
     return NextResponse.json({

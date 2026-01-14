@@ -13,6 +13,7 @@ export default function RegisterPage() {
     confirmPassword: '',
     displayName: '',
     phone: '',
+    email: '',
     invitationCode: '',
   });
   const [error, setError] = useState('');
@@ -54,7 +55,8 @@ export default function RegisterPage() {
           username: formData.username,
           password: formData.password,
           displayName: formData.displayName || undefined,
-          phone: formData.phone,
+          phone: formData.phone || undefined,
+          email: formData.email || undefined,
           invitationCode: formData.invitationCode,
         }),
       });
@@ -155,21 +157,37 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Phone */}
+            {/* Phone (optional) */}
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                Phone Number <span className="text-red-500">*</span>
+                Phone Number <span className="text-gray-400 text-xs font-normal">(optional)</span>
               </label>
               <input
                 id="phone"
                 name="phone"
                 type="tel"
-                required
                 value={formData.phone}
                 onChange={handleChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Your phone number"
                 autoComplete="tel"
+              />
+            </div>
+
+            {/* Email (optional) */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email <span className="text-gray-400 text-xs font-normal">(optional)</span>
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="your@email.com"
+                autoComplete="email"
               />
             </div>
 

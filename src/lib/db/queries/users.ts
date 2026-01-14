@@ -6,6 +6,7 @@ interface UserRow {
   username: string;
   display_name: string | null;
   phone: string | null;
+  email: string | null;
   org_id: number | null;
   role: string;
   is_active: boolean;
@@ -32,6 +33,7 @@ function rowToUser(row: UserRow): User {
     username: row.username,
     displayName: row.display_name || row.username,
     phone: row.phone,
+    email: row.email,
     orgId: row.org_id,
     role: (row.role || 'member') as UserRole,
     isActive: row.is_active,
@@ -58,7 +60,7 @@ function rowToUserWithOrg(row: UserWithOrgRow): UserWithOrg {
  */
 export async function getUserByUsername(username: string): Promise<User | null> {
   const result = await query<UserRow>(
-    `SELECT id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at
+    `SELECT id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at
      FROM users
      WHERE username = $1`,
     [username]
@@ -78,7 +80,7 @@ export async function getUserByUsername(username: string): Promise<User | null> 
  */
 export async function getUserById(id: number): Promise<User | null> {
   const result = await query<UserRow>(
-    `SELECT id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at
+    `SELECT id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at
      FROM users
      WHERE id = $1`,
     [id]
@@ -100,7 +102,7 @@ export async function getUserWithPasswordHash(
   username: string
 ): Promise<{ user: User; passwordHash: string } | null> {
   const result = await query<UserWithPasswordRow>(
-    `SELECT id, username, display_name, phone, org_id, role, password_hash, is_active, created_at, last_login_at
+    `SELECT id, username, display_name, phone, email, org_id, role, password_hash, is_active, created_at, last_login_at, deleted_at
      FROM users
      WHERE username = $1`,
     [username]
@@ -136,7 +138,7 @@ export async function updateLastLogin(userId: number): Promise<void> {
  */
 export async function getAllUsers(): Promise<User[]> {
   const result = await query<UserRow>(
-    `SELECT id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at
+    `SELECT id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at
      FROM users
      ORDER BY id`
   );
@@ -157,16 +159,17 @@ export async function createUser(
   options: {
     displayName?: string;
     phone?: string;
+    email?: string;
     orgId?: number;
     role?: UserRole;
   } = {}
 ): Promise<User> {
-  const { displayName, phone, orgId, role = 'member' } = options;
+  const { displayName, phone, email, orgId, role = 'member' } = options;
   const result = await query<UserRow>(
-    `INSERT INTO users (username, password_hash, display_name, phone, org_id, role)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at`,
-    [username, passwordHash, displayName || null, phone || null, orgId || null, role]
+    `INSERT INTO users (username, password_hash, display_name, phone, email, org_id, role)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
+    [username, passwordHash, displayName || null, phone || null, email || null, orgId || null, role]
   );
 
   return rowToUser(result.rows[0]);
@@ -187,7 +190,7 @@ export async function updateUserOrgAndRole(
     `UPDATE users
      SET org_id = $2, role = $3
      WHERE id = $1
-     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at`,
+     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
     [userId, orgId, role]
   );
 
@@ -199,27 +202,40 @@ export async function updateUserOrgAndRole(
 }
 
 /**
- * Check if username already exists
+ * Check if username already exists (excluding soft-deleted users)
  * @param username - The username to check
- * @returns true if username exists
+ * @returns true if username exists for an active user
  */
 export async function usernameExists(username: string): Promise<boolean> {
   const result = await query<{ count: string }>(
-    `SELECT COUNT(*) as count FROM users WHERE username = $1`,
+    `SELECT COUNT(*) as count FROM users WHERE username = $1 AND deleted_at IS NULL`,
     [username]
   );
   return parseInt(result.rows[0].count, 10) > 0;
 }
 
 /**
- * Check if phone number already exists
+ * Check if phone number already exists (excluding soft-deleted users)
  * @param phone - The phone number to check
- * @returns true if phone exists
+ * @returns true if phone exists for an active user
  */
 export async function phoneExists(phone: string): Promise<boolean> {
   const result = await query<{ count: string }>(
-    `SELECT COUNT(*) as count FROM users WHERE phone = $1`,
+    `SELECT COUNT(*) as count FROM users WHERE phone = $1 AND deleted_at IS NULL`,
     [phone]
+  );
+  return parseInt(result.rows[0].count, 10) > 0;
+}
+
+/**
+ * Check if email already exists (excluding soft-deleted users)
+ * @param email - The email to check
+ * @returns true if email exists for an active user
+ */
+export async function emailExists(email: string): Promise<boolean> {
+  const result = await query<{ count: string }>(
+    `SELECT COUNT(*) as count FROM users WHERE email = $1 AND deleted_at IS NULL`,
+    [email]
   );
   return parseInt(result.rows[0].count, 10) > 0;
 }
@@ -271,7 +287,7 @@ export async function getAllUsersWithOrg(options?: {
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const result = await query<UserWithOrgRow>(
-    `SELECT u.id, u.username, u.display_name, u.phone, u.org_id, u.role,
+    `SELECT u.id, u.username, u.display_name, u.phone, u.email, u.org_id, u.role,
             u.is_active, u.created_at, u.last_login_at, u.deleted_at,
             o.name as org_name
      FROM users u
@@ -314,7 +330,7 @@ export async function getOrgMembers(
   }
 
   const result = await query<UserRow>(
-    `SELECT u.id, u.username, u.display_name, u.phone, u.org_id, u.role,
+    `SELECT u.id, u.username, u.display_name, u.phone, u.email, u.org_id, u.role,
             u.is_active, u.created_at, u.last_login_at, u.deleted_at
      FROM users u
      WHERE ${conditions.join(' AND ')}
@@ -403,7 +419,7 @@ export async function setUserActive(
     `UPDATE users
      SET is_active = $2
      WHERE id = $1 AND deleted_at IS NULL
-     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at`,
+     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
     [userId, isActive]
   );
 
@@ -416,15 +432,22 @@ export async function setUserActive(
 
 /**
  * Soft delete a user (set deleted_at timestamp)
+ * - Renames username to `{username}_deleted_{timestamp}` to release the name
+ * - Clears phone and email to release them for reuse
  * @param userId - The user ID
  * @returns true if user was deleted
  */
 export async function softDeleteUser(userId: number): Promise<boolean> {
+  const timestamp = Date.now();
   const result = await query(
     `UPDATE users
-     SET deleted_at = NOW(), is_active = FALSE
+     SET deleted_at = NOW(),
+         is_active = FALSE,
+         username = username || '_deleted_' || $2,
+         phone = NULL,
+         email = NULL
      WHERE id = $1 AND deleted_at IS NULL`,
-    [userId]
+    [userId, timestamp]
   );
   return result.rowCount !== null && result.rowCount > 0;
 }
@@ -439,7 +462,7 @@ export async function restoreUser(userId: number): Promise<User | null> {
     `UPDATE users
      SET deleted_at = NULL, is_active = TRUE
      WHERE id = $1 AND deleted_at IS NOT NULL
-     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at`,
+     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
     [userId]
   );
 
@@ -464,7 +487,7 @@ export async function updateUserProfile(
     `UPDATE users
      SET display_name = $2
      WHERE id = $1 AND deleted_at IS NULL
-     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at`,
+     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
     [userId, displayName]
   );
 

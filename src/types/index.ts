@@ -123,6 +123,7 @@ export interface User {
   username: string;
   displayName: string;
   phone: string | null;
+  email: string | null;
   orgId: number | null;
   role: UserRole;
   isActive: boolean;
@@ -155,13 +156,16 @@ export interface Organization {
   id: number;
   name: string;
   description: string | null;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Organization with metadata (for admin UI)
 export interface OrganizationWithMeta extends Organization {
-  ownerCodeUsed: boolean;
+  ownerCode: string | null;     // Actual owner code string for display
+  ownerCodeUses: string;        // Formatted usage string: "2/5" or "0/∞"
+  ownerCodeUsed: boolean;       // Legacy: true if any uses
   memberCount: number;
 }
 
@@ -174,8 +178,10 @@ export interface InvitationCode {
   type: InvitationCodeType;
   orgId: number | null;       // For org_member/org_owner: existing org to join
   createdBy: number | null;
-  usedBy: number | null;
-  usedAt: Date | null;
+  usedBy: number | null;      // Legacy: only for single-use codes
+  usedAt: Date | null;        // Legacy: only for single-use codes
+  maxUses: number;            // 0 = unlimited, 1+ = limited uses
+  currentUses: number;        // How many times this code has been used
   createdAt: Date;
 }
 

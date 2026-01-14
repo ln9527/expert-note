@@ -8,21 +8,22 @@
  *   username: string,
  *   password: string,
  *   displayName?: string,
- *   phone: string,           // Required - used as identifier
+ *   phone?: string,          // Optional - unique if provided
+ *   email?: string,          // Optional - unique if provided
  *   invitationCode: string,  // Required - determines user type and org
  * }
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { createUser, usernameExists, phoneExists, updateUserOrgAndRole } from '@/lib/db/queries/users';
+import { createUser, usernameExists, phoneExists, emailExists, updateUserOrgAndRole } from '@/lib/db/queries/users';
 import { validateInvitationCode, useInvitationCode } from '@/lib/db/queries/invitationCodes';
 import { createSession } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { username, password, displayName, phone, invitationCode } = body;
+    const { username, password, displayName, phone, email, invitationCode } = body;
 
     // Validate required fields
     if (!username || typeof username !== 'string' || username.trim().length < 3) {
@@ -39,11 +40,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!phone || typeof phone !== 'string' || phone.trim().length < 6) {
-      return NextResponse.json(
-        { success: false, error: 'Valid phone number is required' },
-        { status: 400 }
-      );
+    // Phone is optional but validate if provided
+    if (phone && typeof phone === 'string' && phone.trim().length > 0) {
+      if (phone.trim().length < 6) {
+        return NextResponse.json(
+          { success: false, error: 'Phone number must be at least 6 characters' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Email is optional but validate format if provided
+    if (email && typeof email === 'string' && email.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid email format' },
+          { status: 400 }
+        );
+      }
     }
 
     if (!invitationCode || typeof invitationCode !== 'string') {
@@ -61,10 +76,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if phone already exists
-    if (await phoneExists(phone.trim())) {
+    // Check if phone already exists (only if provided)
+    if (phone && phone.trim() && await phoneExists(phone.trim())) {
       return NextResponse.json(
         { success: false, error: 'Phone number is already registered' },
+        { status: 409 }
+      );
+    }
+
+    // Check if email already exists (only if provided)
+    if (email && email.trim() && await emailExists(email.trim())) {
+      return NextResponse.json(
+        { success: false, error: 'Email is already registered' },
         { status: 409 }
       );
     }
@@ -87,7 +110,8 @@ export async function POST(request: NextRequest) {
       passwordHash,
       {
         displayName: displayName?.trim() || undefined,
-        phone: phone.trim(),
+        phone: phone?.trim() || undefined,
+        email: email?.trim() || undefined,
         // orgId and role will be set by useInvitationCode
       }
     );
@@ -128,9 +152,9 @@ export async function POST(request: NextRequest) {
 
     // Handle specific errors
     if (error instanceof Error) {
-      if (error.message.includes('already been used')) {
+      if (error.message.includes('already been used') || error.message.includes('usage limit')) {
         return NextResponse.json(
-          { success: false, error: 'Invitation code has already been used' },
+          { success: false, error: 'Invitation code has reached its usage limit' },
           { status: 400 }
         );
       }

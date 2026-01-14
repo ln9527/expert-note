@@ -23,12 +23,17 @@ export default function AdminInvitationCodesPage() {
     type: InvitationCodeType;
     orgId: string;
     orgName: string;
+    maxUses: number;
   }>({
     type: 'individual',
     orgId: '',
     orgName: '',
+    maxUses: 1,
   });
   const [creating, setCreating] = useState(false);
+
+  // Organization filter state
+  const [showDeletedOrgs, setShowDeletedOrgs] = useState(false);
 
   // Organization creation state
   const [showCreateOrgModal, setShowCreateOrgModal] = useState(false);
@@ -92,7 +97,10 @@ export default function AdminInvitationCodesPage() {
   // Fetch organizations with metadata
   const fetchOrganizations = useCallback(async () => {
     try {
-      const response = await fetch(buildApiPath('admin/organizations'));
+      const params = new URLSearchParams();
+      if (showDeletedOrgs) params.set('includeDeleted', 'true');
+
+      const response = await fetch(buildApiPath(`admin/organizations?${params}`));
       const data = await response.json();
 
       if (!data.success) {
@@ -105,7 +113,7 @@ export default function AdminInvitationCodesPage() {
       console.error('Failed to fetch organizations:', err);
       setError('Network error. Please try again.');
     }
-  }, []);
+  }, [showDeletedOrgs]);
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -125,8 +133,9 @@ export default function AdminInvitationCodesPage() {
     setError('');
 
     try {
-      const body: { type: InvitationCodeType; orgId?: number } = {
+      const body: { type: InvitationCodeType; orgId?: number; maxUses: number } = {
         type: createForm.type,
+        maxUses: createForm.maxUses,
       };
 
       if (createForm.type === 'org_member' || createForm.type === 'org_owner') {
@@ -143,7 +152,7 @@ export default function AdminInvitationCodesPage() {
 
       if (data.success) {
         setShowCreateModal(false);
-        setCreateForm({ type: 'individual', orgId: '', orgName: '' });
+        setCreateForm({ type: 'individual', orgId: '', orgName: '', maxUses: 1 });
         fetchCodes();
       } else {
         setError(data.error || 'Failed to create invitation code');
@@ -153,6 +162,52 @@ export default function AdminInvitationCodesPage() {
       setError('Network error. Please try again.');
     } finally {
       setCreating(false);
+    }
+  };
+
+  // Delete organization (soft delete)
+  const handleDeleteOrg = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this organization? This will also delete all users in the organization.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(buildApiPath(`admin/organizations?id=${id}`), {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        fetchOrganizations();
+      } else {
+        setError(data.error || 'Failed to delete organization');
+      }
+    } catch (err) {
+      console.error('Failed to delete organization:', err);
+      setError('Network error. Please try again.');
+    }
+  };
+
+  // Restore organization
+  const handleRestoreOrg = async (id: number) => {
+    try {
+      const response = await fetch(buildApiPath('admin/organizations'), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'restore' }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        fetchOrganizations();
+      } else {
+        setError(data.error || 'Failed to restore organization');
+      }
+    } catch (err) {
+      console.error('Failed to restore organization:', err);
+      setError('Network error. Please try again.');
     }
   };
 
@@ -290,6 +345,19 @@ export default function AdminInvitationCodesPage() {
           </button>
         </div>
 
+        {/* Organization Filters */}
+        <div className="flex items-center gap-4 mb-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={showDeletedOrgs}
+              onChange={(e) => setShowDeletedOrgs(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <span className="text-gray-700">Show deleted organizations</span>
+          </label>
+        </div>
+
         {/* Organizations Table */}
         <div className="bg-white rounded-lg border overflow-hidden">
           <table className="min-w-full">
@@ -299,10 +367,10 @@ export default function AdminInvitationCodesPage() {
                   Organization Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
+                  Owner Code
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Owner Code Status
+                  Uses
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Members
@@ -310,40 +378,81 @@ export default function AdminInvitationCodesPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created
                 </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {organizations.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                     No organizations yet. Create one to get started.
                   </td>
                 </tr>
               ) : (
                 organizations.map((org) => (
-                  <tr key={org.id} className="hover:bg-gray-50">
+                  <tr key={org.id} className={`hover:bg-gray-50 ${org.deletedAt ? 'bg-red-50 opacity-60' : ''}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{org.name}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {org.description || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {org.ownerCodeUsed ? (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                          Used
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
-                          Pending
-                        </span>
+                      <div className="font-medium text-gray-900">
+                        {org.name}
+                        {org.deletedAt && (
+                          <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700">
+                            Deleted
+                          </span>
+                        )}
+                      </div>
+                      {org.description && (
+                        <div className="text-sm text-gray-500">{org.description}</div>
                       )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {org.ownerCode ? (
+                        <div className="flex items-center gap-2">
+                          <code className="font-mono text-sm font-medium text-gray-900">
+                            {org.ownerCode}
+                          </code>
+                          <button
+                            onClick={() => copyCode(org.ownerCode!)}
+                            className="p-1 text-gray-400 hover:text-gray-600"
+                            title="Copy code"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={org.ownerCodeUsed ? 'text-green-600' : 'text-gray-500'}>
+                        {org.ownerCodeUses || '0/0'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {org.memberCount || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(org.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {org.deletedAt ? (
+                        <button
+                          onClick={() => handleRestoreOrg(org.id)}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          Restore
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleDeleteOrg(org.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -448,13 +557,13 @@ export default function AdminInvitationCodesPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {codes.map((code) => (
-                <tr key={code.id} className={code.usedBy ? 'bg-gray-50' : ''}>
+                <tr key={code.id} className={(code.maxUses > 0 && code.currentUses >= code.maxUses) ? 'bg-gray-50' : ''}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <code className="font-mono text-sm font-medium text-gray-900">
                         {code.code}
                       </code>
-                      {!code.usedBy && (
+                      {(code.maxUses === 0 || code.currentUses < code.maxUses) && (
                         <button
                           onClick={() => copyCode(code.code)}
                           className="p-1 text-gray-400 hover:text-gray-600"
@@ -481,13 +590,17 @@ export default function AdminInvitationCodesPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {code.usedBy ? (
+                    {code.maxUses === 0 ? (
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                        {code.currentUses}/∞
+                      </span>
+                    ) : code.currentUses >= code.maxUses ? (
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
-                        Used
+                        {code.currentUses}/{code.maxUses} (Full)
                       </span>
                     ) : (
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                        Available
+                        {code.currentUses}/{code.maxUses}
                       </span>
                     )}
                   </td>
@@ -495,7 +608,7 @@ export default function AdminInvitationCodesPage() {
                     {new Date(code.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {!code.usedBy && (
+                    {code.currentUses === 0 && (
                       <button
                         onClick={() => handleDelete(code.id)}
                         className="text-red-600 hover:text-red-900"
@@ -584,19 +697,39 @@ export default function AdminInvitationCodesPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select organization...</option>
-                      {organizations.map((org) => (
+                      {organizations.filter(o => !o.deletedAt).map((org) => (
                         <option key={org.id} value={org.id}>
                           {org.name}
                         </option>
                       ))}
                     </select>
-                    {organizations.length === 0 && (
+                    {organizations.filter(o => !o.deletedAt).length === 0 && (
                       <p className="mt-1 text-sm text-yellow-600">
                         No organizations available. Create an organization first.
                       </p>
                     )}
                   </div>
                 )}
+
+                {/* Max Uses */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Usage Limit
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      value={createForm.maxUses}
+                      onChange={(e) => setCreateForm({ ...createForm, maxUses: parseInt(e.target.value) || 0 })}
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-500">
+                      {createForm.maxUses === 0 ? '(Unlimited)' : `(Can be used ${createForm.maxUses} time${createForm.maxUses !== 1 ? 's' : ''})`}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Set to 0 for unlimited uses</p>
+                </div>
               </div>
 
               <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
@@ -726,10 +859,9 @@ export default function AdminInvitationCodesPage() {
                   </button>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <p className="text-sm text-amber-800">
-                    <strong>Important:</strong> Give this code to the person who will manage this organization.
-                    This code can only be used once.
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> This owner code can be used unlimited times. Share it with anyone who should own this organization.
                   </p>
                 </div>
               </div>
