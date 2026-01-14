@@ -94,24 +94,17 @@ export async function POST(request: NextRequest) {
     const { type, orgId, orgName } = body;
 
     // Validate type
-    if (!type || !['individual', 'org_creator', 'org_invite'].includes(type)) {
+    if (!type || !['individual', 'org_owner', 'org_member'].includes(type)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid code type. Must be: individual, org_creator, or org_invite' },
+        { success: false, error: 'Invalid code type. Must be: individual, org_owner, or org_member' },
         { status: 400 }
       );
     }
 
     // Validate type-specific requirements
-    if (type === 'org_invite' && !orgId) {
+    if ((type === 'org_owner' || type === 'org_member') && !orgId) {
       return NextResponse.json(
-        { success: false, error: 'org_invite codes require an organization ID' },
-        { status: 400 }
-      );
-    }
-
-    if (type === 'org_creator' && (!orgName || typeof orgName !== 'string' || orgName.trim().length === 0)) {
-      return NextResponse.json(
-        { success: false, error: 'org_creator codes require an organization name' },
+        { success: false, error: `${type} codes require an organization ID` },
         { status: 400 }
       );
     }

@@ -11,9 +11,9 @@ export async function GET() {
     }
 
     const result = await query<User>(
-      `SELECT id as "userId", username, display_name as "displayName", is_active as "isActive", last_login as "lastLogin", created_at as "createdAt"
+      `SELECT id as "userId", username, display_name as "displayName", is_active as "isActive", last_login_at as "lastLogin", created_at as "createdAt"
        FROM users
-       WHERE is_active = TRUE
+       WHERE is_active = TRUE AND deleted_at IS NULL
        ORDER BY display_name, username`,
       []
     );

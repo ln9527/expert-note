@@ -116,8 +116,8 @@ export default function AdminInvitationCodesPage() {
 
   // Create new code
   const handleCreate = async () => {
-    if (createForm.type === 'org_member' && !createForm.orgId) {
-      setError('Please select an organization for the member code');
+    if ((createForm.type === 'org_member' || createForm.type === 'org_owner') && !createForm.orgId) {
+      setError('Please select an organization for the code');
       return;
     }
 
@@ -129,7 +129,7 @@ export default function AdminInvitationCodesPage() {
         type: createForm.type,
       };
 
-      if (createForm.type === 'org_member') {
+      if (createForm.type === 'org_member' || createForm.type === 'org_owner') {
         body.orgId = parseInt(createForm.orgId, 10);
       }
 
