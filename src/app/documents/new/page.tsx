@@ -144,37 +144,36 @@ export default function NewDocumentPage() {
       return;
     }
 
-    // For PDF/DOCX files, upload to server for conversion
+    // For PDF/DOCX files, convert on server but don't create document yet
+    // User can edit title, tags, and content before saving
     setConverting(true);
     setError('');
 
     try {
       const formData = new FormData();
       formData.append('file', file);
-      // Include title if already set
-      if (title.trim()) {
-        formData.append('title', title.trim());
-      }
-      // Include tags if selected
-      if (selectedTagIds.length > 0) {
-        formData.append('tagIds', selectedTagIds.join(','));
-      }
 
-      const res = await fetch(buildApiPath('documents/upload'), {
+      // Use convert endpoint (conversion only, no document creation)
+      const res = await fetch(buildApiPath('documents/convert'), {
         method: 'POST',
         body: formData,
       });
 
       const data = await res.json();
 
-      if (data.success && data.document) {
-        // Redirect to the created document
-        router.push(`/documents/${data.document.id}`);
+      if (data.success && data.content) {
+        // Populate the form with converted content
+        setContent(data.content);
+        // Use suggested title if title is empty
+        if (!title) {
+          setTitle(data.suggestedTitle || '');
+        }
+        // User can now edit title, tags, content and click "Create Document"
       } else {
         setError(data.error || 'Failed to convert file');
       }
     } catch (err) {
-      console.error('Upload error:', err);
+      console.error('Conversion error:', err);
       setError('Network error. Please try again.');
     } finally {
       setConverting(false);
