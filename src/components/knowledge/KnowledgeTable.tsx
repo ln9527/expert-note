@@ -18,6 +18,7 @@ interface KnowledgeTableProps {
   sortDirection: 'asc' | 'desc';
   onSort: (column: string) => void;
   onDelete?: (entry: ExtendedKnowledgeEntry) => void;
+  onDownload?: (entry: ExtendedKnowledgeEntry) => void;
   currentUserId?: number | null;
   onShareToggle?: (entry: ExtendedKnowledgeEntry) => void;
   onEditToggle?: (entry: ExtendedKnowledgeEntry) => void;
@@ -30,6 +31,7 @@ export default function KnowledgeTable({
   sortDirection,
   onSort,
   onDelete,
+  onDownload,
   currentUserId,
   onShareToggle,
   onEditToggle,
@@ -107,6 +109,12 @@ export default function KnowledgeTable({
     onDelete?.(entry);
   };
 
+  const handleDownloadClick = (e: React.MouseEvent, entry: ExtendedKnowledgeEntry) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDownload?.(entry);
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
       {/* Desktop Table */}
@@ -168,8 +176,8 @@ export default function KnowledgeTable({
               >
                 Edit
               </th>
-              <th scope="col" className="relative px-6 py-3">
-                <span className="sr-only">Actions</span>
+              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
               </th>
             </tr>
           </thead>
@@ -280,27 +288,28 @@ export default function KnowledgeTable({
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-2">
-                    <Link
-                      href={`/knowledge/${entry.id}`}
-                      className="text-blue-600 hover:text-blue-900 transition-colors"
+                <td className="px-6 py-4 whitespace-nowrap text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    {/* Download Button */}
+                    <button
+                      onClick={(e) => handleDownloadClick(e, entry)}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Download as .md"
                     >
-                      View
-                    </Link>
-                    <Link
-                      href={`/knowledge/${entry.id}/edit`}
-                      className="text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                      Edit
-                    </Link>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                    </button>
+                    {/* Delete Button (owner only) */}
                     {onDelete && currentUserId && entry.createdBy === currentUserId && (
                       <button
                         onClick={(e) => handleDeleteClick(e, entry)}
-                        className="text-red-600 hover:text-red-900 transition-colors opacity-0 group-hover:opacity-100"
-                        title="Delete entry"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete"
                       >
-                        Delete
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     )}
                   </div>
@@ -424,19 +433,27 @@ export default function KnowledgeTable({
             </Link>
 
             {/* Actions */}
-            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
-              <Link
-                href={`/knowledge/${entry.id}/edit`}
-                className="text-sm text-gray-600 hover:text-gray-900"
+            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-end gap-1">
+              {/* Download Button */}
+              <button
+                onClick={(e) => handleDownloadClick(e, entry)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Download as .md"
               >
-                Edit
-              </Link>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+              {/* Delete Button (owner only) */}
               {onDelete && currentUserId && entry.createdBy === currentUserId && (
                 <button
                   onClick={(e) => handleDeleteClick(e, entry)}
-                  className="text-sm text-red-600 hover:text-red-900"
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete"
                 >
-                  Delete
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                 </button>
               )}
             </div>

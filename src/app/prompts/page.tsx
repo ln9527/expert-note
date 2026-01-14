@@ -182,6 +182,44 @@ export default function PromptsListPage() {
     setDeletingPrompt(prompt);
   };
 
+  // Handle download - export as markdown
+  const handleDownload = (prompt: SystemPrompt) => {
+    // Build markdown content
+    const lines: string[] = [];
+    lines.push(`# ${prompt.title}`);
+    lines.push('');
+    if (prompt.description) {
+      lines.push(`> ${prompt.description}`);
+      lines.push('');
+    }
+    lines.push(`**Version:** v${prompt.version}`);
+    lines.push(`**Created:** ${new Date(prompt.createdAt).toLocaleString()}`);
+    if (prompt.templateType) {
+      lines.push(`**Guide:** ${prompt.templateType}`);
+    }
+    if (prompt.tags && prompt.tags.length > 0) {
+      lines.push(`**Tags:** ${prompt.tags.map(t => t.name).join(', ')}`);
+    }
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+    lines.push(prompt.content);
+
+    const content = lines.join('\n');
+
+    // Create blob and download
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const filename = (prompt.title || 'prompt').replace(/[^a-zA-Z0-9-_\s]/g, '').trim();
+    link.download = `${filename}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleDeleteConfirm = async () => {
     if (!deletingPrompt) return;
 
@@ -432,6 +470,7 @@ export default function PromptsListPage() {
           sortDirection={sortDirection}
           onSort={handleSort}
           onDelete={handleDeleteClick}
+          onDownload={handleDownload}
           currentUserId={currentUserId}
           onShareToggle={handleShareToggle}
           onEditToggle={handleEditToggle}
