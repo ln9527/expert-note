@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ Production PM2 & Nginx Fixes Complete (Jan 15, 2026)
+**Status**: ✅ Knowledge Entry Markdown Architecture (Jan 16, 2026)
 
 ---
 
@@ -63,14 +63,19 @@ sql/
 4. **Test PDF/DOCX Upload Flow** - Verify convert endpoint and form editing works
 5. **Monitor Production** - Watch for any remaining PM2/nginx issues
 
-## Recent Work (Jan 14-15, 2026)
+## Recent Work (Jan 14-16, 2026)
 
-### Session 7 (Current) - LLM Model Upgrade
-- ✅ **Switched to Grok 4.1 Fast**: Changed from `qwen/qwen3-235b-a22b-2507` to `x-ai/grok-4.1-fast`
-  - Faster inference speed for better UX
-  - Same OpenRouter API, just different model ID
-  - Updated `src/lib/ai/openrouter.ts` DEFAULT_MODEL constant
-  - Updated all documentation files
+### Session 8 (Current) - Knowledge Entry Markdown Architecture
+- ✅ **Raw Markdown Storage**: Knowledge entries now store full LLM output in `content` field
+  - Migration 011 adds `content TEXT` column to `knowledge_entries`
+  - Extraction API stores raw markdown instead of parsing into annotations
+  - Detail page displays content as rendered markdown
+  - Edit page has markdown textarea with Edit/Preview toggle
+- ✅ **Download Button Fix**: Added missing `onDownload` prop to KnowledgeCard
+- ✅ **Backward Compatible**: Legacy entries without `content` still work via annotations
+
+### Session 7 - LLM Model Upgrade
+- ✅ **Switched to Grok 4.1 Fast**: `x-ai/grok-4.1-fast` for faster inference
 
 ### Session 6 - Production PM2 & Nginx Fixes
 - ✅ **PM2 Environment Variables**: Fixed critical issue where PM2 doesn't load .env files
@@ -135,7 +140,7 @@ psql -h localhost -U ningli -d annotservice
 SELECT username, role, org_id FROM users;
 ```
 
-**Latest Migration:** 010_tag_ownership_soft_delete.sql (Applied to production Jan 15, 2026)
+**Latest Migration:** 011_knowledge_entry_content.sql (Applied to production Jan 16, 2026)
 
 ## Production
 
@@ -172,4 +177,4 @@ Never patch bugs. Find root causes: Reproduce -> Trace -> Understand -> Fix -> V
 
 ---
 
-**Last Updated:** 2026-01-15 (Session 7: LLM Model Upgrade to Grok 4.1 Fast)
+**Last Updated:** 2026-01-16 (Session 8: Knowledge Entry Markdown Architecture)
