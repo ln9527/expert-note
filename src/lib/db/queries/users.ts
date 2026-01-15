@@ -60,7 +60,7 @@ function rowToUserWithOrg(row: UserWithOrgRow): UserWithOrg {
  */
 export async function getUserByUsername(username: string): Promise<User | null> {
   const result = await query<UserRow>(
-    `SELECT id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at
+    `SELECT id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at
      FROM users
      WHERE username = $1`,
     [username]
@@ -80,7 +80,7 @@ export async function getUserByUsername(username: string): Promise<User | null> 
  */
 export async function getUserById(id: number): Promise<User | null> {
   const result = await query<UserRow>(
-    `SELECT id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at
+    `SELECT id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at
      FROM users
      WHERE id = $1`,
     [id]
@@ -102,7 +102,7 @@ export async function getUserWithPasswordHash(
   username: string
 ): Promise<{ user: User; passwordHash: string } | null> {
   const result = await query<UserWithPasswordRow>(
-    `SELECT id, username, display_name, phone, email, org_id, role, password_hash, is_active, created_at, last_login_at, deleted_at
+    `SELECT id, username, display_name, phone, org_id, role, password_hash, is_active, created_at, last_login_at, deleted_at
      FROM users
      WHERE username = $1`,
     [username]
@@ -138,7 +138,7 @@ export async function updateLastLogin(userId: number): Promise<void> {
  */
 export async function getAllUsers(): Promise<User[]> {
   const result = await query<UserRow>(
-    `SELECT id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at
+    `SELECT id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at
      FROM users
      ORDER BY id`
   );
@@ -164,11 +164,11 @@ export async function createUser(
     role?: UserRole;
   } = {}
 ): Promise<User> {
-  const { displayName, phone, email, orgId, role = 'member' } = options;
+  const { displayName, phone, orgId, role = 'member' } = options;
   const result = await query<UserRow>(
-    `INSERT INTO users (username, password_hash, display_name, phone, email, org_id, role)
+    `INSERT INTO users (username, password_hash, display_name, phone, org_id, role)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
-     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
+     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at`,
     [username, passwordHash, displayName || null, phone || null, email || null, orgId || null, role]
   );
 
@@ -190,7 +190,7 @@ export async function updateUserOrgAndRole(
     `UPDATE users
      SET org_id = $2, role = $3
      WHERE id = $1
-     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
+     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at`,
     [userId, orgId, role]
   );
 
@@ -419,7 +419,7 @@ export async function setUserActive(
     `UPDATE users
      SET is_active = $2
      WHERE id = $1 AND deleted_at IS NULL
-     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
+     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at`,
     [userId, isActive]
   );
 
@@ -462,7 +462,7 @@ export async function restoreUser(userId: number): Promise<User | null> {
     `UPDATE users
      SET deleted_at = NULL, is_active = TRUE
      WHERE id = $1 AND deleted_at IS NOT NULL
-     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
+     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at`,
     [userId]
   );
 
@@ -487,7 +487,7 @@ export async function updateUserProfile(
     `UPDATE users
      SET display_name = $2
      WHERE id = $1 AND deleted_at IS NULL
-     RETURNING id, username, display_name, phone, email, org_id, role, is_active, created_at, last_login_at, deleted_at`,
+     RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at`,
     [userId, displayName]
   );
 

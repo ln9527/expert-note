@@ -70,20 +70,31 @@ export type TemplateType = keyof typeof PROMPT_TEMPLATES;
 
 /**
  * Get the system prompt for generation
- * PRIORITY: Database templates first, then hardcoded fallback
- * This implements "DB as source of truth" architecture
+ * PRIORITY:
+ * 1. Use provided template content (from API route) if available
+ * 2. Load from database using templateType
+ * 3. Fallback to hardcoded default
+ *
+ * This ensures alignment between API route template selection and generation logic
  */
-async function getGenerationSystemPrompt(templateType?: string): Promise<string> {
-  // Hardcoded prompt is the fallback only
-  let systemPrompt = GENERATION_SYSTEM_PROMPT;
+async function getGenerationSystemPrompt(
+  templateType?: string,
+  providedTemplateContent?: string
+): Promise<string> {
+  // PRIORITY 1: Use provided template content (from API route)
+  if (providedTemplateContent?.trim()) {
+    console.log('[Generation] ✓ Using template content provided by API route');
+    return providedTemplateContent;
+  }
 
-  // PRIORITY: Try to load from database FIRST
+  // PRIORITY 2: Try to load from database
+  let systemPrompt = GENERATION_SYSTEM_PROMPT; // Fallback
+
   try {
     const template = await getDefaultTemplate('generation', templateType || undefined);
     if (template?.content) {
-      // Trust the database - use it without compatibility checks
       systemPrompt = template.content;
-      console.log(`[Generation] ✓ Using database template (type: ${templateType || 'default'})`);
+      console.log(`[Generation] ✓ Using database template (type: ${templateType || 'default'}, name: ${template.name})`);
     } else {
       console.log('[Generation] ⚠ No database template found, using hardcoded default');
     }
@@ -154,8 +165,19 @@ ${documentBackgrounds.map((bg, i) => `${i + 1}. ${bg}`).join('\n')}
 
 Generate a comprehensive, well-structured System Prompt based on this expert knowledge.`;
 
-  // Get system prompt from DB (prioritized) or hardcoded fallback
-  const systemPrompt = await getGenerationSystemPrompt(templateType);
+  // Get system prompt
+  // CRITICAL: Pass templateBaseInstructions to ensure we use the same template
+  // that the API route loaded (aligns template selection logic)
+  const systemPrompt = await getGenerationSystemPrompt(
+    templateType,
+    templateBaseInstructions // Use template content from API route if provided
+  );
+
+  console.log('[Generation] System prompt details:', {
+    source: templateBaseInstructions ? 'API route template' : 'Database/hardcoded',
+    length: systemPrompt.length,
+    templateType,
+  });
 
   const response = await chatCompletion(
     [

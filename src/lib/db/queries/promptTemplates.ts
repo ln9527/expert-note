@@ -111,38 +111,77 @@ export async function getPromptTemplateById(id: string): Promise<PromptTemplate 
 
 /**
  * Get the default template for a category
+ *
+ * Priority order when templateType is specified:
+ * 1. Template with matching template_type (regardless of is_default)
+ * 2. Category default template (is_default=TRUE, template_type=NULL)
+ *
+ * This allows both specific templates (e.g., template_type='introduction')
+ * and generic defaults to work correctly.
  */
 export async function getDefaultTemplate(
   category: 'extraction' | 'generation',
   templateType?: string
 ): Promise<PromptTemplate | null> {
-  let sql: string;
-  let params: unknown[];
-
   if (templateType) {
-    // Look for default template with specific type, fallback to category default
-    sql = `
+    console.log(`[Template Query] Looking for ${category} template with type: ${templateType}`);
+
+    // Strategy: Try to find template with matching template_type first
+    // This works for both is_default=TRUE and is_default=FALSE templates
+    let sql = `
       SELECT * FROM prompt_templates
-      WHERE category = $1 AND is_active = TRUE
-        AND (
-          (template_type = $2 AND is_default = FALSE)
-          OR (is_default = TRUE AND template_type IS NULL)
-        )
-      ORDER BY template_type = $2 DESC, is_default DESC
+      WHERE category = $1 AND is_active = TRUE AND template_type = $2
+      ORDER BY is_default DESC
       LIMIT 1
     `;
-    params = [category, templateType];
-  } else {
+    let params: unknown[] = [category, templateType];
+
+    let row = await queryOne<PromptTemplateRow>(sql, params);
+
+    if (row) {
+      console.log(`[Template Query] ✓ Found template: ${row.name} (is_default=${row.is_default})`);
+      return mapTemplateRow(row);
+    }
+
+    // Fallback: If no template with specific type, get category default
+    console.log(`[Template Query] No template found for type "${templateType}", falling back to category default`);
     sql = `
       SELECT * FROM prompt_templates
       WHERE category = $1 AND is_default = TRUE AND is_active = TRUE
       LIMIT 1
     `;
     params = [category];
-  }
 
-  const row = await queryOne<PromptTemplateRow>(sql, params);
-  return row ? mapTemplateRow(row) : null;
+    row = await queryOne<PromptTemplateRow>(sql, params);
+
+    if (row) {
+      console.log(`[Template Query] ✓ Using category default: ${row.name}`);
+      return mapTemplateRow(row);
+    }
+
+    console.log(`[Template Query] ✗ No template found for category ${category}`);
+    return null;
+  } else {
+    // No templateType specified - get category default
+    console.log(`[Template Query] Looking for ${category} default template`);
+
+    const sql = `
+      SELECT * FROM prompt_templates
+      WHERE category = $1 AND is_default = TRUE AND is_active = TRUE
+      LIMIT 1
+    `;
+    const params = [category];
+
+    const row = await queryOne<PromptTemplateRow>(sql, params);
+
+    if (row) {
+      console.log(`[Template Query] ✓ Found default: ${row.name}`);
+      return mapTemplateRow(row);
+    }
+
+    console.log(`[Template Query] ✗ No default template found for category ${category}`);
+    return null;
+  }
 }
 
 export interface CreateTemplateData {

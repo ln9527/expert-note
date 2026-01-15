@@ -14,6 +14,7 @@ import {
 } from '@/lib/ai/generation';
 import { extractAnnotations } from '@/lib/utils/annotation';
 import { KnowledgeAnnotation } from '@/types';
+import { OpenRouterError } from '@/lib/ai/openrouter';
 
 export async function POST(request: NextRequest) {
   try {
@@ -201,16 +202,56 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[API] POST /prompts/generate error:', error);
 
-    // Check if it's an AI API error
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    if (errorMessage.includes('OpenRouter') || errorMessage.includes('API')) {
+    // Handle OpenRouter API errors with specific messages
+    if (error instanceof OpenRouterError) {
+      console.error('[API] OpenRouter error code:', error.code);
+      console.error('[API] OpenRouter error details:', error.details);
+
       return NextResponse.json(
-        { success: false, error: 'AI service error: ' + errorMessage },
-        { status: 502 }
+        {
+          success: false,
+          error: error.message,
+          errorCode: error.code,
+          errorType: 'ai_service_error',
+        },
+        { status: 502 } // Bad Gateway for external service errors
       );
     }
 
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    // Handle database errors
+    if (error instanceof Error && error.message.includes('database')) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Database error: ' + error.message,
+          errorType: 'database_error',
+        },
+        { status: 500 }
+      );
+    }
+
+    // Handle template not found errors
+    if (error instanceof Error && error.message.includes('template')) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Template error: ' + error.message,
+          errorType: 'template_error',
+        },
+        { status: 404 }
+      );
+    }
+
+    // Generic error with message preservation
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to generate prompt: ' + errorMessage,
+        errorType: 'internal_error',
+      },
+      { status: 500 }
+    );
   }
 }
 

@@ -16,7 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { createUser, usernameExists, phoneExists, emailExists, updateUserOrgAndRole } from '@/lib/db/queries/users';
+import { createUser, usernameExists, phoneExists, updateUserOrgAndRole } from '@/lib/db/queries/users';
 import { validateInvitationCode, useInvitationCode } from '@/lib/db/queries/invitationCodes';
 import { createSession } from '@/lib/auth/session';
 
@@ -84,13 +84,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if email already exists (only if provided)
-    if (email && email.trim() && await emailExists(email.trim())) {
-      return NextResponse.json(
-        { success: false, error: 'Email is already registered' },
-        { status: 409 }
-      );
-    }
+    // Email validation removed - email column no longer exists in database
 
     // Validate invitation code
     const codeValidation = await validateInvitationCode(invitationCode.trim());

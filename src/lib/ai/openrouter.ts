@@ -16,13 +16,40 @@ interface ChatCompletionOptions {
   model?: string;
 }
 
+/**
+ * Structured error for OpenRouter API failures
+ */
+export class OpenRouterError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public details?: unknown
+  ) {
+    super(message);
+    this.name = 'OpenRouterError';
+  }
+}
+
 // Create OpenRouter client singleton
 function getOpenRouterClient(): OpenRouter {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
-    throw new Error('OPENROUTER_API_KEY is not configured');
+    throw new OpenRouterError(
+      'OPENROUTER_API_KEY environment variable is not configured. Please check your .env.local file.',
+      'API_KEY_MISSING'
+    );
   }
+
+  // Validate API key format
+  if (!apiKey.startsWith('sk-or-v1-')) {
+    throw new OpenRouterError(
+      `Invalid API key format. Expected format: sk-or-v1-... but got: ${apiKey.substring(0, 15)}...`,
+      'API_KEY_INVALID_FORMAT'
+    );
+  }
+
+  console.log(`[OpenRouter] Client initialized with API key: ${apiKey.substring(0, 20)}...`);
 
   return new OpenRouter({
     apiKey,
@@ -42,7 +69,21 @@ export async function chatCompletion(
   const temperature = options.temperature ?? 0.7;
   const maxTokens = options.maxTokens ?? 2000;
 
+  // Log request details for debugging
+  const systemPromptLength = messages.find(m => m.role === 'system')?.content.length || 0;
+  const userPromptLength = messages.find(m => m.role === 'user')?.content.length || 0;
+  const estimatedInputTokens = Math.ceil((systemPromptLength + userPromptLength) / 4);
+
   console.log(`[OpenRouter] Sending request to ${model}...`);
+  console.log(`[OpenRouter] Request details:`, {
+    model,
+    temperature,
+    maxTokens,
+    messageCount: messages.length,
+    estimatedInputTokens,
+    systemPromptChars: systemPromptLength,
+    userPromptChars: userPromptLength,
+  });
 
   try {
     const response = await openrouter.chat.send({
@@ -55,39 +96,128 @@ export async function chatCompletion(
       maxTokens,
     });
 
-    console.log(`[OpenRouter] Response received. Tokens: ${response.usage?.totalTokens || 'unknown'}`);
+    console.log(`[OpenRouter] ✓ Response received successfully`);
+    console.log(`[OpenRouter] Tokens used:`, {
+      prompt: response.usage?.promptTokens || 'unknown',
+      completion: response.usage?.completionTokens || 'unknown',
+      total: response.usage?.totalTokens || 'unknown',
+    });
 
     // Extract content from response
     const choice = response.choices?.[0];
     if (!choice) {
-      throw new Error('No choices in OpenRouter response');
+      throw new OpenRouterError(
+        'OpenRouter API returned empty response (no choices)',
+        'EMPTY_RESPONSE',
+        { response }
+      );
     }
 
     const content = choice.message?.content;
 
     if (!content) {
-      throw new Error('No content in OpenRouter response');
+      throw new OpenRouterError(
+        'OpenRouter API returned no content in response',
+        'NO_CONTENT',
+        { choice }
+      );
     }
 
     // Handle content that could be string or array
     if (typeof content === 'string') {
+      console.log(`[OpenRouter] Content length: ${content.length} chars`);
       return content;
     }
 
     // If content is an array, extract text from each item
     if (Array.isArray(content)) {
-      return content
+      const text = content
         .filter((item): item is { type: 'text'; text: string } =>
           item && typeof item === 'object' && 'type' in item && item.type === 'text' && 'text' in item
         )
         .map(item => item.text)
         .join('');
+      console.log(`[OpenRouter] Content length: ${text.length} chars (from array)`);
+      return text;
     }
 
-    throw new Error('Unexpected content format in OpenRouter response');
+    throw new OpenRouterError(
+      'OpenRouter API returned unexpected content format',
+      'UNEXPECTED_FORMAT',
+      { contentType: typeof content, content }
+    );
   } catch (error) {
-    console.error('[OpenRouter] API error:', error);
-    throw error;
+    // Enhanced error logging with classification
+    console.error('[OpenRouter] ✗ API call failed');
+    console.error('[OpenRouter] Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    // Classify and re-throw with better error messages
+    if (error instanceof OpenRouterError) {
+      throw error;
+    }
+
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorString = JSON.stringify(error);
+
+    // Check for specific error types
+    if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('invalid api key')) {
+      throw new OpenRouterError(
+        'OpenRouter API key is invalid or unauthorized. Please check your OPENROUTER_API_KEY in .env.local',
+        'API_KEY_UNAUTHORIZED',
+        { originalError: errorMessage }
+      );
+    }
+
+    if (errorMessage.includes('402') || errorMessage.includes('insufficient credits')) {
+      throw new OpenRouterError(
+        'OpenRouter account has insufficient credits. Please add credits to your account.',
+        'INSUFFICIENT_CREDITS',
+        { originalError: errorMessage }
+      );
+    }
+
+    if (errorMessage.includes('403') || errorMessage.includes('forbidden')) {
+      throw new OpenRouterError(
+        `Model "${model}" is not available or not authorized for your API key. Please check model availability.`,
+        'MODEL_FORBIDDEN',
+        { model, originalError: errorMessage }
+      );
+    }
+
+    if (errorMessage.includes('404') || errorString.includes('404')) {
+      throw new OpenRouterError(
+        `Model "${model}" not found. Please verify the model name is correct.`,
+        'MODEL_NOT_FOUND',
+        { model, originalError: errorMessage }
+      );
+    }
+
+    if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+      throw new OpenRouterError(
+        'OpenRouter API rate limit exceeded. Please wait and try again.',
+        'RATE_LIMIT_EXCEEDED',
+        { originalError: errorMessage }
+      );
+    }
+
+    if (errorMessage.includes('timeout') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ETIMEDOUT')) {
+      throw new OpenRouterError(
+        'Network error: Could not connect to OpenRouter API. Please check your internet connection.',
+        'NETWORK_ERROR',
+        { originalError: errorMessage }
+      );
+    }
+
+    // Generic API error
+    throw new OpenRouterError(
+      `OpenRouter API error: ${errorMessage}`,
+      'API_ERROR',
+      { originalError: error }
+    );
   }
 }
 
