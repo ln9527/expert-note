@@ -167,9 +167,9 @@ export async function createUser(
   const { displayName, phone, orgId, role = 'member' } = options;
   const result = await query<UserRow>(
     `INSERT INTO users (username, password_hash, display_name, phone, org_id, role)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, username, display_name, phone, org_id, role, is_active, created_at, last_login_at, deleted_at`,
-    [username, passwordHash, displayName || null, phone || null, email || null, orgId || null, role]
+    [username, passwordHash, displayName || null, phone || null, orgId || null, role]
   );
 
   return rowToUser(result.rows[0]);
