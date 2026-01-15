@@ -141,6 +141,7 @@ export interface ExtractionResult {
 // Response wrapper with metadata about extraction process
 export interface ExtractionResponse {
   results: ExtractionResult[];
+  rawContent: string;  // Raw LLM markdown output (primary storage)
   metadata: {
     usedFallback: boolean;
     fallbackReason?: string;
@@ -286,6 +287,7 @@ export async function extractKnowledge(input: ExtractionInput): Promise<Extracti
   if (input.annotations.length === 0) {
     return {
       results: [],
+      rawContent: '',
       metadata: {
         usedFallback: false,
         usedDatabaseTemplate: false,
@@ -322,13 +324,14 @@ export async function extractKnowledge(input: ExtractionInput): Promise<Extracti
 
     console.log(`[Extraction] ✓ AI refinement successful: ${response.length} chars`);
 
-    // Parse the markdown response into structured results
+    // Parse the markdown response into structured results (for backward compatibility)
     const results = parseMarkdownExtractionResponse(response, input.annotations);
 
     console.log(`[Extraction] ✓ Parsed ${results.length} knowledge items from AI response`);
 
     return {
       results,
+      rawContent: response,  // Store raw LLM markdown output
       metadata: {
         usedFallback: false,
         usedDatabaseTemplate,
@@ -337,6 +340,9 @@ export async function extractKnowledge(input: ExtractionInput): Promise<Extracti
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('[Extraction] ⚠ AI extraction failed, using fallback:', errorMessage);
+
+    // Build fallback markdown content from original annotations
+    const fallbackContent = buildFallbackMarkdown(input);
 
     // Return fallback results from original annotations
     const fallbackResults = input.annotations.map((a, index) => ({
@@ -349,6 +355,7 @@ export async function extractKnowledge(input: ExtractionInput): Promise<Extracti
 
     return {
       results: fallbackResults,
+      rawContent: fallbackContent,  // Fallback markdown
       metadata: {
         usedFallback: true,
         fallbackReason: errorMessage,
@@ -356,4 +363,36 @@ export async function extractKnowledge(input: ExtractionInput): Promise<Extracti
       },
     };
   }
+}
+
+/**
+ * Build fallback markdown content when AI extraction fails
+ */
+function buildFallbackMarkdown(input: ExtractionInput): string {
+  const macroAnnotations = input.annotations.filter(a => a.level === 'MACRO');
+  const mesoAnnotations = input.annotations.filter(a => a.level === 'MESO');
+  const microAnnotations = input.annotations.filter(a => a.level === 'MICRO');
+
+  let markdown = `## Document Context\n\n`;
+  markdown += `**Source**: ${input.documentBackground}\n\n`;
+  markdown += `---\n\n`;
+
+  const formatAnnotations = (annotations: typeof input.annotations, level: string, emoji: string) => {
+    if (annotations.length === 0) return '';
+    let section = `## ${emoji} ${level} Annotations\n\n`;
+    annotations.forEach((a, i) => {
+      section += `### ${i + 1}. ${a.lineNumber ? `Line ${a.lineNumber}` : `Annotation ${i + 1}`}\n\n`;
+      section += `**Text referred to**:\n> ${a.surroundingContext.substring(0, 200)}...\n\n`;
+      section += `**Expert comment**:\n> ${a.content}\n\n`;
+      section += `**Contextualized**: ${a.content}\n\n`;
+      section += `---\n\n`;
+    });
+    return section;
+  };
+
+  markdown += formatAnnotations(macroAnnotations, 'MACRO', '🔴');
+  markdown += formatAnnotations(mesoAnnotations, 'MESO', '🟡');
+  markdown += formatAnnotations(microAnnotations, 'MICRO', '🟢');
+
+  return markdown;
 }

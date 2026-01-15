@@ -193,27 +193,49 @@ export default function KnowledgeListPage() {
 
   // Handle download - export as markdown
   const handleDownload = (entry: ExtendedKnowledgeEntry) => {
-    // Build markdown content
-    const lines: string[] = [];
-    lines.push(`# Knowledge Entry`);
-    lines.push('');
-    if (entry.sourceDocumentName) {
-      lines.push(`**Source:** ${entry.sourceDocumentName}`);
-    }
-    lines.push(`**Created:** ${new Date(entry.createdAt).toLocaleString()}`);
-    lines.push(`**Updated:** ${new Date(entry.updatedAt).toLocaleString()}`);
-    if (entry.tags && entry.tags.length > 0) {
-      lines.push(`**Tags:** ${entry.tags.map(t => t.name).join(', ')}`);
-    }
-    lines.push('');
-    lines.push('## Background');
-    lines.push(entry.background || 'No background description');
-    lines.push('');
+    let markdown: string;
 
-    const content = lines.join('\n');
+    // If content field exists (new format), use it directly
+    if (entry.content) {
+      // Add metadata header, then the raw content
+      const lines: string[] = [];
+      lines.push(`# Knowledge Entry`);
+      lines.push('');
+      if (entry.sourceDocumentName) {
+        lines.push(`**Source:** ${entry.sourceDocumentName}`);
+      }
+      lines.push(`**Created:** ${new Date(entry.createdAt).toLocaleString()}`);
+      lines.push(`**Updated:** ${new Date(entry.updatedAt).toLocaleString()}`);
+      if (entry.tags && entry.tags.length > 0) {
+        lines.push(`**Tags:** ${entry.tags.map(t => t.name).join(', ')}`);
+      }
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+      lines.push(entry.content);
+      markdown = lines.join('\n');
+    } else {
+      // Legacy format: build from background
+      const lines: string[] = [];
+      lines.push(`# Knowledge Entry`);
+      lines.push('');
+      if (entry.sourceDocumentName) {
+        lines.push(`**Source:** ${entry.sourceDocumentName}`);
+      }
+      lines.push(`**Created:** ${new Date(entry.createdAt).toLocaleString()}`);
+      lines.push(`**Updated:** ${new Date(entry.updatedAt).toLocaleString()}`);
+      if (entry.tags && entry.tags.length > 0) {
+        lines.push(`**Tags:** ${entry.tags.map(t => t.name).join(', ')}`);
+      }
+      lines.push('');
+      lines.push('## Background');
+      lines.push(entry.background || 'No background description');
+      lines.push('');
+      markdown = lines.join('\n');
+    }
 
     // Create blob and download
-    const blob = new Blob([content], { type: 'text/markdown' });
+    const blob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -462,6 +484,7 @@ export default function KnowledgeListPage() {
               key={entry.id}
               entry={entry}
               onDelete={handleDeleteClick}
+              onDownload={handleDownload}
               currentUserId={currentUserId}
               onShareToggle={handleShareToggle}
               onEditToggle={handleEditToggle}

@@ -112,56 +112,72 @@ export default function KnowledgeDetailPage() {
   const handleDownload = () => {
     if (!entry) return;
 
-    // Generate Markdown content
-    let markdown = `# Knowledge Entry\n\n`;
-    markdown += `**Created:** ${formatDate(entry.createdAt)}\n\n`;
+    let markdown: string;
 
-    if (entry.tags && entry.tags.length > 0) {
-      markdown += `**Tags:** ${entry.tags.map(t => t.name).join(', ')}\n\n`;
-    }
+    // If content field exists (new format), use it directly
+    if (entry.content) {
+      // Add metadata header, then the raw content
+      markdown = `# Knowledge Entry\n\n`;
+      markdown += `**Created:** ${formatDate(entry.createdAt)}\n\n`;
 
-    markdown += `---\n\n`;
+      if (entry.tags && entry.tags.length > 0) {
+        markdown += `**Tags:** ${entry.tags.map(t => t.name).join(', ')}\n\n`;
+      }
 
-    if (entry.background) {
-      markdown += `## Background Context\n\n${entry.background}\n\n`;
       markdown += `---\n\n`;
-    }
+      markdown += entry.content;
+    } else {
+      // Legacy format: build from annotations
+      markdown = `# Knowledge Entry\n\n`;
+      markdown += `**Created:** ${formatDate(entry.createdAt)}\n\n`;
 
-    if (entry.annotations && entry.annotations.length > 0) {
-      markdown += `## Annotations\n\n`;
+      if (entry.tags && entry.tags.length > 0) {
+        markdown += `**Tags:** ${entry.tags.map(t => t.name).join(', ')}\n\n`;
+      }
 
-      // Group annotations by level
-      const grouped = {
-        MACRO: entry.annotations.filter(a => a.level === 'MACRO'),
-        MESO: entry.annotations.filter(a => a.level === 'MESO'),
-        MICRO: entry.annotations.filter(a => a.level === 'MICRO'),
-      };
+      markdown += `---\n\n`;
 
-      const levelEmojis = { MACRO: '🔴', MESO: '🟡', MICRO: '🟢' };
-      const levelLabels = { MACRO: 'Macro (High-level)', MESO: 'Meso (Pattern-level)', MICRO: 'Micro (Detailed)' };
+      if (entry.background) {
+        markdown += `## Background Context\n\n${entry.background}\n\n`;
+        markdown += `---\n\n`;
+      }
 
-      (['MACRO', 'MESO', 'MICRO'] as const).forEach(level => {
-        const annotations = grouped[level];
-        if (annotations.length === 0) return;
+      if (entry.annotations && entry.annotations.length > 0) {
+        markdown += `## Annotations\n\n`;
 
-        markdown += `### ${levelEmojis[level]} ${levelLabels[level]} (${annotations.length})\n\n`;
+        // Group annotations by level
+        const grouped = {
+          MACRO: entry.annotations.filter(a => a.level === 'MACRO'),
+          MESO: entry.annotations.filter(a => a.level === 'MESO'),
+          MICRO: entry.annotations.filter(a => a.level === 'MICRO'),
+        };
 
-        annotations.forEach((ann, idx) => {
-          markdown += `#### ${idx + 1}. ${ann.location || `Annotation ${idx + 1}`}\n\n`;
+        const levelEmojis = { MACRO: '🔴', MESO: '🟡', MICRO: '🟢' };
+        const levelLabels = { MACRO: 'Macro (High-level)', MESO: 'Meso (Pattern-level)', MICRO: 'Micro (Detailed)' };
 
-          if (ann.backgroundContext) {
-            markdown += `**Context:** ${ann.backgroundContext}\n\n`;
-          }
+        (['MACRO', 'MESO', 'MICRO'] as const).forEach(level => {
+          const annotations = grouped[level];
+          if (annotations.length === 0) return;
 
-          markdown += `**Original:**\n> ${ann.originalText || ann.comment}\n\n`;
+          markdown += `### ${levelEmojis[level]} ${levelLabels[level]} (${annotations.length})\n\n`;
 
-          if (ann.refinedComment && ann.refinedComment !== ann.originalText) {
-            markdown += `**Refined:**\n> ${ann.refinedComment}\n\n`;
-          }
+          annotations.forEach((ann, idx) => {
+            markdown += `#### ${idx + 1}. ${ann.location || `Annotation ${idx + 1}`}\n\n`;
 
-          markdown += `---\n\n`;
+            if (ann.backgroundContext) {
+              markdown += `**Context:** ${ann.backgroundContext}\n\n`;
+            }
+
+            markdown += `**Original:**\n> ${ann.originalText || ann.comment}\n\n`;
+
+            if (ann.refinedComment && ann.refinedComment !== ann.originalText) {
+              markdown += `**Refined:**\n> ${ann.refinedComment}\n\n`;
+            }
+
+            markdown += `---\n\n`;
+          });
         });
-      });
+      }
     }
 
     // Create and trigger download
@@ -402,72 +418,93 @@ export default function KnowledgeDetailPage() {
         </div>
       </div>
 
-      {/* Background/Context Section */}
-      {entry.background && (
+      {/* Main Content Section - Show raw markdown content OR legacy background/annotations */}
+      {entry.content ? (
+        // New format: Display raw LLM markdown content directly
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-indigo-50">
             <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 className="text-lg font-semibold text-gray-900">Background Context</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Extracted Knowledge</h3>
             </div>
           </div>
-          <div className="p-6">
-            <div className={`text-gray-700 ${shouldCollapseBackground && !showBackgroundFull ? 'line-clamp-6' : ''}`}>
-              <MarkdownRenderer content={entry.background} />
-            </div>
-            {shouldCollapseBackground && (
-              <button
-                onClick={() => setShowBackgroundFull(!showBackgroundFull)}
-                className="mt-3 text-sm text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1"
-              >
-                {showBackgroundFull ? (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                    Show less
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                    Read more
-                  </>
-                )}
-              </button>
-            )}
+          <div className="p-6 prose prose-sm max-w-none">
+            <MarkdownRenderer content={entry.content} />
           </div>
         </div>
-      )}
-
-      {/* Annotations Section */}
-      {entry.annotations && entry.annotations.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                </svg>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Annotations
-                </h3>
+      ) : (
+        // Legacy format: Show background context and annotations separately
+        <>
+          {/* Background/Context Section */}
+          {entry.background && (
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-gray-900">Background Context</h3>
+                </div>
               </div>
-              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                {entry.annotations.length}
-              </span>
+              <div className="p-6">
+                <div className={`text-gray-700 ${shouldCollapseBackground && !showBackgroundFull ? 'line-clamp-6' : ''}`}>
+                  <MarkdownRenderer content={entry.background} />
+                </div>
+                {shouldCollapseBackground && (
+                  <button
+                    onClick={() => setShowBackgroundFull(!showBackgroundFull)}
+                    className="mt-3 text-sm text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1"
+                  >
+                    {showBackgroundFull ? (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                        Show less
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                        Read more
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="p-6">
-            <AnnotationList
-              annotations={entry.annotations}
-              showActions={true}
-            />
-          </div>
-        </div>
+          )}
+
+          {/* Annotations Section */}
+          {entry.annotations && entry.annotations.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Annotations
+                    </h3>
+                  </div>
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                    {entry.annotations.length}
+                  </span>
+                </div>
+              </div>
+              <div className="p-6">
+                <AnnotationList
+                  annotations={entry.annotations}
+                  showActions={true}
+                />
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Actions Card */}

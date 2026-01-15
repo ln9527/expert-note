@@ -15,13 +15,14 @@ interface ExtendedKnowledgeEntry extends KnowledgeEntry {
 interface KnowledgeCardProps {
   entry: ExtendedKnowledgeEntry;
   onDelete?: (entry: ExtendedKnowledgeEntry) => void;
+  onDownload?: (entry: ExtendedKnowledgeEntry) => void;
   currentUserId?: number | null;
   onShareToggle?: (entry: ExtendedKnowledgeEntry) => void;
   onEditToggle?: (entry: ExtendedKnowledgeEntry) => void;
   togglingEntryId?: string | null;
 }
 
-export default function KnowledgeCard({ entry, onDelete, currentUserId, onShareToggle, onEditToggle, togglingEntryId }: KnowledgeCardProps) {
+export default function KnowledgeCard({ entry, onDelete, onDownload, currentUserId, onShareToggle, onEditToggle, togglingEntryId }: KnowledgeCardProps) {
   // Preview text - use background or fallback message
   const backgroundText = entry.background || 'No background description';
   const previewText = backgroundText.length > 200
@@ -61,6 +62,12 @@ export default function KnowledgeCard({ entry, onDelete, currentUserId, onShareT
     onDelete?.(entry);
   };
 
+  const handleDownloadClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDownload?.(entry);
+  };
+
   return (
     <Link href={`/knowledge/${entry.id}`}>
       <div
@@ -88,6 +95,17 @@ export default function KnowledgeCard({ entry, onDelete, currentUserId, onShareT
             <span className="text-xs text-gray-400 whitespace-nowrap">
               {formatDate(entry.createdAt)}
             </span>
+            {onDownload && (
+              <button
+                onClick={handleDownloadClick}
+                className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+                title="Download as Markdown"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+            )}
             {onDelete && currentUserId && entry.createdBy === currentUserId && (
               <button
                 onClick={handleDeleteClick}

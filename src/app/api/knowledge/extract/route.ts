@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth/session';
 import { getDocumentById } from '@/lib/db/queries/documents';
-import { createKnowledgeEntry, getKnowledgeEntryWithAnnotations, AnnotationData } from '@/lib/db/queries/knowledge';
-import { extractKnowledge, ExtractionResult, ExtractionResponse } from '@/lib/ai/extraction';
+import { createKnowledgeEntry, getKnowledgeEntryById } from '@/lib/db/queries/knowledge';
+import { extractKnowledge, ExtractionResponse } from '@/lib/ai/extraction';
 import { extractAnnotations } from '@/lib/utils/annotation';
 import { OpenRouterError } from '@/lib/ai/openrouter';
 
@@ -10,19 +10,14 @@ import { OpenRouterError } from '@/lib/ai/openrouter';
  * POST /api/knowledge/extract
  * Extract knowledge from an annotated document using AI
  *
- * The AI returns results in Markdown format with:
- * - Background: Context around the annotation
- * - Original Comment: Verbatim annotation text
- * - Refined Comment: AI-improved version
- * - Level: MACRO/MESO/MICRO
- * - Location: Where in document this appeared
+ * The AI returns raw markdown which is stored directly in the knowledge entry's
+ * `content` field. This preserves the full LLM output without lossy parsing.
  *
  * Request body:
  * {
  *   documentId: string,          // Required: ID of the document to extract from
  *   tagIds?: number[],           // Optional: Tags to assign to the knowledge entry
  *   background?: string,         // Optional: Custom background, defaults to document filename
- *   refineAnnotations?: boolean, // Optional: Whether to refine annotations with AI (default: true)
  *   customInstructions?: string, // Optional: Custom instructions to guide the AI extraction
  *   templateId?: string          // Optional: Extraction guide/template ID to use
  * }
@@ -39,7 +34,6 @@ export async function POST(request: NextRequest) {
       documentId,
       tagIds,
       background: customBackground,
-      refineAnnotations = true,
       customInstructions,
       templateId,
     } = body;
@@ -85,98 +79,70 @@ export async function POST(request: NextRequest) {
     // Use document tags if no custom tags provided
     const entryTagIds: number[] = tagIds || document.tags.map(t => t.id);
 
-    let annotations: AnnotationData[];
-    let metadata: ExtractionResponse['metadata'] | undefined;
+    // Use AI to extract knowledge - returns raw markdown content
+    const extractionInput = {
+      documentContent: document.content,
+      documentBackground: entryBackground,
+      annotations: parsedAnnotations.map(a => ({
+        level: a.level,
+        content: a.content,
+        surroundingContext: a.surroundingContext,
+        lineNumber: a.line,
+      })),
+      customInstructions: customInstructions?.trim() || undefined,
+      templateId: templateId || undefined,
+    };
 
-    if (refineAnnotations) {
-      // Use AI to refine annotations with full document context
-      // The new extraction system uses two phases:
-      // 1. Document analysis to understand overall structure and purpose
-      // 2. Context-aware annotation processing with surrounding text
-      const extractionInput = {
-        documentContent: document.content,  // Full document for analysis
-        documentBackground: entryBackground,
-        annotations: parsedAnnotations.map(a => ({
-          level: a.level,
-          content: a.content,
-          surroundingContext: a.surroundingContext,  // Context around each annotation
-          lineNumber: a.line,
-        })),
-        customInstructions: customInstructions?.trim() || undefined,
-        templateId: templateId || undefined,  // Pass selected extraction guide
-      };
+    const extractionResponse: ExtractionResponse = await extractKnowledge(extractionInput);
+    const { rawContent, metadata } = extractionResponse;
 
-      // Extract knowledge with AI - returns metadata about the extraction process
-      const extractionResponse: ExtractionResponse = await extractKnowledge(extractionInput);
-      const { results: extractionResults, metadata: extractionMetadata } = extractionResponse;
-      metadata = extractionMetadata;
+    console.log(`[Extract API] AI generated ${rawContent.length} chars of markdown content`);
 
-      console.log(`[Extract API] AI returned ${extractionResults.length} refined annotations with context`);
-
-      // Log if fallback was used
-      if (extractionMetadata.usedFallback) {
-        console.warn(`[Extract API] ⚠ AI refinement failed, using fallback annotations. Reason: ${extractionMetadata.fallbackReason}`);
-      } else if (extractionMetadata.usedDatabaseTemplate) {
-        console.log('[Extract API] ✓ Used database template (user-configured)');
-      }
-
-      // Map extraction results to annotation data
-      // The new format includes: level, location, background, originalComment, refinedComment
-      annotations = extractionResults.map((result, index) => {
-        const originalAnnotation = parsedAnnotations[index];
-        return {
-          level: result.level || originalAnnotation?.level || 'MACRO',
-          originalText: result.originalComment || originalAnnotation?.content || '',
-          comment: originalAnnotation?.content || result.originalComment || '',
-          refinedComment: result.refinedComment,
-          location: result.location,
-          backgroundContext: result.background,
-          positionLine: originalAnnotation?.line,
-          positionChar: originalAnnotation?.char,
-        };
-      });
-    } else {
-      // Use annotations as-is without AI refinement
-      annotations = parsedAnnotations.map((ann, index) => ({
-        level: ann.level,
-        originalText: ann.content,
-        comment: ann.content,
-        refinedComment: undefined,
-        location: ann.line ? `Line ${ann.line}` : `Annotation ${index + 1}`,
-        backgroundContext: undefined,
-        positionLine: ann.line,
-        positionChar: ann.char,
-      }));
+    // Log template usage
+    if (metadata.usedFallback) {
+      console.warn(`[Extract API] ⚠ AI extraction failed, using fallback. Reason: ${metadata.fallbackReason}`);
+    } else if (metadata.usedDatabaseTemplate) {
+      console.log('[Extract API] ✓ Used database template (user-configured)');
     }
 
-    // Create the knowledge entry
+    // Create knowledge entry with raw markdown content (no annotation parsing)
     const entry = await createKnowledgeEntry({
       sourceDocumentId: documentId,
       background: entryBackground,
+      content: rawContent,  // Store raw LLM markdown
       tagIds: entryTagIds,
-      annotations,
-      createdBy: user.userId,  // SECURITY: Track who created this entry
+      createdBy: user.userId,
     });
 
-    // Fetch the complete entry with annotations
-    const completeEntry = await getKnowledgeEntryWithAnnotations(entry.id);
+    // Fetch the complete entry
+    const completeEntry = await getKnowledgeEntryById(entry.id);
 
-    // Prepare response with extraction metadata
-    const response: any = {
+    // Prepare response
+    const response: {
+      success: boolean;
+      entry: typeof completeEntry;
+      extractionSummary: {
+        documentId: string;
+        documentFilename: string;
+        annotationCount: number;
+        contentLength: number;
+      };
+      warning?: string;
+      metadata?: { usedFallback: boolean; fallbackReason?: string };
+    } = {
       success: true,
       entry: completeEntry,
-      count: annotations.length,
       extractionSummary: {
         documentId,
         documentFilename: document.filename,
-        annotationsExtracted: annotations.length,
-        refined: refineAnnotations,
+        annotationCount: parsedAnnotations.length,
+        contentLength: rawContent.length,
       },
     };
 
     // Add warning if AI fallback was used
-    if (refineAnnotations && metadata && metadata.usedFallback) {
-      response.warning = 'AI refinement failed - showing original annotations without AI enhancement';
+    if (metadata.usedFallback) {
+      response.warning = 'AI extraction failed - using fallback markdown';
       response.metadata = {
         usedFallback: true,
         fallbackReason: metadata.fallbackReason,

@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
           id: `doc-${documentId}`,
           sourceDocumentId: documentId,
           background: `Document: ${document.filename}`,
+          content: null,  // No raw content for pseudo-entries from documents
           createdBy: document.createdBy,  // Inherit from document
           isShared: document.isShared,    // Inherit from document
           allowEdit: document.allowEdit,  // Inherit from document

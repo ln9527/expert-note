@@ -264,11 +264,12 @@ export interface Session {
 }
 
 // Knowledge Entry type - matches database schema
-// A knowledge entry contains a background/context and multiple annotations
+// A knowledge entry contains raw LLM markdown content and metadata
 export interface KnowledgeEntry {
   id: string;
   sourceDocumentId: string | null;
   background: string | null;
+  content: string | null;  // Raw LLM-generated markdown (primary storage)
   createdBy: number | null;
   isShared: boolean;
   allowEdit: boolean;

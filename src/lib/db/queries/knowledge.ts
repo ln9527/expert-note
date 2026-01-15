@@ -9,6 +9,7 @@ interface KnowledgeEntryRow {
   id: string;
   source_document_id: string | null;
   background: string | null;
+  content: string | null;  // Raw LLM markdown
   created_by: number | null;
   is_shared: boolean;
   allow_edit: boolean;
@@ -41,6 +42,7 @@ export interface KnowledgeEntry {
   id: string;
   sourceDocumentId: string | null;
   background: string | null;
+  content: string | null;  // Raw LLM markdown
   createdBy: number | null;
   isShared: boolean;
   allowEdit: boolean;
@@ -87,6 +89,7 @@ function mapKnowledgeRow(row: KnowledgeEntryRow): KnowledgeEntry {
     id: row.id,
     sourceDocumentId: row.source_document_id,
     background: row.background,
+    content: row.content,  // Raw LLM markdown
     createdBy: row.created_by,
     isShared: row.is_shared ?? false,
     allowEdit: row.allow_edit ?? false,
@@ -240,24 +243,25 @@ export async function getKnowledgeEntryWithAnnotations(
 }
 
 /**
- * Create a new knowledge entry with annotations and tags
+ * Create a new knowledge entry with content (raw LLM markdown) and optional annotations
  */
 export async function createKnowledgeEntry(data: {
   sourceDocumentId?: string;
   background: string;
+  content?: string;  // Raw LLM markdown (primary storage)
   tagIds?: number[];
-  annotations: AnnotationData[];
+  annotations?: AnnotationData[];  // Optional - kept for backward compatibility
   createdBy: number;  // Required: track who created the knowledge entry
 }): Promise<KnowledgeEntry> {
   return transaction(async (client: PoolClient) => {
-    const { sourceDocumentId, background, tagIds, annotations, createdBy } = data;
+    const { sourceDocumentId, background, content, tagIds, annotations, createdBy } = data;
 
-    // Insert knowledge entry and get full row back
+    // Insert knowledge entry with content
     const entryResult = await client.query<KnowledgeEntryRow>(
-      `INSERT INTO knowledge_entries (source_document_id, background, created_by)
-       VALUES ($1, $2, $3)
+      `INSERT INTO knowledge_entries (source_document_id, background, content, created_by)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [sourceDocumentId || null, background, createdBy]
+      [sourceDocumentId || null, background, content || null, createdBy]
     );
     const knowledgeId = entryResult.rows[0].id;
 
@@ -270,23 +274,25 @@ export async function createKnowledgeEntry(data: {
       );
     }
 
-    // Insert annotations
-    for (const ann of annotations) {
-      await client.query(
-        `INSERT INTO annotations (knowledge_id, level, original_text, comment, refined_comment, location, background_context, position_line, position_char)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [
-          knowledgeId,
-          ann.level.toLowerCase(),
-          ann.originalText,
-          ann.comment,
-          ann.refinedComment || null,
-          ann.location || null,
-          ann.backgroundContext || null,
-          ann.positionLine || null,
-          ann.positionChar || null,
-        ]
-      );
+    // Insert annotations (optional - for backward compatibility)
+    if (annotations && annotations.length > 0) {
+      for (const ann of annotations) {
+        await client.query(
+          `INSERT INTO annotations (knowledge_id, level, original_text, comment, refined_comment, location, background_context, position_line, position_char)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            knowledgeId,
+            ann.level.toLowerCase(),
+            ann.originalText,
+            ann.comment,
+            ann.refinedComment || null,
+            ann.location || null,
+            ann.backgroundContext || null,
+            ann.positionLine || null,
+            ann.positionChar || null,
+          ]
+        );
+      }
     }
 
     // Fetch complete entry with tags using same transaction connection
@@ -317,13 +323,14 @@ export async function updateKnowledgeEntry(
   id: string,
   data: {
     background?: string;
+    content?: string;  // Raw LLM markdown
     tagIds?: number[];
     isShared?: boolean;
     allowEdit?: boolean;
   }
 ): Promise<KnowledgeEntry | null> {
   return transaction(async (client: PoolClient) => {
-    const { background, tagIds, isShared, allowEdit } = data;
+    const { background, content, tagIds, isShared, allowEdit } = data;
 
     // Build update query
     const updates: string[] = ['updated_at = NOW()'];
@@ -333,6 +340,11 @@ export async function updateKnowledgeEntry(
     if (background !== undefined) {
       updates.push(`background = $${paramIndex++}`);
       params.push(background);
+    }
+
+    if (content !== undefined) {
+      updates.push(`content = $${paramIndex++}`);
+      params.push(content);
     }
 
     if (isShared !== undefined) {

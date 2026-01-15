@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { KnowledgeEntryWithAnnotations, Tag, ANNOTATION_COLORS, LEVEL_CONFIG, AnnotationLevel, KnowledgeAnnotation } from '@/types';
+import { MarkdownRenderer } from '@/components/common';
 
 interface KnowledgeDetailData extends KnowledgeEntryWithAnnotations {
   sourceDocumentName?: string;
@@ -23,9 +24,11 @@ export default function KnowledgeEditPage() {
 
   // Editable fields
   const [background, setBackground] = useState('');
+  const [content, setContent] = useState('');  // New: raw markdown content
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [editedAnnotations, setEditedAnnotations] = useState<Map<string, string>>(new Map());
+  const [showPreview, setShowPreview] = useState(false);  // Toggle markdown preview
 
   // Permission state
   const [canEdit, setCanEdit] = useState(true);
@@ -56,6 +59,7 @@ export default function KnowledgeEditPage() {
       const fetchedEntry = entryData.entry;
       setEntry(fetchedEntry);
       setBackground(fetchedEntry.background || '');
+      setContent(fetchedEntry.content || '');  // Initialize content field
       setSelectedTags((fetchedEntry.tags || []).map((t: Tag) => t.name));
       setAllTags(tagsData.tags || []);
 
@@ -100,12 +104,13 @@ export default function KnowledgeEditPage() {
     try {
       setSaving(true);
 
-      // Update the knowledge entry (background and tags)
+      // Update the knowledge entry (background, content, and tags)
       const entryRes = await fetch(buildApiPath(`knowledge/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           background,
+          content,  // Include content field
           tags: selectedTags,
         }),
       });
@@ -114,21 +119,23 @@ export default function KnowledgeEditPage() {
         throw new Error('Failed to update knowledge entry');
       }
 
-      // Update each annotation's refined comment
-      const annotationPromises = Array.from(editedAnnotations.entries()).map(
-        async ([annotationId, refinedComment]) => {
-          const res = await fetch(buildApiPath(`annotations/${annotationId}`), {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refinedComment }),
-          });
-          if (!res.ok) {
-            console.error(`Failed to update annotation ${annotationId}`);
+      // Only update annotations if we're in legacy mode (no content field)
+      if (!entry.content && editedAnnotations.size > 0) {
+        const annotationPromises = Array.from(editedAnnotations.entries()).map(
+          async ([annotationId, refinedComment]) => {
+            const res = await fetch(buildApiPath(`annotations/${annotationId}`), {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refinedComment }),
+            });
+            if (!res.ok) {
+              console.error(`Failed to update annotation ${annotationId}`);
+            }
           }
-        }
-      );
+        );
 
-      await Promise.all(annotationPromises);
+        await Promise.all(annotationPromises);
+      }
 
       // Navigate back to the detail page
       router.push(`/knowledge/${id}`);
@@ -342,67 +349,113 @@ export default function KnowledgeEditPage() {
         </div>
       </div>
 
-      {/* Annotations Section */}
-      {entry.annotations && entry.annotations.length > 0 && (
+      {/* Content Section - New format: Markdown editor OR Legacy: Annotations editor */}
+      {entry.content !== null && entry.content !== undefined ? (
+        // New format: Markdown content editor
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
+          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-indigo-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <h2 className="text-lg font-semibold text-gray-900">Annotations (Refined Comments)</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Extracted Knowledge</h2>
               </div>
-              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                {entry.annotations.length}
-              </span>
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  showPreview
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {showPreview ? 'Edit' : 'Preview'}
+              </button>
             </div>
           </div>
-          <div className="p-6 space-y-6">
-            {entry.annotations.map((annotation, index) => {
-              const colors = ANNOTATION_COLORS[annotation.level];
-              const config = LEVEL_CONFIG[annotation.level];
-              return (
-                <div key={annotation.id} className={`p-4 rounded-lg border ${colors.border} ${colors.bg}`}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-sm font-medium ${colors.text}`}>
-                      <span>{config.icon}</span>
-                      <span>{config.label}</span>
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {annotation.location || `Annotation ${index + 1}`}
-                    </span>
-                  </div>
-
-                  {/* Original Comment (read-only) */}
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-600 mb-1">
-                      Original Comment
-                    </label>
-                    <div className="px-3 py-2 bg-white/50 rounded border border-gray-200 text-sm text-gray-700">
-                      {annotation.originalText || annotation.comment}
-                    </div>
-                  </div>
-
-                  {/* Refined Comment (editable) */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">
-                      Refined Comment
-                    </label>
-                    <textarea
-                      value={editedAnnotations.get(annotation.id) || ''}
-                      onChange={(e) => handleAnnotationChange(annotation.id, e.target.value)}
-                      rows={3}
-                      readOnly={!canEdit}
-                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y text-sm ${!canEdit ? 'bg-gray-50 cursor-not-allowed' : ''}`}
-                      placeholder="Enter refined comment..."
-                    />
-                  </div>
-                </div>
-              );
-            })}
+          <div className="p-6">
+            {showPreview ? (
+              <div className="prose prose-sm max-w-none min-h-[400px] p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <MarkdownRenderer content={content} />
+              </div>
+            ) : (
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={20}
+                readOnly={!canEdit}
+                className={`w-full px-4 py-3 font-mono text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y ${!canEdit ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                placeholder="Enter markdown content..."
+              />
+            )}
+            <p className="mt-2 text-xs text-gray-500">
+              Supports full Markdown formatting including headers, lists, blockquotes, code blocks, and more.
+            </p>
           </div>
         </div>
+      ) : (
+        // Legacy format: Annotations editor
+        entry.annotations && entry.annotations.length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                  </svg>
+                  <h2 className="text-lg font-semibold text-gray-900">Annotations (Refined Comments)</h2>
+                </div>
+                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                  {entry.annotations.length}
+                </span>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              {entry.annotations.map((annotation, index) => {
+                const colors = ANNOTATION_COLORS[annotation.level];
+                const config = LEVEL_CONFIG[annotation.level];
+                return (
+                  <div key={annotation.id} className={`p-4 rounded-lg border ${colors.border} ${colors.bg}`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-sm font-medium ${colors.text}`}>
+                        <span>{config.icon}</span>
+                        <span>{config.label}</span>
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {annotation.location || `Annotation ${index + 1}`}
+                      </span>
+                    </div>
+
+                    {/* Original Comment (read-only) */}
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        Original Comment
+                      </label>
+                      <div className="px-3 py-2 bg-white/50 rounded border border-gray-200 text-sm text-gray-700">
+                        {annotation.originalText || annotation.comment}
+                      </div>
+                    </div>
+
+                    {/* Refined Comment (editable) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        Refined Comment
+                      </label>
+                      <textarea
+                        value={editedAnnotations.get(annotation.id) || ''}
+                        onChange={(e) => handleAnnotationChange(annotation.id, e.target.value)}
+                        rows={3}
+                        readOnly={!canEdit}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y text-sm ${!canEdit ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                        placeholder="Enter refined comment..."
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
       )}
 
       {/* Action buttons at bottom */}
