@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ Multi-Use Codes & Table Actions Complete (Jan 14, 2026)
+**Status**: ✅ Tag Ownership & PDF Upload UX Complete (Jan 15, 2026)
 
 ---
 
@@ -15,7 +15,7 @@ npm run build                  # Build for production
 npm run lint                   # Run linter
 
 # Test credentials (password: password123)
-# admin (super_admin) | ning (owner) | expert1 (member) | testuser123 (individual)
+# admin (super_admin) - only user after DB cleanup
 ```
 
 ## Key Documentation
@@ -56,14 +56,27 @@ sql/
 
 ## Current Priorities
 
-1. **Test Password Reset** - Verify temp password flow works for all user types
-2. **Migration Cleanup** - Renumber duplicate migration files (005, 006, 007)
-3. **Add Toast Notifications** - Show feedback when copy/download actions occur
-4. **Monitor Production** - Watch for permission or user management errors
+1. **Test Tag Ownership** - Verify users can only delete their own tags, admin can delete all
+2. **PDF Word-Joining Issue** - Words like "demandpersonalized" still occur in PDF conversion
+3. **Migration Cleanup** - Renumber duplicate migration files (005, 006, 007)
+4. **Add Toast Notifications** - Show feedback when copy/download actions occur
+5. **Test PDF/DOCX Upload Flow** - Verify convert endpoint and form editing works
 
-## Recent Work (Jan 14, 2026)
+## Recent Work (Jan 14-15, 2026)
 
-### Session 3 (Current) - Table Actions & Multi-Use Codes
+### Session 4 (Current) - Tag Ownership & PDF Upload UX
+- ✅ **PDF Conversion Quality**: Switched to pdfjs-dist with hasEOL for better text extraction
+- ✅ **PDF/DOCX Upload UX**: New /api/documents/convert endpoint lets users edit title/tags before saving
+- ✅ **TagFilter Bug Fix**: Added type="button" to 5 buttons to prevent form auto-submit
+- ✅ **Database Cleanup**: Hard deleted all test data, kept only admin user and seed tags
+- ✅ **Tag Ownership System**: Migration 010 adds created_by, is_deleted, deleted_at
+  - Users can only delete tags they created
+  - Global tags (created_by=NULL) only deletable by super_admin
+  - UI shows ownership badges (System/Yours/Shared) and conditional delete
+- ⚠️ **Known Issue**: PDF word-joining (e.g., "demandpersonalized") - needs spacing heuristic
+- 📄 **Commits**: 5 commits (38423cc, 209b1f3, fbc90fc, 507180f, 7a0d908)
+
+### Session 3 - Table Actions & Multi-Use Codes
 - ✅ **Org Owner Invitations Page**: Fixed 4 issues to match admin page functionality
   - Added create modal with Usage Limit input
   - Updated table columns: CODE | USAGE | CREATED | ACTIONS
@@ -96,7 +109,7 @@ psql -h localhost -U ningli -d annotservice
 SELECT username, role, org_id FROM users;
 ```
 
-**Latest Migration:** 008_add_user_soft_delete.sql (Applied to production Jan 14, 2026)
+**Latest Migration:** 010_tag_ownership_soft_delete.sql (Applied to production Jan 15, 2026)
 
 ## Production
 
@@ -130,4 +143,4 @@ Never patch bugs. Find root causes: Reproduce -> Trace -> Understand -> Fix -> V
 
 ---
 
-**Last Updated:** 2026-01-14 (Session 3: Table Actions & Multi-Use Codes)
+**Last Updated:** 2026-01-15 (Session 4: Tag Ownership & PDF Upload UX)
