@@ -3,7 +3,7 @@
 import { OpenRouter } from '@openrouter/sdk';
 import { AnnotationLevel } from '@/types';
 
-const DEFAULT_MODEL = 'qwen/qwen3-235b-a22b-2507';
+const DEFAULT_MODEL = 'x-ai/grok-4.1-fast';
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';

@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ Tag Ownership & PDF Upload UX Complete (Jan 15, 2026)
+**Status**: ✅ Production PM2 & Nginx Fixes Complete (Jan 15, 2026)
 
 ---
 
@@ -25,6 +25,7 @@ npm run lint                   # Run linter
 | [HANDOFF.md](./HANDOFF.md) | System overview - read first |
 | [RECENT_WORK_2026-01.md](./RECENT_WORK_2026-01.md) | Recent changes |
 | [docs/INDEX.md](./docs/INDEX.md) | Full documentation index |
+| [docs/user-guide/](./docs/user-guide/) | User guides & landing page |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Production deployment |
 
 ## Tech Stack
@@ -32,7 +33,7 @@ npm run lint                   # Run linter
 - Next.js 16 (App Router) + TypeScript
 - React 19 + TailwindCSS 4
 - PostgreSQL 16 + iron-session
-- OpenRouter (Qwen model)
+- OpenRouter (Grok 4.1 Fast model)
 
 ## Key Directories
 
@@ -56,15 +57,40 @@ sql/
 
 ## Current Priorities
 
-1. **Test Tag Ownership** - Verify users can only delete their own tags, admin can delete all
-2. **PDF Word-Joining Issue** - Words like "demandpersonalized" still occur in PDF conversion
-3. **Migration Cleanup** - Renumber duplicate migration files (005, 006, 007)
-4. **Add Toast Notifications** - Show feedback when copy/download actions occur
-5. **Test PDF/DOCX Upload Flow** - Verify convert endpoint and form editing works
+1. **PDF Word-Joining Issue** - Words like "demandpersonalized" still occur in PDF conversion
+2. **Migration Cleanup** - Renumber duplicate migration files (005, 006, 007)
+3. **Add Toast Notifications** - Show feedback when copy/download actions occur
+4. **Test PDF/DOCX Upload Flow** - Verify convert endpoint and form editing works
+5. **Monitor Production** - Watch for any remaining PM2/nginx issues
 
 ## Recent Work (Jan 14-15, 2026)
 
-### Session 4 (Current) - Tag Ownership & PDF Upload UX
+### Session 7 (Current) - LLM Model Upgrade
+- ✅ **Switched to Grok 4.1 Fast**: Changed from `qwen/qwen3-235b-a22b-2507` to `x-ai/grok-4.1-fast`
+  - Faster inference speed for better UX
+  - Same OpenRouter API, just different model ID
+  - Updated `src/lib/ai/openrouter.ts` DEFAULT_MODEL constant
+  - Updated all documentation files
+
+### Session 6 - Production PM2 & Nginx Fixes
+- ✅ **PM2 Environment Variables**: Fixed critical issue where PM2 doesn't load .env files
+  - Root cause: PM2 doesn't automatically load .env files into process environment
+  - Fix: Must explicitly set env vars when starting PM2 (see DEPLOYMENT.md)
+  - Fixed vars: DB_PASSWORD, OPENROUTER_API_KEY, DB_HOST, DB_PORT, etc.
+- ✅ **OpenRouter API Key**: Updated to correct key in PM2 environment
+- ✅ **Database Templates Verified**: Marker test confirmed templates ARE being loaded from database
+- ✅ **Nginx Timeout**: Increased to 5 minutes (300s) for large document LLM calls
+  - Added `proxy_read_timeout 300s`, `proxy_send_timeout 300s` to /annote location
+- ⚠️ **Key Learning**: PM2 requires explicit env vars - don't rely on .env files!
+- 📄 **Fix Reports**: `test-reports/fix-report-2026-01-15-pm2-environment.md`
+
+### Session 5 - User Documentation & Landing Page
+- ✅ **User Guide**: Complete DOCX with 15 annotated screenshots
+- ✅ **Quick Start Guide**: Streamlined 4-screenshot version for onboarding
+- ✅ **Landing Page**: `expert-note-landing.html` - conceptual page based on "generation abundant, evaluation scarce" thesis
+- 📁 **Location**: `docs/user-guide/` contains all documentation assets
+
+### Session 4 - Tag Ownership & PDF Upload UX
 - ✅ **PDF Conversion Quality**: Switched to pdfjs-dist with hasEOL for better text extraction
 - ✅ **PDF/DOCX Upload UX**: New /api/documents/convert endpoint lets users edit title/tags before saving
 - ✅ **TagFilter Bug Fix**: Added type="button" to 5 buttons to prevent form auto-submit
@@ -115,12 +141,15 @@ SELECT username, role, org_id FROM users;
 
 **URL:** https://spansurvey.net/annote
 **Server:** 47.121.176.193
+**PM2 Process ID:** 30
 
 ```bash
-# Deploy (after git push)
-# SSH key located at: ./ningli.pem (in project root)
+# Deploy (after git push) - See DEPLOYMENT.md for full details
 ssh -i /Users/ningli/Library/CloudStorage/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem root@47.121.176.193 \
   "cd /var/www/expert-note && git pull && export BASE_PATH=/annote && npm install && npm run build && pm2 restart expert-note"
+
+# ⚠️ CRITICAL: If PM2 process is deleted/recreated, must set ALL env vars explicitly!
+# PM2 does NOT load .env files. See DEPLOYMENT.md "PM2 Environment Variables" section.
 ```
 
 ## Important Notes
@@ -143,4 +172,4 @@ Never patch bugs. Find root causes: Reproduce -> Trace -> Understand -> Fix -> V
 
 ---
 
-**Last Updated:** 2026-01-15 (Session 4: Tag Ownership & PDF Upload UX)
+**Last Updated:** 2026-01-15 (Session 7: LLM Model Upgrade to Grok 4.1 Fast)

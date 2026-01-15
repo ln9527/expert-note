@@ -23,7 +23,7 @@ This document provides a comprehensive reference of all LLM-calling functions in
 
 **Configuration:**
 - API Provider: OpenRouter
-- Default Model: `qwen/qwen3-235b-a22b-2507`
+- Default Model: `x-ai/grok-4.1-fast`
 - API Key: `process.env.OPENROUTER_API_KEY`
 
 **Related Functions:**

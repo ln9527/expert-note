@@ -2,7 +2,7 @@
 
 **Date:** January 8, 2026
 **Status:** ✅ All prompts now configurable via database
-**Model:** Qwen 3 235B Instruct (`qwen/qwen3-235b-a22b-2507`)
+**Model:** Grok 4.1 Fast (`x-ai/grok-4.1-fast`)
 
 ---
 
@@ -208,11 +208,11 @@ The "user" role prompts are constructed programmatically from:
 2. Or exposed in Settings UI as "Advanced Options"
 
 ### ❌ Model Selection
-Current model: **`qwen/qwen3-235b-a22b-2507`** (Qwen 3 235B Instruct)
+Current model: **`x-ai/grok-4.1-fast`** (Grok 4.1 Fast)
 
 **Location:** `src/lib/ai/openrouter.ts:6`
 ```typescript
-const DEFAULT_MODEL = 'qwen/qwen3-235b-a22b-2507';
+const DEFAULT_MODEL = 'x-ai/grok-4.1-fast';
 ```
 
 **To Change:**
@@ -244,23 +244,25 @@ ORDER BY category, is_default DESC;
 
 ## Model Information
 
-**Current Model:** Qwen 3 235B Instruct
-**Model ID:** `qwen/qwen3-235b-a22b-2507`
-**Provider:** OpenRouter
-**Context Window:** ~32K tokens
+**Current Model:** Grok 4.1 Fast
+**Model ID:** `x-ai/grok-4.1-fast`
+**Provider:** OpenRouter (via xAI)
+**Context Window:** 128K tokens
 **Pricing:** See OpenRouter pricing page
 
 **Model Capabilities:**
+- Fast inference speed
 - Instruction following
 - Long context understanding
 - Structured output generation
 - Markdown formatting
 
 **Why This Model:**
-1. Large context window for full document processing
-2. Strong instruction following for prompt templates
-3. Good at structured markdown output (critical for parsing)
-4. Cost-effective compared to GPT-4 class models
+1. **Fast inference** - Significantly faster than Qwen 3 235B
+2. Large 128K context window for full document processing
+3. Strong instruction following for prompt templates
+4. Good at structured markdown output (critical for parsing)
+5. Cost-effective with faster response times
 
 ---
 
