@@ -4,7 +4,7 @@ import { getDocumentById } from '@/lib/db/queries/documents';
 import { createKnowledgeEntry, getKnowledgeEntryById } from '@/lib/db/queries/knowledge';
 import { extractKnowledge, ExtractionResponse } from '@/lib/ai/extraction';
 import { extractAnnotations } from '@/lib/utils/annotation';
-import { OpenRouterError } from '@/lib/ai/openrouter';
+import { handleApiError } from '@/lib/api/errors';
 
 /**
  * POST /api/knowledge/extract
@@ -151,45 +151,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
-    console.error('[API] POST /knowledge/extract error:', error);
-
-    // Handle OpenRouter API errors with specific messages
-    if (error instanceof OpenRouterError) {
-      console.error('[API] OpenRouter error code:', error.code);
-      console.error('[API] OpenRouter error details:', error.details);
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: error.message,
-          errorCode: error.code,
-          errorType: 'ai_service_error',
-        },
-        { status: 502 } // Bad Gateway for external service errors
-      );
-    }
-
-    // Handle database errors
-    if (error instanceof Error && error.message.includes('database')) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Database error: ' + error.message,
-          errorType: 'database_error',
-        },
-        { status: 500 }
-      );
-    }
-
-    // Generic error with message preservation
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to extract knowledge: ' + errorMessage,
-        errorType: 'internal_error',
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, 'extract knowledge');
   }
 }

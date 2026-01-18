@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert Note - Transform Expertise into AI Assets</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --macro: #ef4444;
+            --meso: #f59e0b;
+            --micro: #10b981;
+            --bg-light: #f8fafc;
+            --bg-card: #ffffff;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-light);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-10%, -10%) scale(1.1); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 3em;
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .hero p {
+            font-size: 1.3em;
+            opacity: 0.95;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .version {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+
+        /* Pipeline Visualization */
+        .pipeline {
+            background: white;
+            padding: 60px 40px;
+            position: relative;
+        }
+
+        .pipeline-title {
+            text-align: center;
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 50px;
+            color: var(--text-dark);
+        }
+
+        .pipeline-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .pipeline-step {
+            flex: 1;
+            min-width: 200px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 30px 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .pipeline-step:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .pipeline-step.step-1 { border-top: 4px solid var(--primary); }
+        .pipeline-step.step-2 { border-top: 4px solid var(--macro); }
+        .pipeline-step.step-3 { border-top: 4px solid var(--meso); }
+        .pipeline-step.step-4 { border-top: 4px solid var(--micro); }
+
+        .step-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .step-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+
+        .step-desc {
+            font-size: 0.95em;
+            color: var(--text-light);
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 60px 40px;
+            background: var(--bg-light);
+        }
+
+        .section:nth-child(even) {
+            background: white;
+        }
+
+        .section-title {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--text-dark);
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary);
+            display: inline-block;
+        }
+
+        /* Annotation Levels */
+        .annotation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .annotation-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            border-left: 6px solid;
+            transition: transform 0.3s ease;
+        }
+
+        .annotation-card:hover {
+            transform: translateX(5px);
+        }
+
+        .annotation-card.macro { border-left-color: var(--macro); }
+        .annotation-card.meso { border-left-color: var(--meso); }
+        .annotation-card.micro { border-left-color: var(--micro); }
+
+        .annotation-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .annotation-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: white;
+        }
+
+        .macro .annotation-icon { background: var(--macro); }
+        .meso .annotation-icon { background: var(--meso); }
+        .micro .annotation-icon { background: var(--micro); }
+
+        .annotation-title {
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+
+        .annotation-subtitle {
+            font-size: 0.9em;
+            color: var(--text-light);
+            margin-bottom: 15px;
+        }
+
+        .annotation-example {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 10px;
+            font-style: italic;
+            color: var(--text-light);
+            margin-top: 15px;
+        }
+
+        /* Screenshot Section */
+        .screenshot-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-top: 30px;
+        }
+
+        .screenshot-container img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+        }
+
+        .screenshot-caption {
+            text-align: center;
+            font-style: italic;
+            color: var(--text-light);
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+        }
+
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+
+        .feature-desc {
+            color: var(--text-light);
+            font-size: 0.95em;
+        }
+
+        /* Workflow Steps */
+        .workflow {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+
+        .workflow-step {
+            display: flex;
+            gap: 20px;
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .workflow-step:hover {
+            transform: translateX(10px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .workflow-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .workflow-content h3 {
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-size: 1.2em;
+        }
+
+        .workflow-content p {
+            color: var(--text-light);
+            font-size: 0.95em;
+        }
+
+        /* Tips Section */
+        .tips-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .tips-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .tips-box.do {
+            border-top: 4px solid var(--micro);
+        }
+
+        .tips-box.dont {
+            border-top: 4px solid var(--macro);
+        }
+
+        .tips-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tips-list {
+            list-style: none;
+        }
+
+        .tips-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .tips-list li::before {
+            position: absolute;
+            left: 0;
+            font-size: 1.2em;
+        }
+
+        .do .tips-list li::before {
+            content: '✅';
+        }
+
+        .dont .tips-list li::before {
+            content: '❌';
+        }
+
+        /* CTA Section */
+        .cta {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 2.2em;
+            margin-bottom: 20px;
+        }
+
+        .cta p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: var(--micro);
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Value Chain */
+        .value-chain {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+
+        .chain-flow {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 900px;
+            justify-content: center;
+        }
+
+        .chain-box {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 150px;
+            box-shadow: var(--shadow);
+        }
+
+        .chain-label {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .chain-desc {
+            font-size: 0.85em;
+            color: var(--text-light);
+        }
+
+        .chain-arrow {
+            font-size: 2em;
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2em; }
+            .hero p { font-size: 1.1em; }
+            .pipeline-flow { flex-direction: column; }
+            .arrow { transform: rotate(90deg); }
+            .tips-container { grid-template-columns: 1fr; }
+            .section { padding: 40px 20px; }
+            .hero { padding: 40px 20px; }
+        }
+
+        /* Smooth Scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Nav */
+        .nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .logo {
+            font-size: 1.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="logo">Expert Note</div>
+            <ul class="nav-links">
+                <li><a href="#pipeline">Pipeline</a></li>
+                <li><a href="#annotations">Annotations</a></li>
+                <li><a href="#workflows">Workflows</a></li>
+                <li><a href="#tips">Tips</a></li>
+            </ul>
+        </nav>
+
+        <!-- Hero Section -->
+        <header class="hero">
+            <div class="hero-content">
+                <h1>Transform Expertise into AI Assets</h1>
+                <p>Capture human expert knowledge and convert it into structured, reusable AI-ready assets</p>
+                <span class="version">Quick Start Guide v1.0 | January 2026</span>
+            </div>
+        </header>
+
+        <!-- Pipeline Section -->
+        <section class="pipeline" id="pipeline">
+            <h2 class="pipeline-title">The Knowledge Pipeline</h2>
+            <div class="pipeline-flow">
+                <div class="pipeline-step step-1">
+                    <span class="step-icon">📄</span>
+                    <div class="step-title">Expert Documents</div>
+                    <div class="step-desc">Your PDFs, Word files, transcripts</div>
+                </div>
+                <span class="arrow">→</span>
+                <div class="pipeline-step step-2">
+                    <span class="step-icon">🎯</span>
+                    <div class="step-title">Structured Annotations</div>
+                    <div class="step-desc">3-level markup (MACRO/MESO/MICRO)</div>
+                </div>
+                <span class="arrow">→</span>
+                <div class="pipeline-step step-3">
+                    <span class="step-icon">🧠</span>
+                    <div class="step-title">Knowledge Entries</div>
+                    <div class="step-desc">AI-extracted insights</div>
+                </div>
+                <span class="arrow">→</span>
+                <div class="pipeline-step step-4">
+                    <span class="step-icon">✨</span>
+                    <div class="step-title">AI Prompts</div>
+                    <div class="step-desc">Embodied expertise</div>
+                </div>
+            </div>
+
+            <div class="value-chain">
+                <div class="chain-flow">
+                    <div class="chain-box">
+                        <div class="chain-label">INPUT</div>
+                        <div class="chain-desc">Unstructured expertise</div>
+                    </div>
+                    <span class="chain-arrow">→</span>
+                    <div class="chain-box">
+                        <div class="chain-label">HUMAN STRUCTURE</div>
+                        <div class="chain-desc">Annotation markup</div>
+                    </div>
+                    <span class="chain-arrow">→</span>
+                    <div class="chain-box">
+                        <div class="chain-label">AI EXTRACTION</div>
+                        <div class="chain-desc">Organized facts</div>
+                    </div>
+                    <span class="chain-arrow">→</span>
+                    <div class="chain-box">
+                        <div class="chain-label">OUTPUT</div>
+                        <div class="chain-desc">AI assistant</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Upload Section -->
+        <section class="section">
+            <h2 class="section-title">1. Capture Expert Documents</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">📝</span>
+                    <div class="feature-title">Type or Paste</div>
+                    <div class="feature-desc">Enter text directly into the editor</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📎</span>
+                    <div class="feature-title">Upload Files</div>
+                    <div class="feature-desc">PDF, DOCX, MD, TXT files supported</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">⚡</span>
+                    <div class="feature-title">Auto-Convert</div>
+                    <div class="feature-desc">PDFs & Word docs → Markdown automatically</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📚</span>
+                    <div class="feature-title">Bulk Upload</div>
+                    <div class="feature-desc">Process up to 100 files at once</div>
+                </div>
+            </div>
+
+            <div class="screenshot-container">
+                <h3>Document Creation Interface</h3>
+                <img src="screenshots/images/04-create-document.png" alt="Create Document">
+                <p class="screenshot-caption">Upload documents in multiple formats - PDF and DOCX are automatically converted to markdown</p>
+            </div>
+        </section>
+
+        <!-- Annotations Section -->
+        <section class="section" id="annotations">
+            <h2 class="section-title">2. Annotate with Three Levels</h2>
+            <p style="margin-bottom: 30px; color: var(--text-light); font-size: 1.1em;">Mark important content using a structured 3-level system that creates hierarchy AI can understand</p>
+
+            <div class="annotation-grid">
+                <div class="annotation-card macro">
+                    <div class="annotation-header">
+                        <div class="annotation-icon">🔴</div>
+                        <div>
+                            <div class="annotation-title">MACRO</div>
+                            <div class="annotation-subtitle">Keyboard: Cmd+1</div>
+                        </div>
+                    </div>
+                    <p><strong>What to mark:</strong> Big ideas, themes, frameworks, research questions</p>
+                    <div class="annotation-example">
+                        "Machine learning requires three key components: data, algorithms, and compute power..."
+                    </div>
+                </div>
+
+                <div class="annotation-card meso">
+                    <div class="annotation-header">
+                        <div class="annotation-icon">🟡</div>
+                        <div>
+                            <div class="annotation-title">MESO</div>
+                            <div class="annotation-subtitle">Keyboard: Cmd+2</div>
+                        </div>
+                    </div>
+                    <p><strong>What to mark:</strong> Supporting evidence, methodologies, secondary themes</p>
+                    <div class="annotation-example">
+                        "The training process uses backpropagation to adjust neural network weights..."
+                    </div>
+                </div>
+
+                <div class="annotation-card micro">
+                    <div class="annotation-header">
+                        <div class="annotation-icon">🟢</div>
+                        <div>
+                            <div class="annotation-title">MICRO</div>
+                            <div class="annotation-subtitle">Keyboard: Cmd+3</div>
+                        </div>
+                    </div>
+                    <p><strong>What to mark:</strong> Specific facts, quotes, data points, citations</p>
+                    <div class="annotation-example">
+                        "Model accuracy improved from 87% to 94% after optimization"
+                    </div>
+                </div>
+            </div>
+
+            <div class="screenshot-container">
+                <h3>Annotation Interface</h3>
+                <img src="screenshots/images/05-document-editor.png" alt="Document Editor">
+                <p class="screenshot-caption">Annotation buttons (Cmd+1/2/3) and visual markup preserve knowledge structure</p>
+            </div>
+        </section>
+
+        <!-- Extraction Section -->
+        <section class="section">
+            <h2 class="section-title">3. Extract Structured Knowledge</h2>
+            <p style="margin-bottom: 30px; color: var(--text-light); font-size: 1.1em;">AI analyzes your annotations and creates searchable, reusable knowledge entries</p>
+
+            <div class="workflow">
+                <div class="workflow-step">
+                    <div class="workflow-number">1</div>
+                    <div class="workflow-content">
+                        <h3>Choose Extraction Guide</h3>
+                        <p>Select a template matching your domain: Academic Research, Business Strategy, Technical Documentation, or Default</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-number">2</div>
+                    <div class="workflow-content">
+                        <h3>Add Custom Instructions (Optional)</h3>
+                        <p>Guide the AI to focus on specific aspects or adjust formality level</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-number">3</div>
+                    <div class="workflow-content">
+                        <h3>Extract Knowledge</h3>
+                        <p>AI generates: Background/Context, Key Concepts (organized by level), Relationships, Actionable Insights</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="screenshot-container">
+                <h3>Knowledge Extraction Modal</h3>
+                <img src="screenshots/images/06-knowledge-extraction.png" alt="Knowledge Extraction">
+                <p class="screenshot-caption">Choose an extraction guide matching your domain and optionally add custom instructions</p>
+            </div>
+        </section>
+
+        <!-- Prompts Section -->
+        <section class="section">
+            <h2 class="section-title">4. Generate AI Prompts (Embodied Expertise)</h2>
+            <p style="margin-bottom: 30px; color: var(--text-light); font-size: 1.1em;">Turn knowledge into prompts that teach AI to reason like your domain experts</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🎓</span>
+                    <div class="feature-title">Research Assistant</div>
+                    <div class="feature-desc">Thinks like your senior scientist</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <div class="feature-title">Business Analyst</div>
+                    <div class="feature-desc">Uses your strategic frameworks</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📝</span>
+                    <div class="feature-title">Technical Writer</div>
+                    <div class="feature-desc">Matches your documentation standards</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🎯</span>
+                    <div class="feature-title">Domain Expert</div>
+                    <div class="feature-desc">Embodies real expert knowledge</div>
+                </div>
+            </div>
+
+            <div class="screenshot-container">
+                <h3>Prompt Generation</h3>
+                <img src="screenshots/images/13-prompts.png" alt="Prompts">
+                <p class="screenshot-caption">Generate prompts that teach AI to reason like your domain experts - created from real knowledge, not generic templates</p>
+            </div>
+        </section>
+
+        <!-- Tips Section -->
+        <section class="section" id="tips">
+            <h2 class="section-title">Essential Tips & Best Practices</h2>
+
+            <div class="tips-container">
+                <div class="tips-box do">
+                    <div class="tips-title">
+                        <span>✅</span> DO
+                    </div>
+                    <ul class="tips-list">
+                        <li>Start with MACRO - identify big ideas first</li>
+                        <li>Be selective - annotate what's important</li>
+                        <li>Keep annotations focused - one concept each</li>
+                        <li>Use consistent criteria across documents</li>
+                        <li>Choose the right extraction guide for your domain</li>
+                        <li>Tag strategically (domain, type, status, project)</li>
+                    </ul>
+                </div>
+
+                <div class="tips-box dont">
+                    <div class="tips-title">
+                        <span>❌</span> DON'T
+                    </div>
+                    <ul class="tips-list">
+                        <li>Annotate every sentence</li>
+                        <li>Mix multiple ideas in one annotation</li>
+                        <li>Skip the hierarchy - all three levels matter</li>
+                        <li>Extract knowledge without annotations</li>
+                        <li>Create tags without a naming convention</li>
+                        <li>Focus on quantity over quality</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workflows Section -->
+        <section class="section" id="workflows">
+            <h2 class="section-title">15-Minute First Session</h2>
+            <p style="margin-bottom: 30px; color: var(--text-light); font-size: 1.1em;">Get started with Expert Note in just 15 minutes</p>
+
+            <div class="workflow">
+                <div class="workflow-step">
+                    <div class="workflow-number">1</div>
+                    <div class="workflow-content">
+                        <h3>Upload a Document (2 min)</h3>
+                        <p>Choose a document you know well - research paper, report, or documentation</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-number">2</div>
+                    <div class="workflow-content">
+                        <h3>Add 10-15 Annotations (8 min)</h3>
+                        <p>Mix of MACRO (main ideas), MESO (supporting points), MICRO (specific details)</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-number">3</div>
+                    <div class="workflow-content">
+                        <h3>Extract Knowledge (3 min)</h3>
+                        <p>Use default extraction guide, click Extract, review the structured result</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-number">4</div>
+                    <div class="workflow-content">
+                        <h3>Review & Learn (2 min)</h3>
+                        <p>See how AI structured your annotations - notice the organization and insights</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta">
+            <h2>Start Transforming Expertise into Assets</h2>
+            <p>Convert scattered expert knowledge into organized, AI-ready assets that preserve human insight</p>
+            <a href="#pipeline" class="cta-button">Get Started Now</a>
+        </section>
+    </div>
+</body>
+</html>

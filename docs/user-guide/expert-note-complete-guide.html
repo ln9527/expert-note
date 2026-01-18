@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>expert-note-complete-guide</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css" />
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#expert-note-user-guide"
+id="toc-expert-note-user-guide">Expert Note User Guide</a>
+<ul>
+<li><a href="#table-of-contents" id="toc-table-of-contents">Table of
+Contents</a></li>
+</ul></li>
+<li><a href="#getting-started" id="toc-getting-started">Getting
+Started</a>
+<ul>
+<li><a href="#what-is-expert-note" id="toc-what-is-expert-note">What is
+Expert Note?</a></li>
+<li><a href="#logging-in" id="toc-logging-in">Logging In</a>
+<ul>
+<li><a href="#troubleshooting-login"
+id="toc-troubleshooting-login">Troubleshooting Login</a></li>
+</ul></li>
+<li><a href="#registration" id="toc-registration">Registration</a>
+<ul>
+<li><a href="#registration-steps"
+id="toc-registration-steps">Registration Steps:</a></li>
+</ul></li>
+<li><a href="#understanding-your-role"
+id="toc-understanding-your-role">Understanding Your Role</a></li>
+<li><a href="#dashboard-overview" id="toc-dashboard-overview">Dashboard
+Overview</a></li>
+</ul></li>
+<li><a href="#for-organization-owners"
+id="toc-for-organization-owners">For Organization Owners</a>
+<ul>
+<li><a href="#creating-documents" id="toc-creating-documents">Creating
+Documents</a>
+<ul>
+<li><a href="#method-1-type-content-directly"
+id="toc-method-1-type-content-directly">Method 1: Type Content
+Directly</a></li>
+<li><a href="#method-2-upload-a-file"
+id="toc-method-2-upload-a-file">Method 2: Upload a File</a></li>
+<li><a href="#method-3-bulk-upload" id="toc-method-3-bulk-upload">Method
+3: Bulk Upload</a></li>
+</ul></li>
+<li><a href="#annotating-documents"
+id="toc-annotating-documents">Annotating Documents</a>
+<ul>
+<li><a href="#annotation-levels" id="toc-annotation-levels">Annotation
+Levels</a></li>
+<li><a href="#how-to-annotate" id="toc-how-to-annotate">How to
+Annotate</a></li>
+<li><a href="#annotation-format" id="toc-annotation-format">Annotation
+Format</a></li>
+</ul></li>
+<li><a href="#extracting-knowledge"
+id="toc-extracting-knowledge">Extracting Knowledge</a>
+<ul>
+<li><a href="#extraction-steps" id="toc-extraction-steps">Extraction
+Steps</a></li>
+</ul></li>
+<li><a href="#sharing-content" id="toc-sharing-content">Sharing
+Content</a>
+<ul>
+<li><a href="#sharing-steps" id="toc-sharing-steps">Sharing
+Steps</a></li>
+<li><a href="#important-notes" id="toc-important-notes">Important
+Notes</a></li>
+</ul></li>
+<li><a href="#managing-members" id="toc-managing-members">Managing
+Members</a>
+<ul>
+<li><a href="#access-member-management"
+id="toc-access-member-management">Access Member Management</a></li>
+<li><a href="#member-management-tasks"
+id="toc-member-management-tasks">Member Management Tasks</a></li>
+</ul></li>
+<li><a href="#creating-invitation-codes"
+id="toc-creating-invitation-codes">Creating Invitation Codes</a>
+<ul>
+<li><a href="#creating-a-code" id="toc-creating-a-code">Creating a
+Code</a></li>
+<li><a href="#managing-codes" id="toc-managing-codes">Managing
+Codes</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#for-organization-members"
+id="toc-for-organization-members">For Organization Members</a>
+<ul>
+<li><a href="#your-role-as-a-member" id="toc-your-role-as-a-member">Your
+Role as a Member</a></li>
+<li><a href="#viewing-shared-documents"
+id="toc-viewing-shared-documents">Viewing Shared Documents</a>
+<ul>
+<li><a href="#document-details" id="toc-document-details">Document
+Details</a></li>
+</ul></li>
+<li><a href="#editing-shared-documents"
+id="toc-editing-shared-documents">Editing Shared Documents</a></li>
+<li><a href="#viewing-knowledge-prompts"
+id="toc-viewing-knowledge-prompts">Viewing Knowledge &amp; Prompts</a>
+<ul>
+<li><a href="#knowledge-base" id="toc-knowledge-base">Knowledge
+Base</a></li>
+<li><a href="#prompts-generation-guides"
+id="toc-prompts-generation-guides">Prompts / Generation Guides</a></li>
+</ul></li>
+<li><a href="#managing-your-account"
+id="toc-managing-your-account">Managing Your Account</a>
+<ul>
+<li><a href="#update-your-display-name"
+id="toc-update-your-display-name">Update Your Display Name</a></li>
+<li><a href="#change-your-password" id="toc-change-your-password">Change
+Your Password</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#common-features" id="toc-common-features">Common
+Features</a>
+<ul>
+<li><a href="#understanding-annotations"
+id="toc-understanding-annotations">Understanding Annotations</a>
+<ul>
+<li><a href="#three-level-system"
+id="toc-three-level-system">Three-Level System</a></li>
+<li><a href="#best-practices" id="toc-best-practices">Best
+Practices</a></li>
+</ul></li>
+<li><a href="#search-and-filtering" id="toc-search-and-filtering">Search
+and Filtering</a>
+<ul>
+<li><a href="#document-search" id="toc-document-search">Document
+Search</a></li>
+<li><a href="#knowledge-base-search"
+id="toc-knowledge-base-search">Knowledge Base Search</a></li>
+</ul></li>
+<li><a href="#tag-management" id="toc-tag-management">Tag Management</a>
+<ul>
+<li><a href="#viewing-tags" id="toc-viewing-tags">Viewing Tags</a></li>
+<li><a href="#creating-a-tag" id="toc-creating-a-tag">Creating a
+Tag</a></li>
+<li><a href="#editing-your-tags" id="toc-editing-your-tags">Editing Your
+Tags</a></li>
+<li><a href="#deleting-tags" id="toc-deleting-tags">Deleting
+Tags</a></li>
+</ul></li>
+<li><a href="#trash-recovery" id="toc-trash-recovery">Trash &amp;
+Recovery</a>
+<ul>
+<li><a href="#viewing-deleted-items"
+id="toc-viewing-deleted-items">Viewing Deleted Items</a></li>
+<li><a href="#restoring-items" id="toc-restoring-items">Restoring
+Items</a></li>
+<li><a href="#permanently-deleting"
+id="toc-permanently-deleting">Permanently Deleting</a></li>
+</ul></li>
+<li><a href="#account-settings" id="toc-account-settings">Account
+Settings</a>
+<ul>
+<li><a href="#profile-information" id="toc-profile-information">Profile
+Information</a></li>
+<li><a href="#password-requirements"
+id="toc-password-requirements">Password Requirements</a></li>
+<li><a href="#security-tips" id="toc-security-tips">Security
+Tips</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#quick-reference" id="toc-quick-reference">Quick
+Reference</a>
+<ul>
+<li><a href="#keyboard-shortcuts" id="toc-keyboard-shortcuts">Keyboard
+Shortcuts</a></li>
+<li><a href="#glossary" id="toc-glossary">Glossary</a></li>
+<li><a href="#file-formats-supported"
+id="toc-file-formats-supported">File Formats Supported</a></li>
+<li><a href="#getting-help" id="toc-getting-help">Getting Help</a></li>
+<li><a href="#screenshot-index" id="toc-screenshot-index">Screenshot
+Index</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="expert-note-user-guide">Expert Note User Guide</h1>
+<p><strong>Complete Documentation with Screenshots</strong></p>
+<p>Version 1.0 | January 2026</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#getting-started">Getting Started</a></li>
+<li><a href="#for-organization-owners">For Organization Owners</a></li>
+<li><a href="#for-organization-members">For Organization
+Members</a></li>
+<li><a href="#common-features">Common Features</a></li>
+<li><a href="#quick-reference">Quick Reference</a></li>
+</ul>
+<hr />
+<h1 id="getting-started">Getting Started</h1>
+<h2 id="what-is-expert-note">What is Expert Note?</h2>
+<p>Expert Note is an annotation-based knowledge capture system that
+helps you: - <strong>Capture</strong> documents from multiple sources
+(text, PDF, Word) - <strong>Annotate</strong> content using a structured
+three-level system - <strong>Extract</strong> knowledge through
+AI-powered analysis - <strong>Collaborate</strong> with your
+organization members</p>
+<h2 id="logging-in">Logging In</h2>
+<p>📸 <strong><a href="screenshots/01-login.md">See Screenshot 01: Login
+Page</a></strong></p>
+<ol type="1">
+<li>Navigate to the Expert Note login page</li>
+<li>Enter your <strong>username</strong> (①)</li>
+<li>Enter your <strong>password</strong> (②)</li>
+<li>Click <strong>Sign In</strong> (③)</li>
+</ol>
+<p><strong>First time user?</strong> Click the “Register with invitation
+code” link (④) to create an account.</p>
+<h3 id="troubleshooting-login">Troubleshooting Login</h3>
+<p><strong>Forgotten password?</strong> Contact your organization owner
+or system administrator to reset it.</p>
+<p><strong>Account disabled message?</strong> Your account may have been
+temporarily disabled. Contact your organization owner.</p>
+<hr />
+<h2 id="registration">Registration</h2>
+<p>📸 <strong><a href="screenshots/02-registration.md">See Screenshot
+02: Registration Page</a></strong></p>
+<p>New users need an <strong>invitation code</strong> from their
+organization owner or system administrator.</p>
+<h3 id="registration-steps">Registration Steps:</h3>
+<ol type="1">
+<li><p><strong>Enter invitation code</strong> (① - Required)</p>
+<ul>
+<li>Get this from your organization admin</li>
+<li>Determines if you join as owner or member</li>
+</ul></li>
+<li><p><strong>Choose a username</strong> (② - Required)</p>
+<ul>
+<li>Must be unique</li>
+<li>Used for login</li>
+</ul></li>
+<li><p><strong>Display name</strong> (③ - Optional)</p>
+<ul>
+<li>How your name appears to other users</li>
+<li>Can be changed later in account settings</li>
+</ul></li>
+<li><p><strong>Phone number</strong> (④ - Optional)</p></li>
+<li><p><strong>Email address</strong> (⑤ - Optional)</p></li>
+<li><p><strong>Create password</strong> (⑥ - Required)</p>
+<ul>
+<li>Minimum 8 characters</li>
+<li>Must match in both fields</li>
+</ul></li>
+<li><p><strong>Confirm password</strong> (⑦ - Required)</p></li>
+<li><p>Click <strong>Create Account</strong> (⑧)</p></li>
+</ol>
+<hr />
+<h2 id="understanding-your-role">Understanding Your Role</h2>
+<p>Expert Note has three main user roles:</p>
+<table>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 41%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Role</th>
+<th>Access Level</th>
+<th>Key Features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Organization Owner</strong></td>
+<td>Full access</td>
+<td>Create &amp; share documents, manage members, create invitation
+codes, extract knowledge</td>
+</tr>
+<tr>
+<td><strong>Organization Member</strong></td>
+<td>Limited access</td>
+<td>View shared documents, edit if allowed, manage personal tags</td>
+</tr>
+<tr>
+<td><strong>System Administrator</strong></td>
+<td>Platform-wide</td>
+<td>Manage all organizations, users, and system settings</td>
+</tr>
+</tbody>
+</table>
+<p>Your role determines what features you can access.</p>
+<hr />
+<h2 id="dashboard-overview">Dashboard Overview</h2>
+<p>📸 <strong><a href="screenshots/03-dashboard.md">See Screenshot 03:
+Dashboard</a></strong></p>
+<p>After logging in, you’ll see the main dashboard:</p>
+<ul>
+<li><strong>① Navigation Menu</strong> (top right): Access Knowledge
+Base, Prompts, Settings</li>
+<li><strong>② + New Document Button</strong>: Create a new document</li>
+<li><strong>③ Search Bar</strong>: Find documents by title</li>
+<li><strong>④ Filters</strong>: Filter by Status, Tags, or Creator</li>
+<li><strong>⑤ Document List</strong>: View all your documents</li>
+<li><strong>⑥ Statistics Cards</strong>: Total documents, annotated
+count, total annotations</li>
+</ul>
+<h1 id="for-organization-owners">For Organization Owners</h1>
+<p>As an organization owner, you have full access to create, annotate,
+and share content with your team.</p>
+<hr />
+<h2 id="creating-documents">Creating Documents</h2>
+<p>📸 <strong><a href="screenshots/04-create-document.md">See Screenshot
+04: Create Document</a></strong></p>
+<p>You can create documents in three ways:</p>
+<h3 id="method-1-type-content-directly">Method 1: Type Content
+Directly</h3>
+<ol type="1">
+<li>Click <strong>+ New Document</strong></li>
+<li>Enter a <strong>title</strong> (①)</li>
+<li>Select <strong>tags</strong> (②) to organize your document</li>
+<li>Choose <strong>Type Text</strong> tab (③)</li>
+<li>Type or paste your content in the editor (④)</li>
+<li>Click <strong>Save Document</strong></li>
+</ol>
+<h3 id="method-2-upload-a-file">Method 2: Upload a File</h3>
+<ol type="1">
+<li>Click <strong>+ New Document</strong></li>
+<li>Enter a <strong>title</strong></li>
+<li>Select <strong>tags</strong></li>
+<li>Choose <strong>Upload File</strong> tab</li>
+<li>Click <strong>Choose File</strong> or drag and drop</li>
+<li>Supported formats: <code>.md</code>, <code>.txt</code>,
+<code>.pdf</code>, <code>.docx</code></li>
+<li>Click <strong>Save Document</strong></li>
+</ol>
+<p><strong>PDF/DOCX files</strong> are automatically converted to
+markdown. You can preview and edit before saving.</p>
+<h3 id="method-3-bulk-upload">Method 3: Bulk Upload</h3>
+<ol type="1">
+<li>Click <strong>+ New Document</strong></li>
+<li>Choose <strong>Bulk Upload</strong> tab</li>
+<li>Select multiple files (up to 100)</li>
+<li>Files are processed with automatic titles from filenames</li>
+<li>Folder structure is preserved</li>
+</ol>
+<hr />
+<h2 id="annotating-documents">Annotating Documents</h2>
+<p>📸 <strong><a href="screenshots/05-document-editor.md">See Screenshot
+05: Document Editor</a></strong></p>
+<p>Expert Note uses a <strong>three-level annotation system</strong> to
+help you categorize information:</p>
+<h3 id="annotation-levels">Annotation Levels</h3>
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 30%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr>
+<th>Level</th>
+<th>Color</th>
+<th>Shortcut</th>
+<th>Use For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MACRO</strong></td>
+<td>🔴 Red</td>
+<td>Cmd+1</td>
+<td>High-level themes, main arguments, overarching concepts</td>
+</tr>
+<tr>
+<td><strong>MESO</strong></td>
+<td>🟡 Yellow</td>
+<td>Cmd+2</td>
+<td>Supporting ideas, evidence, methodologies</td>
+</tr>
+<tr>
+<td><strong>MICRO</strong></td>
+<td>🟢 Green</td>
+<td>Cmd+3</td>
+<td>Specific details, quotes, data points, examples</td>
+</tr>
+</tbody>
+</table>
+<h3 id="how-to-annotate">How to Annotate</h3>
+<ol type="1">
+<li>Open a document in the editor</li>
+<li><strong>Select the text</strong> you want to annotate</li>
+<li>Click one of the annotation buttons (① MACRO, MESO, or MICRO) or use
+keyboard shortcuts</li>
+<li>The text is marked with the appropriate color</li>
+<li>View annotation counts in the sidebar (②)</li>
+</ol>
+<p><strong>Annotations are saved automatically</strong> as you work.</p>
+<h3 id="annotation-format">Annotation Format</h3>
+<p>Annotations appear in your document like this:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{{{MACRO</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>This is a high-level theme or main argument.</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>}}}</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>{{{MESO</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>This is supporting evidence or methodology.</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>}}}</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>{{{MICRO</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>This is a specific detail or quote.</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>}}}</span></code></pre></div>
+<hr />
+<h2 id="extracting-knowledge">Extracting Knowledge</h2>
+<p>📸 <strong><a href="screenshots/06-knowledge-extraction.md">See
+Screenshot 06: Knowledge Extraction</a></strong></p>
+<p>Once you’ve annotated a document, you can extract structured
+knowledge using AI.</p>
+<h3 id="extraction-steps">Extraction Steps</h3>
+<ol type="1">
+<li>Open an annotated document</li>
+<li>Click <strong>Extract Knowledge</strong> button (③ in the
+sidebar)</li>
+<li><strong>Select an Extraction Guide</strong> (①) from the dropdown
+<ul>
+<li>Guides are templates that determine how knowledge is structured</li>
+<li>Choose based on your domain (e.g., “Academic Writing”, “Market
+Research”)</li>
+</ul></li>
+<li>(Optional) Add <strong>custom instructions</strong> (②) to guide the
+AI</li>
+<li>Click <strong>Extract</strong> button (④)</li>
+</ol>
+<p>The AI will: - Analyze your annotations - Generate background/context
+- Create a structured knowledge entry - Store it in your Knowledge
+Base</p>
+<p>📸 <strong><a href="screenshots/12-knowledge-base.md">See Screenshot
+12: Knowledge Base</a></strong> to view extracted knowledge.</p>
+<hr />
+<h2 id="sharing-content">Sharing Content</h2>
+<p>📸 <strong><a href="screenshots/07-document-properties.md">See
+Screenshot 07: Document Properties</a></strong></p>
+<p>Share documents with your organization members:</p>
+<h3 id="sharing-steps">Sharing Steps</h3>
+<ol type="1">
+<li>Open a document you own</li>
+<li>In the <strong>Document Info</strong> sidebar, find the
+<strong>Sharing</strong> section</li>
+<li>Toggle <strong>Share with organization</strong> ON</li>
+<li>Choose edit permissions:
+<ul>
+<li><strong>Read-only</strong>: Members can view but not edit</li>
+<li><strong>Allow edits</strong>: Members can make changes</li>
+</ul></li>
+</ol>
+<h3 id="important-notes">Important Notes</h3>
+<ul>
+<li>Only <strong>organization members</strong> can see shared
+content</li>
+<li>You can <strong>revoke sharing</strong> at any time</li>
+<li>When you disable sharing, edit permissions are reset to
+read-only</li>
+</ul>
+<hr />
+<h2 id="managing-members">Managing Members</h2>
+<p>📸 <strong><a href="screenshots/10-user-management.md">See Screenshot
+10: User Management</a></strong></p>
+<p>Organization owners can manage their team members.</p>
+<h3 id="access-member-management">Access Member Management</h3>
+<ol type="1">
+<li>Click <strong>Settings</strong> in the top navigation</li>
+<li>Choose <strong>Members</strong> from the sidebar</li>
+</ol>
+<h3 id="member-management-tasks">Member Management Tasks</h3>
+<p><strong>View all members:</strong> - See usernames, display names,
+roles, last login - Search by username or display name (②) - Filter by
+role or status (③/④)</p>
+<p><strong>Reset a member’s password:</strong> 1. Find the member in the
+table 2. Click <strong>Reset Password</strong> (⑥) 3. A temporary
+password is shown <strong>once</strong> in a modal 4. Share this
+password securely with the member 5. They must change it on next
+login</p>
+<p><strong>Enable/Disable member accounts:</strong> 1. Find the member
+2. Click the <strong>Enable/Disable</strong> toggle (⑦) 3. Disabled
+members cannot log in but data is preserved</p>
+<p><strong>Remove a member:</strong> 1. Find the member 2. Click
+<strong>Delete</strong> (⑧) 3. Confirm the action 4. Member is
+<strong>soft deleted</strong> (data preserved, marked as deleted)</p>
+<hr />
+<h2 id="creating-invitation-codes">Creating Invitation Codes</h2>
+<p>📸 <strong><a href="screenshots/09-invitation-codes.md">See
+Screenshot 09: Invitation Codes</a></strong></p>
+<p>Generate invitation codes for new members to register.</p>
+<h3 id="creating-a-code">Creating a Code</h3>
+<ol type="1">
+<li>Go to <strong>Settings</strong> → <strong>Invitations</strong></li>
+<li>Click <strong>+ Create Code</strong> (①)</li>
+<li>Select <strong>Code Type</strong> (②):
+<ul>
+<li><strong>Individual</strong>: Standalone user (no organization)</li>
+<li><strong>Organization Member</strong>: Adds user to your
+organization</li>
+</ul></li>
+<li>Set <strong>Usage Limit</strong> (③):
+<ul>
+<li><strong>1</strong>: Single-use code</li>
+<li><strong>0</strong>: Unlimited uses</li>
+</ul></li>
+<li>Click <strong>Create Code</strong></li>
+<li>Share the generated code with new members</li>
+</ol>
+<h3 id="managing-codes">Managing Codes</h3>
+<ul>
+<li>View all codes in the table (④)</li>
+<li>See usage status (e.g., “2/5” means used 2 times out of 5)</li>
+<li><strong>Delete unused codes</strong> to keep your list clean</li>
+<li>Filter by type (⑤): Owner / Member / Individual</li>
+</ul>
+<h1 id="for-organization-members">For Organization Members</h1>
+<p>As an organization member, you can view and interact with content
+shared by your organization owner.</p>
+<hr />
+<h2 id="your-role-as-a-member">Your Role as a Member</h2>
+<p><strong>What you can do:</strong> - ✅ View documents shared by your
+organization - ✅ Edit shared documents (if owner allows) - ✅ View
+knowledge entries and prompts shared with you - ✅ Create and manage
+personal tags - ✅ Manage your account settings</p>
+<p><strong>What you cannot do:</strong> - ❌ Create new documents - ❌
+Share your own content - ❌ Manage other members - ❌ Create invitation
+codes</p>
+<hr />
+<h2 id="viewing-shared-documents">Viewing Shared Documents</h2>
+<p>📸 <strong><a href="screenshots/03-dashboard.md">See Screenshot 03:
+Dashboard</a></strong></p>
+<ol type="1">
+<li>Log in to Expert Note</li>
+<li>The dashboard shows all documents shared with you</li>
+<li>Use <strong>search</strong> (③) and <strong>filters</strong> (④) to
+find specific documents</li>
+</ol>
+<h3 id="document-details">Document Details</h3>
+<p>In the document list, you can see: - Document title - Status (raw,
+annotated, refined) - Tags - Who created it - Last updated date -
+Whether you have edit permission</p>
+<hr />
+<h2 id="editing-shared-documents">Editing Shared Documents</h2>
+<p>📸 <strong><a href="screenshots/05-document-editor.md">See Screenshot
+05: Document Editor</a></strong></p>
+<p>If the owner has granted <strong>edit permissions</strong>:</p>
+<ol type="1">
+<li>Click on a shared document</li>
+<li>Make your changes in the editor</li>
+<li>Changes are <strong>auto-saved</strong></li>
+<li>Your edits are visible to all organization members</li>
+</ol>
+<p><strong>If read-only:</strong> You can view but not modify the
+content.</p>
+<hr />
+<h2 id="viewing-knowledge-prompts">Viewing Knowledge &amp; Prompts</h2>
+<h3 id="knowledge-base">Knowledge Base</h3>
+<p>📸 <strong><a href="screenshots/12-knowledge-base.md">See Screenshot
+12: Knowledge Base</a></strong></p>
+<ol type="1">
+<li>Click <strong>Knowledge Base</strong> in the navigation (①)</li>
+<li>View all knowledge entries shared with you</li>
+<li>Search entries (①) by content</li>
+<li>Filter by tags (②)</li>
+<li>Switch between <strong>Table</strong> and <strong>Card</strong> view
+(③)</li>
+</ol>
+<h3 id="prompts-generation-guides">Prompts / Generation Guides</h3>
+<p>📸 <strong><a href="screenshots/13-prompts.md">See Screenshot 13:
+Prompts</a></strong></p>
+<ol type="1">
+<li>Click <strong>Prompts</strong> in the navigation</li>
+<li>View all generation guides available to you</li>
+<li>Search prompts (①)</li>
+<li>Filter by tags (②)</li>
+<li>Click <strong>Generate New Prompt</strong> (③) if you have
+permission</li>
+</ol>
+<hr />
+<h2 id="managing-your-account">Managing Your Account</h2>
+<p>📸 <strong><a href="screenshots/15-account-settings.md">See
+Screenshot 15: Account Settings</a></strong></p>
+<h3 id="update-your-display-name">Update Your Display Name</h3>
+<ol type="1">
+<li>Go to <strong>Settings</strong> → <strong>Account</strong></li>
+<li>Edit the <strong>Display Name</strong> field (①)</li>
+<li>Click <strong>Save Changes</strong> (②)</li>
+</ol>
+<h3 id="change-your-password">Change Your Password</h3>
+<ol type="1">
+<li>Go to <strong>Settings</strong> → <strong>Account</strong></li>
+<li>In the <strong>Change Password</strong> section (③):
+<ul>
+<li>Enter your current password</li>
+<li>Enter your new password (8+ characters)</li>
+<li>Confirm your new password</li>
+</ul></li>
+<li>Click <strong>Change Password</strong></li>
+</ol>
+<h1 id="common-features">Common Features</h1>
+<p>These features are available to all users (owners and members).</p>
+<hr />
+<h2 id="understanding-annotations">Understanding Annotations</h2>
+<p>📸 <strong><a href="screenshots/05-document-editor.md">See Screenshot
+05: Document Editor</a></strong></p>
+<h3 id="three-level-system">Three-Level System</h3>
+<p><strong>MACRO (Red 🔴)</strong> - Use for: - Main themes and
+arguments - Research questions - Overall conclusions - High-level
+frameworks</p>
+<p><strong>MESO (Yellow 🟡)</strong> - Use for: - Supporting evidence -
+Methodologies - Secondary themes - Analysis sections</p>
+<p><strong>MICRO (Green 🟢)</strong> - Use for: - Specific quotes - Data
+points - Examples - Citations - Technical details</p>
+<h3 id="best-practices">Best Practices</h3>
+<ol type="1">
+<li><strong>Start with MACRO</strong>: Identify the big picture
+first</li>
+<li><strong>Add MESO</strong>: Mark supporting ideas</li>
+<li><strong>Capture MICRO</strong>: Note specific details</li>
+<li><strong>Be selective</strong>: Annotate important content, not
+everything</li>
+<li><strong>Stay consistent</strong>: Use the same level for similar
+content types</li>
+</ol>
+<hr />
+<h2 id="search-and-filtering">Search and Filtering</h2>
+<h3 id="document-search">Document Search</h3>
+<p>📸 <strong><a href="screenshots/03-dashboard.md">See Screenshot 03:
+Dashboard</a></strong></p>
+<p><strong>Search by title</strong> (③): - Type keywords in the search
+bar - Results update in real-time</p>
+<p><strong>Filter by status</strong> (④): - All Status - Raw (not
+annotated) - Annotated - Refined</p>
+<p><strong>Filter by tags</strong> (④): - Click the tag filter dropdown
+- Select one or more tags - Documents with ANY selected tag are
+shown</p>
+<p><strong>Filter by creator</strong> (④): - Filter to see only your
+documents - Or documents from specific team members</p>
+<h3 id="knowledge-base-search">Knowledge Base Search</h3>
+<p>📸 <strong><a href="screenshots/12-knowledge-base.md">See Screenshot
+12: Knowledge Base</a></strong></p>
+<ul>
+<li><strong>Search content</strong> (①): Find entries by background or
+content text</li>
+<li><strong>Filter by tags</strong> (②): Narrow to specific topics</li>
+<li><strong>View modes</strong> (③): Switch between Table and Card
+layouts</li>
+</ul>
+<hr />
+<h2 id="tag-management">Tag Management</h2>
+<p>📸 <strong><a href="screenshots/11-tag-management.md">See Screenshot
+11: Tag Management</a></strong></p>
+<p>Tags help you organize documents, knowledge entries, and prompts.</p>
+<h3 id="viewing-tags">Viewing Tags</h3>
+<ol type="1">
+<li>Go to <strong>Settings</strong> → <strong>Tags</strong></li>
+<li>See all available tags with ownership badges (②):
+<ul>
+<li><strong>System</strong> (gray): Built-in tags, cannot be
+deleted</li>
+<li><strong>Yours</strong> (blue): Tags you created</li>
+<li><strong>Shared</strong> (green): Tags created by team members</li>
+</ul></li>
+</ol>
+<h3 id="creating-a-tag">Creating a Tag</h3>
+<ol type="1">
+<li>Click <strong>+ Create Tag</strong> (①)</li>
+<li>Enter a <strong>tag name</strong></li>
+<li>Choose a <strong>color</strong> from the palette</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h3 id="editing-your-tags">Editing Your Tags</h3>
+<ol type="1">
+<li>Find a tag you created (marked “Yours”)</li>
+<li>Click the <strong>Edit</strong> button (③)</li>
+<li>Change the name or color</li>
+<li>Click <strong>Save</strong></li>
+</ol>
+<h3 id="deleting-tags">Deleting Tags</h3>
+<ul>
+<li>You can only delete tags <strong>you created</strong> (marked
+“Yours”)</li>
+<li>System tags cannot be deleted</li>
+<li>Shared tags can only be deleted by their creator</li>
+</ul>
+<hr />
+<h2 id="trash-recovery">Trash &amp; Recovery</h2>
+<p>📸 <strong><a href="screenshots/14-trash.md">See Screenshot 14:
+Trash</a></strong></p>
+<p>Expert Note uses <strong>soft deletion</strong> - deleted items go to
+trash and can be restored.</p>
+<h3 id="viewing-deleted-items">Viewing Deleted Items</h3>
+<ol type="1">
+<li>Go to <strong>Settings</strong> → <strong>Trash</strong></li>
+<li>See all deleted documents, prompts, and knowledge entries</li>
+<li>Filter by type (①): All / Documents / Prompts / Knowledge</li>
+</ol>
+<h3 id="restoring-items">Restoring Items</h3>
+<ol type="1">
+<li>Find the item in the trash list (②)</li>
+<li>Click <strong>Restore</strong></li>
+<li>Item is moved back to its original location</li>
+</ol>
+<h3 id="permanently-deleting">Permanently Deleting</h3>
+<p><strong>Delete one item:</strong> 1. Find the item 2. Click
+<strong>Permanently Delete</strong> 3. Confirm the action 4.
+<strong>This cannot be undone</strong></p>
+<p><strong>Empty entire trash:</strong> 1. Click <strong>Empty
+Trash</strong> button 2. Confirm the action 3. All items are permanently
+deleted</p>
+<hr />
+<h2 id="account-settings">Account Settings</h2>
+<p>📸 <strong><a href="screenshots/15-account-settings.md">See
+Screenshot 15: Account Settings</a></strong></p>
+<h3 id="profile-information">Profile Information</h3>
+<p><strong>Display Name</strong> (①): - How your name appears to other
+users - Can be your real name or a nickname - Click <strong>Save
+Changes</strong> (②) after editing</p>
+<h3 id="password-requirements">Password Requirements</h3>
+<p>When changing your password (③): - Minimum <strong>8
+characters</strong> - Include letters and numbers (recommended) - Don’t
+reuse old passwords - Don’t share your password</p>
+<h3 id="security-tips">Security Tips</h3>
+<ul>
+<li>Log out when using shared computers</li>
+<li>Change your password if you suspect it’s compromised</li>
+<li>Contact your organization owner if you notice suspicious
+activity</li>
+</ul>
+<h1 id="quick-reference">Quick Reference</h1>
+<h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Shortcut</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MACRO annotation</td>
+<td><code>Cmd+1</code></td>
+</tr>
+<tr>
+<td>MESO annotation</td>
+<td><code>Cmd+2</code></td>
+</tr>
+<tr>
+<td>MICRO annotation</td>
+<td><code>Cmd+3</code></td>
+</tr>
+<tr>
+<td>Save document</td>
+<td>Auto-save (no shortcut needed)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="glossary">Glossary</h2>
+<p><strong>Annotation</strong> - Highlighted text marked as MACRO, MESO,
+or MICRO to categorize information</p>
+<p><strong>Dashboard</strong> - Main page showing your documents and
+statistics</p>
+<p><strong>Document</strong> - Text file you create, upload, or annotate
+in Expert Note</p>
+<p><strong>Extraction Guide</strong> - Template that defines how AI
+structures knowledge from annotations</p>
+<p><strong>Invitation Code</strong> - Unique code for registering new
+users</p>
+<p><strong>Knowledge Entry</strong> - Structured information extracted
+from annotated documents</p>
+<p><strong>Organization</strong> - Group of users collaborating
+together</p>
+<p><strong>Soft Delete</strong> - Items marked as deleted but data is
+preserved for recovery</p>
+<p><strong>Tags</strong> - Labels to organize and categorize content</p>
+<p><strong>Generation Guide</strong> (also called “Prompt” or “System
+Prompt”) - AI template for creating prompts from knowledge/documents</p>
+<hr />
+<h2 id="file-formats-supported">File Formats Supported</h2>
+<p><strong>Upload:</strong> - Markdown (.md) - Plain text (.txt) - PDF
+(.pdf) - Microsoft Word (.docx)</p>
+<p><strong>Download:</strong> - Markdown (.md)</p>
+<p><strong>PDF and DOCX files</strong> are automatically converted to
+markdown when uploaded.</p>
+<hr />
+<h2 id="getting-help">Getting Help</h2>
+<p>For technical support or questions: - <strong>Members</strong>:
+Contact your organization owner - <strong>Owners</strong>: Contact your
+system administrator - <strong>System issues</strong>: Email
+support@expertnotesystem.com (replace with actual contact)</p>
+<hr />
+<p><strong>Documentation Version:</strong> 1.0 <strong>Last
+Updated:</strong> January 2026 <strong>For Expert Note Application
+Version:</strong> Current Production</p>
+<hr />
+<h2 id="screenshot-index">Screenshot Index</h2>
+<p>All referenced screenshots with detailed descriptions:</p>
+<ol type="1">
+<li><a href="screenshots/01-login.md">Login Page</a></li>
+<li><a href="screenshots/02-registration.md">Registration Page</a></li>
+<li><a href="screenshots/03-dashboard.md">Dashboard Overview</a></li>
+<li><a href="screenshots/04-create-document.md">Create Document</a></li>
+<li><a href="screenshots/05-document-editor.md">Document Editor</a></li>
+<li><a href="screenshots/06-knowledge-extraction.md">Knowledge
+Extraction</a></li>
+<li><a href="screenshots/07-document-properties.md">Document Properties
+&amp; Sharing</a></li>
+<li><a href="screenshots/08-admin-organizations.md">Admin
+Organizations</a></li>
+<li><a href="screenshots/09-invitation-codes.md">Invitation
+Codes</a></li>
+<li><a href="screenshots/10-user-management.md">User Management</a></li>
+<li><a href="screenshots/11-tag-management.md">Tag Management</a></li>
+<li><a href="screenshots/12-knowledge-base.md">Knowledge Base
+View</a></li>
+<li><a href="screenshots/13-prompts.md">Prompts / Generation
+Guides</a></li>
+<li><a href="screenshots/14-trash.md">Trash &amp; Recovery</a></li>
+<li><a href="screenshots/15-account-settings.md">Account
+Settings</a></li>
+</ol>
+<p><strong>See the <a href="screenshots/">screenshots folder</a> for
+detailed descriptions of each interface element with numbered
+annotations.</strong></p>
+</body>
+</html>

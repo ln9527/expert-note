@@ -411,6 +411,8 @@ backend agent systems to automate the process - combine ai general knowledge wit
 8. integrate with other ai tools - we only be part of the workflow
 9. situations - teacher - train teaching feedback, mba thesis feedback, doctoral thesis feedback... targeted user - teacher, grading, thesis etc.. that create prompts to grade students etc or provide checklists and comments to the users
 
+10. Build entry home page to indicate the value of expert note - shift from generation to evaluation - in unverifiable domains - it becomes extreme value and previous evaluation effort has been waisted becomes one time dispensiable ouptuts - but in accumulation can make great value to ai powered organizations
+
 
 
 

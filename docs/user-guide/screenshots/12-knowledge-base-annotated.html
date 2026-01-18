@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base - Annotated</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .screenshot-container {
+            position: relative;
+            width: 1486px;
+            height: 827px;
+            margin: 0 auto;
+        }
+        .screenshot {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .annotation {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #ff6600;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="screenshot-container">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1486' height='827'%3E%3Crect fill='%23f5f5f5' width='1486' height='827'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='24' fill='%23999' text-anchor='middle' dy='.3em'%3EKnowledge Base Screenshot%3C/text%3E%3C/svg%3E" alt="Knowledge Base" class="screenshot" id="screenshot">
+
+        <!-- Annotations -->
+        <div class="annotation" style="left: 200px; top: 230px;">1</div>
+        <div class="annotation" style="left: 570px; top: 230px;">2</div>
+        <div class="annotation" style="left: 1074px; top: 106px;">3</div>
+        <div class="annotation" style="left: 900px; top: 228px;">4</div>
+    </div>
+
+    <script>
+        // This script would normally load the actual screenshot
+        // For now, using placeholder
+        console.log('Annotations: 1=Search, 2=Tag filter, 3=Table/Card toggle, 4=Statistics');
+    </script>
+</body>
+</html>

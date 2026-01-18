@@ -106,8 +106,8 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06080a] text-slate-200 font-sans selection:bg-indigo-500/30 flex flex-col lg:flex-row">
-      {/* Dynamic Background */}
+    <div className="min-h-screen bg-[#06080a] text-slate-200 font-sans selection:bg-indigo-500/30">
+      {/* Dynamic Background - Full screen */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,_rgba(63,94,251,0.05)_0%,_rgba(0,0,0,0)_50%)]"></div>
 
@@ -126,15 +126,12 @@ export default function LoginForm() {
             }}
           />
         ))}
-
-        {/* Vertical Divider Line - desktop only */}
-        <div className="hidden lg:block absolute top-0 bottom-0 right-[420px] w-px bg-gradient-to-b from-transparent via-indigo-500/20 to-transparent">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-indigo-500/40 rounded-full blur-md animate-pulse" />
-        </div>
       </div>
 
-      {/* Left Column: Content */}
-      <div className="flex-1 relative z-10 p-6 sm:p-8 lg:p-12 xl:p-16 overflow-y-auto">
+      {/* Centered Content Container */}
+      <div className="max-w-[1600px] mx-auto min-h-screen flex flex-col lg:flex-row relative">
+        {/* Left Column: Content */}
+        <div className="flex-1 relative z-10 p-6 sm:p-8 lg:p-12 xl:p-16 overflow-y-auto">
         {/* Logo/Brand - In normal document flow */}
         <div className="flex items-center gap-3 mb-8 lg:mb-12">
           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 flex-shrink-0">
@@ -197,8 +194,15 @@ export default function LoginForm() {
         </div>
       </div>
 
-      {/* Right Column: Login */}
-      <div className="w-full lg:w-[420px] lg:min-w-[380px] xl:min-w-[420px] flex-shrink-0 relative z-10 p-6 lg:p-8 flex items-center justify-center bg-white/[0.01] lg:bg-white/[0.02] backdrop-blur-xl border-t lg:border-t-0 lg:border-l border-white/5 lg:min-h-screen lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
+        {/* Vertical Divider Line - desktop only */}
+        <div className="hidden lg:flex items-center justify-center w-px flex-shrink-0">
+          <div className="h-full w-px bg-gradient-to-b from-transparent via-indigo-500/20 to-transparent relative">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-indigo-500/40 rounded-full blur-md animate-pulse" />
+          </div>
+        </div>
+
+        {/* Right Column: Login */}
+        <div className="w-full lg:w-[420px] lg:min-w-[380px] xl:min-w-[420px] flex-shrink-0 relative z-10 p-6 lg:p-8 flex items-center justify-center bg-white/[0.01] lg:bg-white/[0.02] backdrop-blur-xl border-t lg:border-t-0 border-white/5 lg:min-h-screen lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
         {/* Language Toggle */}
         <button
           onClick={toggleLanguage}
@@ -308,6 +312,7 @@ export default function LoginForm() {
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Global Styles */}

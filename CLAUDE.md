@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ Knowledge Entry Markdown Architecture (Jan 16, 2026)
+**Status**: ✅ i18n Language Switch Feature (Jan 18, 2026)
 
 ---
 
@@ -60,12 +60,26 @@ sql/
 1. **PDF Word-Joining Issue** - Words like "demandpersonalized" still occur in PDF conversion
 2. **Migration Cleanup** - Renumber duplicate migration files (005, 006, 007)
 3. **Add Toast Notifications** - Show feedback when copy/download actions occur
-4. **Test PDF/DOCX Upload Flow** - Verify convert endpoint and form editing works
+4. **i18n Coverage Check** - Verify all UI strings are translated (some edge cases may remain)
 5. **Monitor Production** - Watch for any remaining PM2/nginx issues
 
-## Recent Work (Jan 14-16, 2026)
+## Recent Work (Jan 14-18, 2026)
 
-### Session 8 (Current) - Knowledge Entry Markdown Architecture
+### Session 9 (Current) - i18n Language Switch Feature
+- ✅ **English/Chinese Language Toggle**: Added to AppHeader, persists in localStorage
+  - Custom React Context (`src/i18n/`) with useTranslation hook
+  - JSON-based translation files: `en.json` (~260 strings), `zh.json`
+  - Click "中文" to switch to Chinese, "EN" to switch back to English
+- ✅ **Components Migrated**: ~34 components now use translations
+  - ViewModeToggle (Table/Card buttons)
+  - KnowledgeTable, PromptsTable (headers, labels, tooltips, empty states)
+  - Settings sidebar and prompts management page
+  - LoginForm, AppHeader, DeleteConfirmModal, DocumentFilters
+  - Generate page, Editor page, and more
+- ⚠️ **Known Limitation**: System prompts/LLM guides stay in English (by design)
+- 📁 **Key Files**: `src/i18n/`, `src/i18n/locales/en.json`, `src/i18n/locales/zh.json`
+
+### Session 8 - Knowledge Entry Markdown Architecture
 - ✅ **Raw Markdown Storage**: Knowledge entries now store full LLM output in `content` field
   - Migration 011 adds `content TEXT` column to `knowledge_entries`
   - Extraction API stores raw markdown instead of parsing into annotations

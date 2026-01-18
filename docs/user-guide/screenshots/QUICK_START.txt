@@ -1,0 +1,94 @@
+================================================================================
+QUICK START: Capture Screenshots 12-15
+================================================================================
+
+GOAL: Create 4 annotated PNG screenshots for the user guide
+
+FILES TO CREATE:
+  - images/12-knowledge-base.png
+  - images/13-prompts.png
+  - images/14-trash.png
+  - images/15-account-settings.png
+
+================================================================================
+SIMPLE 3-STEP PROCESS:
+================================================================================
+
+STEP 1: Open HTML file
+------------------------
+Double-click: capture-12-knowledge-base.html
+
+(Or from terminal):
+  open capture-12-knowledge-base.html
+
+STEP 2: Wait for page to load
+------------------------------
+You'll see:
+  ✓ Production site loaded in the center
+  ✓ Orange numbered circles overlaid on key features
+  ✓ Instructions at the top
+
+STEP 3: Take screenshot
+-----------------------
+Method A (macOS quick):
+  1. Press: Cmd + Shift + 4
+  2. Press: Space (cursor becomes camera icon)
+  3. Click the WHITE CONTAINER in the browser
+  4. Screenshot saved to Desktop
+  5. Move it to: images/12-knowledge-base.png
+
+Method B (Browser DevTools):
+  1. Right-click white container → "Inspect"
+  2. Right-click .container element in DevTools
+  3. "Capture node screenshot"
+  4. Save as: images/12-knowledge-base.png
+
+================================================================================
+REPEAT FOR ALL 4 PAGES:
+================================================================================
+
+1. capture-12-knowledge-base.html   → images/12-knowledge-base.png
+2. capture-13-prompts.html          → images/13-prompts.png
+3. capture-14-trash.html            → images/14-trash.png
+4. capture-15-account-settings.html → images/15-account-settings.png
+
+================================================================================
+EXPECTED RESULT:
+================================================================================
+
+images/
+  ✅ 01-login.png                 (already exists)
+  ✅ 02-registration.png          (already exists)
+  ✅ 03-dashboard.png             (already exists)
+  ✅ 04-create-document.png       (already exists)
+  ✅ 05-document-editor.png       (already exists)
+  ✅ 06-knowledge-extraction.png  (already exists)
+  ✅ 07-document-properties.png   (already exists)
+  ⏳ 12-knowledge-base.png        (YOU CREATE THIS)
+  ⏳ 13-prompts.png               (YOU CREATE THIS)
+  ⏳ 14-trash.png                 (YOU CREATE THIS)
+  ⏳ 15-account-settings.png      (YOU CREATE THIS)
+
+================================================================================
+TROUBLESHOOTING:
+================================================================================
+
+Q: HTML page is blank or shows error
+A: Check internet connection - page loads from https://spansurvey.net/annote
+
+Q: Don't see orange circles
+A: Refresh the page, make sure it loaded completely
+
+Q: Screenshot has wrong dimensions
+A: Use Method B (DevTools) to capture exact container size (1486x827px)
+
+================================================================================
+MORE HELP:
+================================================================================
+
+Read these files for more details:
+  - README_SCREENSHOTS.md  (comprehensive guide)
+  - CAPTURE_README.md      (detailed instructions)
+  - COMPLETION_REPORT.md   (technical details)
+
+================================================================================

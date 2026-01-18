@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert Note - Quick Start Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1e293b;
+            background: #f8fafc;
+        }
+
+        /* Header - matches Expert Note nav */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: #2563eb;
+        }
+
+        /* Main content area */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Page title */
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: #64748b;
+            font-size: 1rem;
+            margin-bottom: 32px;
+        }
+
+        /* Content sections - white cards */
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .card p {
+            color: #475569;
+            margin-bottom: 16px;
+        }
+
+        .card p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Pipeline visualization - simple boxes */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            flex-wrap: wrap;
+        }
+
+        .pipeline-step {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px 20px;
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .pipeline-step-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .pipeline-step-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .pipeline-arrow {
+            color: #94a3b8;
+            font-size: 1.25rem;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            font-size: 0.95rem;
+            color: #475569;
+        }
+
+        /* Annotation level badges */
+        .level-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .level-macro {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .level-meso {
+            background: #fffbeb;
+            color: #d97706;
+            border: 1px solid #fde68a;
+        }
+
+        .level-micro {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+
+        .level-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .level-macro .level-dot { background: #dc2626; }
+        .level-meso .level-dot { background: #d97706; }
+        .level-micro .level-dot { background: #059669; }
+
+        /* Screenshots */
+        .screenshot {
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .screenshot img {
+            width: 100%;
+            display: block;
+        }
+
+        .screenshot-caption {
+            padding: 12px 16px;
+            background: #f8fafc;
+            font-size: 0.875rem;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 12px 0 12px 20px;
+            color: #475569;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Inline code */
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 0.875rem;
+            color: #0f172a;
+        }
+
+        /* Keyboard shortcuts */
+        kbd {
+            background: #f1f5f9;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 0.8rem;
+            box-shadow: 0 1px 0 #d1d5db;
+        }
+
+        /* Tips box */
+        .tip-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .tip-box-title {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .tip-box p {
+            color: #1e40af;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Warning box */
+        .warning-box {
+            background: #fefce8;
+            border: 1px solid #fde047;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .warning-box-title {
+            font-weight: 600;
+            color: #a16207;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .warning-box p {
+            color: #a16207;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Button styles */
+        .btn {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        /* Section divider */
+        .divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 32px 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: #94a3b8;
+            font-size: 0.875rem;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 40px;
+        }
+
+        /* Workflow steps */
+        .workflow-steps {
+            margin: 16px 0;
+        }
+
+        .workflow-step {
+            display: flex;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .workflow-step:last-child {
+            border-bottom: none;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: #2563eb;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Two column layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+            .pipeline {
+                flex-direction: column;
+            }
+            .pipeline-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        /* Annotation example */
+        .annotation-example {
+            background: #f8fafc;
+            border-left: 3px solid;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 0.9rem;
+            color: #475569;
+            font-style: italic;
+        }
+
+        .annotation-example.macro { border-left-color: #dc2626; }
+        .annotation-example.meso { border-left-color: #d97706; }
+        .annotation-example.micro { border-left-color: #059669; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">Expert Note</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#pipeline">Pipeline</a></li>
+                <li><a href="#annotations">Annotations</a></li>
+                <li><a href="#workflows">Workflows</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main">
+        <!-- Page Title -->
+        <h1 class="page-title">Quick Start Guide</h1>
+        <p class="page-subtitle">Transform human expertise into structured, AI-ready knowledge assets</p>
+
+        <!-- Overview Section -->
+        <section id="overview">
+            <div class="card">
+                <h2 class="card-title">What is Expert Note?</h2>
+                <p>Expert Note captures human expert knowledge and transforms it into structured, reusable AI assets. The system helps you:</p>
+                <ul>
+                    <li>Upload documents containing expert knowledge (PDFs, Word files, text)</li>
+                    <li>Annotate content using a structured three-level system</li>
+                    <li>Extract organized knowledge entries using AI</li>
+                    <li>Generate prompts that embody expert reasoning patterns</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Pipeline Section -->
+        <section id="pipeline">
+            <div class="card">
+                <h2 class="card-title">The Knowledge Pipeline</h2>
+                <p>Expert Note transforms unstructured expertise into AI-ready assets through four stages:</p>
+
+                <div class="pipeline">
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-title">Documents</div>
+                        <div class="pipeline-step-desc">PDFs, Word, text files</div>
+                    </div>
+                    <span class="pipeline-arrow">→</span>
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-title">Annotations</div>
+                        <div class="pipeline-step-desc">3-level markup</div>
+                    </div>
+                    <span class="pipeline-arrow">→</span>
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-title">Knowledge</div>
+                        <div class="pipeline-step-desc">AI-extracted insights</div>
+                    </div>
+                    <span class="pipeline-arrow">→</span>
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-title">Prompts</div>
+                        <div class="pipeline-step-desc">Embodied expertise</div>
+                    </div>
+                </div>
+
+                <div class="tip-box">
+                    <div class="tip-box-title">Why this matters</div>
+                    <p>Each stage adds structure. Documents are raw text. Annotations add human judgment about importance. Knowledge entries organize those judgments. Prompts encode the reasoning patterns for AI to use.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Getting Started -->
+        <section>
+            <div class="card">
+                <h2 class="card-title">Getting Started</h2>
+
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 20px 0 12px;">Registration</h3>
+                <p>New users need an invitation code from their organization admin. The code determines your role:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Role</th>
+                            <th>Access</th>
+                            <th>Key Features</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Organization Owner</strong></td>
+                            <td>Full access</td>
+                            <td>Create documents, annotate, extract knowledge, manage members</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Organization Member</strong></td>
+                            <td>Limited access</td>
+                            <td>View shared documents, edit if allowed, manage personal tags</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="screenshot">
+                    <img src="screenshots/images/02-registration.png" alt="Registration form">
+                    <div class="screenshot-caption">Enter your invitation code, username, and password to create an account</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Annotations Section -->
+        <section id="annotations">
+            <div class="card">
+                <h2 class="card-title">The Annotation System</h2>
+                <p>Expert Note uses a three-level annotation system to categorize content by importance. This hierarchy helps AI understand the structure of expert knowledge.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Level</th>
+                            <th>Shortcut</th>
+                            <th>Use For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="level-badge level-macro"><span class="level-dot"></span>MACRO</span></td>
+                            <td><kbd>Cmd</kbd> + <kbd>1</kbd></td>
+                            <td>Main themes, key arguments, overarching concepts</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-badge level-meso"><span class="level-dot"></span>MESO</span></td>
+                            <td><kbd>Cmd</kbd> + <kbd>2</kbd></td>
+                            <td>Supporting evidence, methodologies, secondary themes</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-badge level-micro"><span class="level-dot"></span>MICRO</span></td>
+                            <td><kbd>Cmd</kbd> + <kbd>3</kbd></td>
+                            <td>Specific facts, quotes, data points, citations</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 24px 0 12px;">Examples</h3>
+
+                <div class="annotation-example macro">
+                    <strong>MACRO:</strong> "Machine learning models require three fundamental components: quality training data, appropriate algorithms, and sufficient computational resources."
+                </div>
+
+                <div class="annotation-example meso">
+                    <strong>MESO:</strong> "The training process uses backpropagation to iteratively adjust model weights based on prediction errors."
+                </div>
+
+                <div class="annotation-example micro">
+                    <strong>MICRO:</strong> "After optimization, model accuracy improved from 87.3% to 94.1% on the test dataset."
+                </div>
+
+                <div class="screenshot">
+                    <img src="screenshots/images/05-document-editor.png" alt="Document editor with annotation buttons">
+                    <div class="screenshot-caption">Select text and click MACRO, MESO, or MICRO to annotate (or use keyboard shortcuts)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Knowledge Extraction -->
+        <section>
+            <div class="card">
+                <h2 class="card-title">Extracting Knowledge</h2>
+                <p>Once you've annotated a document, AI analyzes your annotations and creates a structured knowledge entry.</p>
+
+                <div class="workflow-steps">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Select an Extraction Guide</h4>
+                            <p>Choose a template matching your domain (Academic Research, Business Strategy, Technical Documentation)</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Add Custom Instructions (Optional)</h4>
+                            <p>Guide the AI to focus on specific aspects or adjust the output format</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Extract</h4>
+                            <p>AI generates background context, organized concepts, relationships, and actionable insights</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screenshot">
+                    <img src="screenshots/images/06-knowledge-extraction.png" alt="Knowledge extraction modal">
+                    <div class="screenshot-caption">Choose an extraction guide and click Extract to generate a knowledge entry</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Generating Prompts -->
+        <section>
+            <div class="card">
+                <h2 class="card-title">Generating AI Prompts</h2>
+                <p>Turn extracted knowledge into prompts that teach AI to reason like your domain experts.</p>
+
+                <div class="tip-box">
+                    <div class="tip-box-title">What makes this valuable</div>
+                    <p>Unlike generic prompts, these are created from real expert knowledge. The AI learns the actual reasoning patterns, frameworks, and domain-specific insights from your annotated documents.</p>
+                </div>
+
+                <p>Example use cases:</p>
+                <ul>
+                    <li>Research assistant that applies your senior scientist's methodology</li>
+                    <li>Business analyst using your team's strategic frameworks</li>
+                    <li>Technical writer matching your documentation standards</li>
+                </ul>
+
+                <div class="screenshot">
+                    <img src="screenshots/images/13-prompts.png" alt="Prompts page">
+                    <div class="screenshot-caption">View and manage prompts generated from your knowledge entries</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workflows Section -->
+        <section id="workflows">
+            <div class="card">
+                <h2 class="card-title">15-Minute First Session</h2>
+                <p>Get started with Expert Note in a quick hands-on session:</p>
+
+                <div class="workflow-steps">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Upload a Document (2 min)</h4>
+                            <p>Choose a document you know well—research paper, report, or documentation</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Add 10-15 Annotations (8 min)</h4>
+                            <p>Mark main ideas (MACRO), supporting points (MESO), and specific details (MICRO)</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Extract Knowledge (3 min)</h4>
+                            <p>Use the default extraction guide and review what AI generates</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Review Results (2 min)</h4>
+                            <p>See how AI structured your annotations into organized knowledge</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Best Practices -->
+        <section>
+            <div class="card">
+                <h2 class="card-title">Best Practices</h2>
+
+                <div class="two-col">
+                    <div>
+                        <h3 style="font-size: 0.95rem; font-weight: 600; color: #059669; margin-bottom: 12px;">Recommended</h3>
+                        <ul>
+                            <li>Start with MACRO—identify big ideas first</li>
+                            <li>Be selective—annotate what's important</li>
+                            <li>One concept per annotation</li>
+                            <li>Use consistent criteria across documents</li>
+                            <li>Choose extraction guides matching your domain</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 0.95rem; font-weight: 600; color: #dc2626; margin-bottom: 12px;">Avoid</h3>
+                        <ul>
+                            <li>Annotating every sentence</li>
+                            <li>Mixing multiple ideas in one annotation</li>
+                            <li>Skipping annotation levels</li>
+                            <li>Extracting without annotations</li>
+                            <li>Quantity over quality</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <div class="warning-box-title">Quality matters</div>
+                    <p>5-10 well-chosen annotations per page produce better knowledge entries than marking everything. Focus on what experts consider important.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Reference -->
+        <section>
+            <div class="card">
+                <h2 class="card-title">Quick Reference</h2>
+
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 16px 0 12px;">Keyboard Shortcuts</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>MACRO annotation</td>
+                            <td><kbd>Cmd</kbd> + <kbd>1</kbd></td>
+                        </tr>
+                        <tr>
+                            <td>MESO annotation</td>
+                            <td><kbd>Cmd</kbd> + <kbd>2</kbd></td>
+                        </tr>
+                        <tr>
+                            <td>MICRO annotation</td>
+                            <td><kbd>Cmd</kbd> + <kbd>3</kbd></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 24px 0 12px;">Key Terms</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><strong>Document</strong></td>
+                            <td>Source text from experts (PDF, Word, typed content)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Annotation</strong></td>
+                            <td>Marked section categorized by importance level</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Knowledge Entry</strong></td>
+                            <td>AI-extracted structured insights from annotations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Prompt</strong></td>
+                            <td>AI instruction encoding expert reasoning patterns</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Extraction Guide</strong></td>
+                            <td>Template controlling how AI structures knowledge</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Expert Note Quick Start Guide · Version 1.0 · January 2026</p>
+            <p style="margin-top: 8px;">For detailed documentation, see the complete user guide.</p>
+        </footer>
+    </main>
+</body>
+</html>

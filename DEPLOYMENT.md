@@ -32,7 +32,7 @@ All users have password: `password123`
 - ning, admin, expert1, expert2, student1-3, researcher1-2, guest
 
 ### API Keys
-- **OpenRouter**: `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`
+- **OpenRouter**: `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`
 
 ---
 
@@ -126,8 +126,8 @@ module.exports = {
       DB_NAME: 'annotservice',
       DB_USER: 'postgres',
       DB_PASSWORD: 'annotservice2025',
-      OPENROUTER_API_KEY: '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',
-      SESSION_SECRET: 'annote-session-secret-production-2026-very-secure-key'
+      OPENROUTER_API_KEY: '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',
+      SESSION_SECRET: 'annote-production-secret-key-secure-2025-deployment'
     }
   }]
 };
@@ -166,6 +166,11 @@ pm2 save
 Add to `/etc/nginx/sites-enabled/default` (inside the server block):
 ```nginx
 location /annote {
+    # Timeouts for LLM API calls (extraction/generation can take 1-2 minutes)
+    proxy_read_timeout 300s;
+    proxy_connect_timeout 30s;
+    proxy_send_timeout 300s;
+
     proxy_pass http://localhost:3006;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
@@ -188,27 +193,82 @@ nginx -t && systemctl reload nginx
 ## Common Issues & Solutions
 
 ### Issue 1: Database Authentication Failed
-**Symptom**: `password authentication failed for user "postgres"`
+**Symptom**: `password authentication failed for user "postgres"` or `SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string`
 
-**Root Cause**: PostgreSQL password not set or wrong password in environment.
+**Root Cause**: PostgreSQL password not set, or PM2 environment missing DB_PASSWORD.
 
 **Solution**:
 ```bash
-# Set the postgres password
+# 1. Set the postgres password in PostgreSQL
 sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'annotservice2025';"
 
-# Verify connection works
-PGPASSWORD=annotservice2025 psql -h localhost -U postgres -d annotservice -c 'SELECT 1'
+# 2. Verify PM2 has the DB_PASSWORD set
+pm2 env <process-id> | grep DB_PASSWORD
+
+# 3. If missing, restart PM2 with explicit env vars (see "PM2 Environment Variables" below)
 ```
 
-### Issue 2: Environment Variables Not Loaded
+### Issue 2: PM2 Environment Variables Not Loaded (CRITICAL)
+**Symptom**: App starts but DB connection fails, OpenRouter returns 401, or other env-dependent features fail
+
+**Root Cause**: **PM2 does NOT automatically load .env files!** Even if .env, .env.local, or .env.production exist, PM2 won't read them.
+
+**Solution**: Explicitly set ALL required environment variables when starting PM2:
+
+```bash
+# Delete the old process first
+pm2 delete expert-note
+
+# Start with ALL environment variables explicitly set
+PORT=3006 \
+NODE_ENV=production \
+BASE_PATH=/annote \
+DB_HOST=localhost \
+DB_PORT=5432 \
+DB_NAME=annotservice \
+DB_USER=postgres \
+DB_PASSWORD=annotservice2025 \
+OPENROUTER_API_KEY='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' \
+SESSION_SECRET='annote-production-secret-key-secure-2025-deployment' \
+pm2 start npm --name expert-note -- start
+
+# Save the configuration
+pm2 save
+
+# Verify environment variables are set
+pm2 env <process-id> | grep -E '(DB_|OPENROUTER|SESSION)'
+```
+
+**Alternative**: Use `ecosystem.config.js` (see "First Time Setup" section).
+
+### Issue 3: OpenRouter API 401 Unauthorized
+**Symptom**: Knowledge extraction completes in 3-5 seconds (too fast), returns fallback results, or 502 errors on generation
+
+**Root Cause**: OPENROUTER_API_KEY not set in PM2 environment, or using old/invalid key.
+
+**Solution**:
+```bash
+# Check current API key in PM2 env
+pm2 env <process-id> | grep OPENROUTER
+
+# If missing or wrong, restart PM2 with correct key (see Issue 2 above)
+```
+
+### Issue 4: 504 Gateway Timeout on Large Documents
+**Symptom**: Extraction/generation times out after 60 seconds on documents with many annotations
+
+**Root Cause**: Nginx default `proxy_read_timeout` is 60 seconds, but LLM calls can take 1-3 minutes.
+
+**Solution**: Add timeout settings to nginx `/annote` location (see "Configure Nginx" section above).
+
+### Issue 5: Environment Variables Not Loaded (Legacy)
 **Symptom**: App starts but DB connection fails even with correct .env.local
 
 **Root Cause**: Next.js production mode doesn't automatically read .env.local at runtime.
 
-**Solution**: Use PM2 ecosystem.config.js to pass environment variables (see above).
+**Solution**: Use PM2 ecosystem.config.js or explicit env vars to pass environment variables (see Issue 2).
 
-### Issue 3: Redirect Loop on /annote/
+### Issue 6: Redirect Loop on /annote/
 **Symptom**: Infinite redirects between /annote and /annote/
 
 **Root Cause**: Nginx trailing slash redirect conflicts with Next.js trailingSlash setting.
@@ -217,7 +277,7 @@ PGPASSWORD=annotservice2025 psql -h localhost -U postgres -d annotservice -c 'SE
 - Use `location /annote` (without trailing slash) in Nginx
 - Remove the `location = /annote { return 301 /annote/; }` rule
 
-### Issue 4: Static Assets 404
+### Issue 7: Static Assets 404
 **Symptom**: Page loads but CSS/JS files return 404
 
 **Root Cause**: BASE_PATH not set correctly at build time.
@@ -228,7 +288,7 @@ PGPASSWORD=annotservice2025 psql -h localhost -U postgres -d annotservice -c 'SE
 BASE_PATH=/annote
 ```
 
-### Issue 5: Session/Cookie Not Persisting
+### Issue 8: Session/Cookie Not Persisting
 **Symptom**: Login works but user is logged out on page refresh
 
 **Root Cause**: Cookie path doesn't match BASE_PATH.
@@ -393,5 +453,5 @@ sudo -u postgres psql -d annotservice    # Connect to DB
 
 ---
 
-*Last updated: January 8, 2026*
-*Deployment History: 2026-01-08 Major Enhancement Release - Ready for Production*
+*Last updated: January 15, 2026*
+*Latest: PM2 environment variable fix + nginx timeout increase (5 minutes)*

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { buildApiPath } from '@/lib/utils/pathHelper';
+import { formatDateLong } from '@/lib/utils/date';
 import { KnowledgeEntryWithAnnotations, Tag, ANNOTATION_COLORS, LEVEL_CONFIG, AnnotationLevel } from '@/types';
 import { AnnotationList } from '@/components/knowledge';
 import { MarkdownRenderer } from '@/components/common';
@@ -112,97 +113,82 @@ export default function KnowledgeDetailPage() {
   const handleDownload = () => {
     if (!entry) return;
 
-    let markdown: string;
+    const tagList = entry.tags?.length ? entry.tags.map(t => t.name).join(', ') : null;
+    const header = [
+      '# Knowledge Entry',
+      '',
+      `**Created:** ${formatDateLong(entry.createdAt)}`,
+      tagList ? `**Tags:** ${tagList}` : null,
+      '',
+      '---',
+      '',
+    ].filter(Boolean).join('\n');
 
-    // If content field exists (new format), use it directly
+    let markdown = header;
+
     if (entry.content) {
-      // Add metadata header, then the raw content
-      markdown = `# Knowledge Entry\n\n`;
-      markdown += `**Created:** ${formatDate(entry.createdAt)}\n\n`;
-
-      if (entry.tags && entry.tags.length > 0) {
-        markdown += `**Tags:** ${entry.tags.map(t => t.name).join(', ')}\n\n`;
-      }
-
-      markdown += `---\n\n`;
+      // New format: use raw content directly
       markdown += entry.content;
     } else {
-      // Legacy format: build from annotations
-      markdown = `# Knowledge Entry\n\n`;
-      markdown += `**Created:** ${formatDate(entry.createdAt)}\n\n`;
-
-      if (entry.tags && entry.tags.length > 0) {
-        markdown += `**Tags:** ${entry.tags.map(t => t.name).join(', ')}\n\n`;
-      }
-
-      markdown += `---\n\n`;
-
-      if (entry.background) {
-        markdown += `## Background Context\n\n${entry.background}\n\n`;
-        markdown += `---\n\n`;
-      }
-
-      if (entry.annotations && entry.annotations.length > 0) {
-        markdown += `## Annotations\n\n`;
-
-        // Group annotations by level
-        const grouped = {
-          MACRO: entry.annotations.filter(a => a.level === 'MACRO'),
-          MESO: entry.annotations.filter(a => a.level === 'MESO'),
-          MICRO: entry.annotations.filter(a => a.level === 'MICRO'),
-        };
-
-        const levelEmojis = { MACRO: '🔴', MESO: '🟡', MICRO: '🟢' };
-        const levelLabels = { MACRO: 'Macro (High-level)', MESO: 'Meso (Pattern-level)', MICRO: 'Micro (Detailed)' };
-
-        (['MACRO', 'MESO', 'MICRO'] as const).forEach(level => {
-          const annotations = grouped[level];
-          if (annotations.length === 0) return;
-
-          markdown += `### ${levelEmojis[level]} ${levelLabels[level]} (${annotations.length})\n\n`;
-
-          annotations.forEach((ann, idx) => {
-            markdown += `#### ${idx + 1}. ${ann.location || `Annotation ${idx + 1}`}\n\n`;
-
-            if (ann.backgroundContext) {
-              markdown += `**Context:** ${ann.backgroundContext}\n\n`;
-            }
-
-            markdown += `**Original:**\n> ${ann.originalText || ann.comment}\n\n`;
-
-            if (ann.refinedComment && ann.refinedComment !== ann.originalText) {
-              markdown += `**Refined:**\n> ${ann.refinedComment}\n\n`;
-            }
-
-            markdown += `---\n\n`;
-          });
-        });
-      }
+      // Legacy format: build from background and annotations
+      markdown += buildLegacyMarkdown(entry);
     }
 
-    // Create and trigger download
-    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    downloadMarkdown(markdown, `knowledge-entry-${entry.id.substring(0, 8)}.md`);
+  };
+
+  // Build markdown from legacy annotation format
+  function buildLegacyMarkdown(entry: KnowledgeDetailData): string {
+    let md = '';
+
+    if (entry.background) {
+      md += `## Background Context\n\n${entry.background}\n\n---\n\n`;
+    }
+
+    if (!entry.annotations?.length) return md;
+
+    md += '## Annotations\n\n';
+
+    const levels = ['MACRO', 'MESO', 'MICRO'] as const;
+    const levelConfig = {
+      MACRO: { emoji: '🔴', label: 'Macro (High-level)' },
+      MESO: { emoji: '🟡', label: 'Meso (Pattern-level)' },
+      MICRO: { emoji: '🟢', label: 'Micro (Detailed)' },
+    };
+
+    for (const level of levels) {
+      const annotations = entry.annotations.filter(a => a.level === level);
+      if (annotations.length === 0) continue;
+
+      const { emoji, label } = levelConfig[level];
+      md += `### ${emoji} ${label} (${annotations.length})\n\n`;
+
+      annotations.forEach((ann, idx) => {
+        md += `#### ${idx + 1}. ${ann.location || `Annotation ${idx + 1}`}\n\n`;
+        if (ann.backgroundContext) md += `**Context:** ${ann.backgroundContext}\n\n`;
+        md += `**Original:**\n> ${ann.originalText || ann.comment}\n\n`;
+        if (ann.refinedComment && ann.refinedComment !== ann.originalText) {
+          md += `**Refined:**\n> ${ann.refinedComment}\n\n`;
+        }
+        md += '---\n\n';
+      });
+    }
+
+    return md;
+  }
+
+  // Trigger markdown file download
+  function downloadMarkdown(content: string, filename: string): void {
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `knowledge-entry-${entry.id.substring(0, 8)}.md`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  };
-
-  // Format date
-  const formatDate = (date: Date | string) => {
-    const d = new Date(date);
-    return d.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  }
 
   if (loading) {
     return (
@@ -293,7 +279,7 @@ export default function KnowledgeDetailPage() {
               )}
             </div>
             <span className="text-sm text-gray-500">
-              {formatDate(entry.createdAt)}
+              {formatDateLong(entry.createdAt)}
             </span>
           </div>
         </div>

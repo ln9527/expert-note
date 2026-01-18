@@ -1,0 +1,15 @@
+{
+  "name": "expert-note-screenshots",
+  "version": "1.0.0",
+  "description": "Screenshot capture tool for Expert Note user guide",
+  "main": "capture.js",
+  "scripts": {
+    "capture": "node capture.js"
+  },
+  "keywords": ["screenshots", "documentation"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  }
+}

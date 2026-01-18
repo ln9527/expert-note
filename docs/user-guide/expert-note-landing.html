@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert Note - Transform Expertise into AI Assets</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --text-dark: #1e293b;
+            --text-medium: #475569;
+            --text-light: #64748b;
+            --bg-white: #ffffff;
+            --bg-light: #f8fafc;
+            --bg-subtle: #f1f5f9;
+            --border: #e2e8f0;
+            --accent: #2563eb;
+            --accent-light: #dbeafe;
+            --macro: #dc2626;
+            --macro-bg: #fef2f2;
+            --meso: #d97706;
+            --meso-bg: #fffbeb;
+            --micro: #059669;
+            --micro-bg: #ecfdf5;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-white);
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--text-dark);
+        }
+
+        .nav-cta {
+            background: var(--accent);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .nav-cta:hover {
+            background: #1d4ed8;
+        }
+
+        /* Sections */
+        section {
+            padding: 100px 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-top: 120px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            max-width: 700px;
+        }
+
+        .hero .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-medium);
+            max-width: 600px;
+            margin-bottom: 48px;
+        }
+
+        /* Animated visualization */
+        .hero-visual {
+            width: 100%;
+            max-width: 800px;
+            height: 280px;
+            position: relative;
+            margin-bottom: 48px;
+        }
+
+        .visual-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+            padding: 0 40px;
+        }
+
+        .abundance-side {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            opacity: 0.4;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: var(--text-light);
+            border-radius: 50%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .dot:nth-child(even) {
+            animation-delay: -1.5s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .filter-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 40px;
+        }
+
+        .filter-icon {
+            width: 80px;
+            height: 80px;
+            border: 3px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-white);
+            position: relative;
+        }
+
+        .filter-icon::before {
+            content: '';
+            width: 40px;
+            height: 40px;
+            background: var(--accent-light);
+            border-radius: 50%;
+        }
+
+        .filter-label {
+            margin-top: 12px;
+            font-size: 0.875rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .value-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .value-item {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 0.875rem;
+            color: var(--text-medium);
+            animation: fadeSlideIn 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        .value-item:nth-child(1) { animation-delay: 0.3s; }
+        .value-item:nth-child(2) { animation-delay: 0.6s; }
+        .value-item:nth-child(3) { animation-delay: 0.9s; }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .visual-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 60px;
+            margin-top: 20px;
+        }
+
+        .visual-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Problem Section */
+        .problem {
+            background: var(--bg-light);
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-medium);
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 48px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .comparison-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        .comparison-card h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+            margin-bottom: 24px;
+        }
+
+        .comparison-card ul {
+            list-style: none;
+        }
+
+        .comparison-card li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+            color: var(--text-medium);
+        }
+
+        .comparison-card li:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-card.after li {
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .insight-box {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            padding: 24px;
+            margin-top: 48px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .insight-box p {
+            font-size: 1.125rem;
+            color: var(--text-dark);
+            font-style: italic;
+        }
+
+        /* Expert Section */
+        .expert-section {
+            background: var(--bg-white);
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .scenario-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .scenario-question {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .scenario-answer {
+            font-size: 0.95rem;
+            color: var(--text-medium);
+            line-height: 1.6;
+        }
+
+        .scenario-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-light);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scenario-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--accent);
+        }
+
+        /* Mechanism Section */
+        .mechanism {
+            background: var(--bg-light);
+        }
+
+        .mechanism-visual {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin: 48px 0;
+            flex-wrap: wrap;
+        }
+
+        .mechanism-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            flex: 1;
+            min-width: 200px;
+            max-width: 280px;
+        }
+
+        .mechanism-card h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+            margin-bottom: 12px;
+        }
+
+        .mechanism-card p {
+            font-size: 1rem;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .mechanism-card.highlight {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, var(--bg-white) 0%, var(--accent-light) 100%);
+        }
+
+        .arrow {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            color: var(--text-light);
+        }
+
+        /* Pipeline Section */
+        .pipeline-section {
+            background: var(--bg-white);
+        }
+
+        .pipeline-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            max-width: 900px;
+            margin: 48px auto;
+            flex-wrap: wrap;
+        }
+
+        .pipeline-step {
+            flex: 1;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .pipeline-box {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 16px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+
+        .pipeline-step:hover .pipeline-box {
+            border-color: var(--accent);
+            background: var(--bg-white);
+        }
+
+        .pipeline-number {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0 auto 12px;
+        }
+
+        .pipeline-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .pipeline-desc {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .pipeline-arrow {
+            color: var(--text-light);
+            font-size: 1.25rem;
+            padding-top: 40px;
+        }
+
+        /* Annotation Preview */
+        .annotation-preview {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 48px;
+            flex-wrap: wrap;
+        }
+
+        .annotation-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .annotation-tag.macro {
+            background: var(--macro-bg);
+            color: var(--macro);
+        }
+
+        .annotation-tag.meso {
+            background: var(--meso-bg);
+            color: var(--meso);
+        }
+
+        .annotation-tag.micro {
+            background: var(--micro-bg);
+            color: var(--micro);
+        }
+
+        .annotation-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Stakes Section */
+        .stakes {
+            background: var(--bg-light);
+        }
+
+        .stakes-content {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .stakes-stat {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin: 48px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .stakes-message {
+            font-size: 1.25rem;
+            color: var(--text-medium);
+            margin-top: 32px;
+            padding: 24px;
+            background: var(--bg-white);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: var(--bg-white);
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .cta-section h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .cta-section p {
+            font-size: 1.125rem;
+            color: var(--text-medium);
+            margin-bottom: 32px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 16px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .cta-button:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 32px;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .visual-container {
+                flex-direction: column;
+                gap: 32px;
+            }
+
+            .comparison-grid,
+            .scenario-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pipeline-flow {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .pipeline-arrow {
+                transform: rotate(90deg);
+                padding: 0;
+            }
+
+            section {
+                padding: 60px 20px;
+            }
+        }
+
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-logo">Expert Note</div>
+        <a href="#cta" class="nav-cta">Get Started</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Your Expertise.<br>Preserved. Amplified.</h1>
+        <p class="subtitle">In a world of infinite AI-generated content, the scarce resource is knowing what's good.</p>
+
+        <div class="hero-visual">
+            <div class="visual-container">
+                <div class="abundance-side">
+                    <!-- Dots representing abundance of AI generation -->
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+
+                <div class="filter-center">
+                    <div class="filter-icon"></div>
+                    <span class="filter-label">Expert Judgment</span>
+                </div>
+
+                <div class="value-side">
+                    <div class="value-item">Structured insights</div>
+                    <div class="value-item">Actionable knowledge</div>
+                    <div class="value-item">Reusable expertise</div>
+                </div>
+            </div>
+
+            <div class="visual-labels">
+                <span class="visual-label">AI Generation (Abundant)</span>
+                <span class="visual-label">Valuable Knowledge (Scarce)</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="problem">
+        <h2 class="section-title fade-in">The Real Bottleneck Isn't Generation</h2>
+        <p class="section-subtitle fade-in">AI can generate infinite ideas. The challenge is knowing which ones matter.</p>
+
+        <div class="comparison-grid">
+            <div class="comparison-card fade-in">
+                <h3>Before AI</h3>
+                <ul>
+                    <li>Hard to generate novel ideas</li>
+                    <li>Evaluation felt manageable</li>
+                    <li>Experts needed for creation</li>
+                </ul>
+            </div>
+            <div class="comparison-card after fade-in">
+                <h3>After AI</h3>
+                <ul>
+                    <li>AI generates infinite variations</li>
+                    <li>Evaluation is the new challenge</li>
+                    <li>Experts needed for curation</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="insight-box fade-in">
+            <p>"GenAI scores in the 99th percentile on creativity tests. Yet it can't tell you if a research question is truly interesting."</p>
+        </div>
+    </section>
+
+    <!-- Expert Section -->
+    <section class="expert-section">
+        <h2 class="section-title fade-in">Experts Don't Just Know More</h2>
+        <p class="section-subtitle fade-in">They <em>feel</em> what works. Through years of experience, they've developed intuition that AI can't replicate.</p>
+
+        <div class="scenario-grid">
+            <div class="scenario-card fade-in">
+                <div class="scenario-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4M12 8h.01"></path>
+                    </svg>
+                </div>
+                <div class="scenario-question">"Is this a good research question?"</div>
+                <div class="scenario-answer">Experts simulate how reviewers will react. They sense the counterintuitive twist that makes work compelling.</div>
+            </div>
+
+            <div class="scenario-card fade-in">
+                <div class="scenario-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                </div>
+                <div class="scenario-question">"Should I structure it this way?"</div>
+                <div class="scenario-answer">Experts project how readers will experience the flow. They feel where confusion might arise.</div>
+            </div>
+
+            <div class="scenario-card fade-in">
+                <div class="scenario-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <div class="scenario-question">"What feedback should I give?"</div>
+                <div class="scenario-answer">Experts anticipate how suggestions will land. They understand the context that shapes reception.</div>
+            </div>
+
+            <div class="scenario-card fade-in">
+                <div class="scenario-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
+                <div class="scenario-question">"Is this ready to ship?"</div>
+                <div class="scenario-answer">Experts sense the gap between competent and compelling. They know "good enough" when they see it.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mechanism Section -->
+    <section class="mechanism">
+        <h2 class="section-title fade-in">How Expert Judgment Actually Works</h2>
+        <p class="section-subtitle fade-in">It's not magic—it's mental simulation honed by years of experience.</p>
+
+        <div class="mechanism-visual fade-in">
+            <div class="mechanism-card">
+                <h4>AI Processing</h4>
+                <p>Looks backward<br>at patterns from data</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="mechanism-card highlight">
+                <h4>Expert Processing</h4>
+                <p>Looks forward<br>simulating futures</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="mechanism-card">
+                <h4>The Difference</h4>
+                <p>What <em>was</em> useful vs.<br>what <em>will</em> resonate</p>
+            </div>
+        </div>
+
+        <div class="insight-box fade-in">
+            <p>"The expert constructs a mental simulation of how an idea will unfold and derives an intuitive forecast of usefulness."</p>
+        </div>
+    </section>
+
+    <!-- Pipeline Section -->
+    <section class="pipeline-section">
+        <h2 class="section-title fade-in">Capture What Experts Know</h2>
+        <p class="section-subtitle fade-in">Before it's lost. Transform tacit knowledge into structured, reusable assets.</p>
+
+        <div class="pipeline-flow fade-in">
+            <div class="pipeline-step">
+                <div class="pipeline-box">
+                    <div class="pipeline-number">1</div>
+                    <div class="pipeline-title">Expert Documents</div>
+                    <div class="pipeline-desc">PDFs, notes, interviews, methodologies</div>
+                </div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step">
+                <div class="pipeline-box">
+                    <div class="pipeline-number">2</div>
+                    <div class="pipeline-title">Structured Annotations</div>
+                    <div class="pipeline-desc">Mark what matters with 3-level hierarchy</div>
+                </div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step">
+                <div class="pipeline-box">
+                    <div class="pipeline-number">3</div>
+                    <div class="pipeline-title">Extracted Knowledge</div>
+                    <div class="pipeline-desc">AI structures your insights</div>
+                </div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step">
+                <div class="pipeline-box">
+                    <div class="pipeline-number">4</div>
+                    <div class="pipeline-title">AI Prompts</div>
+                    <div class="pipeline-desc">That think like you</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="annotation-preview fade-in">
+            <div class="annotation-tag macro">
+                <span class="annotation-dot"></span>
+                MACRO: Big ideas, frameworks
+            </div>
+            <div class="annotation-tag meso">
+                <span class="annotation-dot"></span>
+                MESO: Evidence, methods
+            </div>
+            <div class="annotation-tag micro">
+                <span class="annotation-dot"></span>
+                MICRO: Specific facts, data
+            </div>
+        </div>
+    </section>
+
+    <!-- Stakes Section -->
+    <section class="stakes">
+        <h2 class="section-title fade-in">Expert Knowledge Is Being Lost</h2>
+
+        <div class="stakes-content fade-in">
+            <div class="stakes-stat">
+                <div class="stat-item">
+                    <div class="stat-number">10,000</div>
+                    <div class="stat-label">Baby boomers retire daily</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">4.1</div>
+                    <div class="stat-label">Years: average job tenure</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">70%</div>
+                    <div class="stat-label">Knowledge is tacit, unwritten</div>
+                </div>
+            </div>
+
+            <div class="stakes-message">
+                AI can generate endlessly. Only experts can evaluate. <strong>Expert Note captures what makes the difference.</strong>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="cta">
+        <h2 class="fade-in">Transform Expertise into Assets</h2>
+        <p class="fade-in">Start capturing what you know—before it's just in your head.</p>
+        <a href="#" class="cta-button fade-in">Get Started</a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Expert Note — Annotation-based knowledge capture for structured expert note-taking.</p>
+    </footer>
+
+    <script>
+        // Scroll animation observer
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

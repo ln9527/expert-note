@@ -147,78 +147,79 @@ export async function chatCompletion(
       { contentType: typeof content, content }
     );
   } catch (error) {
-    // Enhanced error logging with classification
-    console.error('[OpenRouter] ✗ API call failed');
-    console.error('[OpenRouter] Error details:', {
-      name: error instanceof Error ? error.name : 'Unknown',
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    console.error('[OpenRouter] API call failed:', error instanceof Error ? error.message : String(error));
 
-    // Classify and re-throw with better error messages
     if (error instanceof OpenRouterError) {
       throw error;
     }
 
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorString = JSON.stringify(error);
-
-    // Check for specific error types
-    if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('invalid api key')) {
-      throw new OpenRouterError(
-        'OpenRouter API key is invalid or unauthorized. Please check your OPENROUTER_API_KEY in .env.local',
-        'API_KEY_UNAUTHORIZED',
-        { originalError: errorMessage }
-      );
-    }
-
-    if (errorMessage.includes('402') || errorMessage.includes('insufficient credits')) {
-      throw new OpenRouterError(
-        'OpenRouter account has insufficient credits. Please add credits to your account.',
-        'INSUFFICIENT_CREDITS',
-        { originalError: errorMessage }
-      );
-    }
-
-    if (errorMessage.includes('403') || errorMessage.includes('forbidden')) {
-      throw new OpenRouterError(
-        `Model "${model}" is not available or not authorized for your API key. Please check model availability.`,
-        'MODEL_FORBIDDEN',
-        { model, originalError: errorMessage }
-      );
-    }
-
-    if (errorMessage.includes('404') || errorString.includes('404')) {
-      throw new OpenRouterError(
-        `Model "${model}" not found. Please verify the model name is correct.`,
-        'MODEL_NOT_FOUND',
-        { model, originalError: errorMessage }
-      );
-    }
-
-    if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
-      throw new OpenRouterError(
-        'OpenRouter API rate limit exceeded. Please wait and try again.',
-        'RATE_LIMIT_EXCEEDED',
-        { originalError: errorMessage }
-      );
-    }
-
-    if (errorMessage.includes('timeout') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ETIMEDOUT')) {
-      throw new OpenRouterError(
-        'Network error: Could not connect to OpenRouter API. Please check your internet connection.',
-        'NETWORK_ERROR',
-        { originalError: errorMessage }
-      );
-    }
-
-    // Generic API error
-    throw new OpenRouterError(
-      `OpenRouter API error: ${errorMessage}`,
-      'API_ERROR',
-      { originalError: error }
-    );
+    throw classifyApiError(error, model);
   }
+}
+
+/**
+ * Classify an API error into a specific OpenRouterError
+ */
+function classifyApiError(error: unknown, model: string): OpenRouterError {
+  const message = error instanceof Error ? error.message : String(error);
+  const errorJson = JSON.stringify(error);
+
+  // Error classification rules: [pattern test, message, code, extra details]
+  const errorPatterns: Array<{
+    test: () => boolean;
+    code: string;
+    message: string;
+    details?: Record<string, unknown>;
+  }> = [
+    {
+      test: () => message.includes('401') || message.includes('unauthorized') || message.includes('invalid api key'),
+      code: 'API_KEY_UNAUTHORIZED',
+      message: 'OpenRouter API key is invalid or unauthorized. Please check your OPENROUTER_API_KEY in .env.local',
+    },
+    {
+      test: () => message.includes('402') || message.includes('insufficient credits'),
+      code: 'INSUFFICIENT_CREDITS',
+      message: 'OpenRouter account has insufficient credits. Please add credits to your account.',
+    },
+    {
+      test: () => message.includes('403') || message.includes('forbidden'),
+      code: 'MODEL_FORBIDDEN',
+      message: `Model "${model}" is not available or not authorized for your API key.`,
+      details: { model },
+    },
+    {
+      test: () => message.includes('404') || errorJson.includes('404'),
+      code: 'MODEL_NOT_FOUND',
+      message: `Model "${model}" not found. Please verify the model name is correct.`,
+      details: { model },
+    },
+    {
+      test: () => message.includes('429') || message.includes('rate limit'),
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'OpenRouter API rate limit exceeded. Please wait and try again.',
+    },
+    {
+      test: () => message.includes('timeout') || message.includes('ECONNREFUSED') || message.includes('ETIMEDOUT'),
+      code: 'NETWORK_ERROR',
+      message: 'Network error: Could not connect to OpenRouter API. Please check your internet connection.',
+    },
+  ];
+
+  for (const pattern of errorPatterns) {
+    if (pattern.test()) {
+      return new OpenRouterError(
+        pattern.message,
+        pattern.code,
+        { originalError: message, ...pattern.details }
+      );
+    }
+  }
+
+  return new OpenRouterError(
+    `OpenRouter API error: ${message}`,
+    'API_ERROR',
+    { originalError: error }
+  );
 }
 
 /**

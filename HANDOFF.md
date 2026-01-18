@@ -1,18 +1,19 @@
 # Expert Note System - Handoff Document
 
-**Last Updated:** 2026-01-14
+**Last Updated:** 2026-01-18
 **For:** Next AI agent picking up this project
-**Context:** User Management System fully implemented + registration fixed
+**Context:** i18n (EN/CN) feature complete and deployed to production
 
 ---
 
 ## Current System State
 
-**Status:** ✅ Phase 6 Complete - User Management System Implemented
+**Status:** ✅ Phase 8 Complete - i18n Language Switching (EN/CN)
 
 **Production URL:** https://spansurvey.net/annote
 **Local Dev:** http://localhost:3000
 **Database:** annotservice (PostgreSQL 16)
+**PM2 Process ID:** 30
 
 ---
 
@@ -52,7 +53,125 @@
 
 ---
 
-## Recent Changes (Jan 14, 2026)
+## Recent Changes (Jan 18, 2026)
+
+### i18n Language Switching Feature (Session 9)
+
+**Feature:** English/Chinese UI language toggle
+
+| Component | Changes |
+|-----------|---------|
+| LanguageContext | React Context + Provider for language state |
+| useTranslation hook | `const { t, language, setLanguage } = useTranslation()` |
+| en.json / zh.json | ~260 translation strings each |
+| LanguageSwitcher | Toggle in AppHeader showing "中文"/"EN" |
+
+**Key Files Created:**
+```
+src/i18n/
+├── index.ts              # Main exports
+├── LanguageContext.tsx   # Context + Provider
+├── useTranslation.ts     # Custom hook
+├── types.ts              # TypeScript types
+└── locales/
+    ├── en.json           # English translations
+    └── zh.json           # Chinese translations
+```
+
+**Components Migrated (~34 total):**
+- AppHeader, LoginForm, DeleteConfirmModal
+- DocumentFilters, KnowledgeCard, KnowledgeTable
+- PromptsTable, ViewModeToggle
+- All settings pages (layout, prompts, tags, members, etc.)
+- Dashboard, Knowledge, Prompts pages
+
+**What's Translated:**
+- Navigation labels, button text, form labels
+- Table headers, filter options, empty states
+- Error messages, modal dialogs
+
+**What Stays in English:**
+- "Expert Note" (app name)
+- System prompts / LLM generation guides
+- User-generated content, tag names
+
+**Persistence:** localStorage key `expert-note-language`, defaults to English
+
+---
+
+## Lessons Learned (Session 9)
+
+### ⚠️ SSH Key Path Variability
+
+The Dropbox path varies between machines/configurations:
+
+| Path Type | Example |
+|-----------|---------|
+| Direct | `/Users/ningli/Dropbox/...` |
+| CloudStorage | `/Users/ningli/Library/CloudStorage/Dropbox/...` |
+
+**Always verify with `ls` before using:**
+```bash
+ls /Users/ningli/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem
+# OR if that fails:
+ls /Users/ningli/Library/CloudStorage/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem
+```
+
+**Current Working Path:**
+```
+/Users/ningli/Dropbox/Ning_Agentic_AI_workflow/claude_code/expert-note/ningli.pem
+```
+
+### ⚠️ i18n Migration: Systematic Component Tracing Required
+
+**Problem:** Initial i18n migration missed many components, leaving English text visible after switching to Chinese.
+
+**Root Cause:** Only migrated "main" page components, didn't trace through all child components like:
+- ViewModeToggle (Table/Card buttons)
+- KnowledgeTable, PromptsTable (table headers, labels)
+- Settings layout (sidebar items)
+
+**Lesson:** Before starting i18n migration:
+1. List ALL components in the feature area
+2. Read each component to identify hardcoded strings
+3. Create comprehensive translation key list
+4. Migrate systematically, verifying each component
+
+---
+
+## Previous Changes (Jan 15, 2026)
+
+### Production PM2 & Nginx Fixes (Session 6)
+
+**Critical Discovery:** PM2 does NOT automatically load .env files!
+
+| Issue | Symptom | Fix |
+|-------|---------|-----|
+| DB_PASSWORD missing | Login 500 errors, "client password must be a string" | Explicitly set in PM2 startup |
+| OPENROUTER_API_KEY missing | Extraction 401 errors, using old key | Explicitly set in PM2 startup |
+| Nginx timeout too short | 504 Gateway Timeout on large documents | Increased to 300s (5 min) |
+
+**Key Changes:**
+- ✅ All environment variables now explicitly set when starting PM2
+- ✅ Nginx `/annote` location has `proxy_read_timeout 300s`
+- ✅ Database templates verified working (marker test confirmed)
+- ✅ OpenRouter API key updated to correct value
+
+**PM2 Restart Command (if needed):**
+```bash
+pm2 delete expert-note
+PORT=3006 NODE_ENV=production BASE_PATH=/annote DB_HOST=localhost DB_PORT=5432 \
+DB_NAME=annotservice DB_USER=postgres DB_PASSWORD=annotservice2025 \
+OPENROUTER_API_KEY='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' \
+SESSION_SECRET='annote-production-secret-key-secure-2025-deployment' \
+pm2 start npm --name expert-note -- start && pm2 save
+```
+
+**Fix Reports:** `test-reports/fix-report-2026-01-15-pm2-environment.md`
+
+---
+
+## Previous Changes (Jan 14, 2026)
 
 ### User Management System - Complete Implementation
 
@@ -149,6 +268,13 @@ expert-note/
 ├── RECENT_WORK_2026-01.md              ← Detailed changes log
 │
 ├── src/
+│   ├── i18n/                           ← i18n system ✅ NEW (Session 9)
+│   │   ├── index.ts                    ← Main exports
+│   │   ├── LanguageContext.tsx         ← Context + Provider
+│   │   ├── useTranslation.ts           ← Hook: t(), language, setLanguage
+│   │   └── locales/
+│   │       ├── en.json                 ← English (~260 strings)
+│   │       └── zh.json                 ← Chinese (~260 strings)
 │   ├── app/
 │   │   ├── page.tsx                    ← Dashboard with sharing icons
 │   │   ├── documents/[id]/page.tsx     ← Editor with read-only mode
@@ -347,14 +473,14 @@ psql -h localhost -U ningli -d annotservice -f sql/migrations/XXX.sql  # Run mig
 ## Next Development Tasks (Prioritized)
 
 ### High Priority
-1. **Test password reset flow** - Verify temp password works for all user types
-2. **Monitor production** - Watch for user management or permission errors
+1. **i18n Coverage Check** - Verify all pages display correctly in Chinese
+2. **PDF Word-Joining Issue** - Words like "demandpersonalized" still occur in PDF conversion
 3. **Migration cleanup** - Renumber duplicate migration files (005, 006, 007)
 
 ### Medium Priority
-1. **NULL org_id safety** - Add explicit checks in permission logic
-2. **Improve error messages** - Consistent 403 vs 404 usage
-3. **Test disabled/deleted login** - Verify error messages display correctly
+1. **Add Toast Notifications** - Show feedback when copy/download actions occur
+2. **Test PDF/DOCX Upload Flow** - Verify convert endpoint and form editing works
+3. **Monitor production** - Watch for any remaining PM2/nginx issues
 
 ### Nice to Have
 1. **Integration tests** - Automated user management tests
@@ -376,8 +502,12 @@ pm2 restart expert-note
 
 ---
 
-**Handoff Complete. User Management System is fully implemented and deployed.**
+**Handoff Complete. i18n (EN/CN) feature deployed and operational.**
+
+**⚠️ Critical Reminders:**
+1. PM2 does NOT load .env files! See DEPLOYMENT.md "Issue 2" if you need to restart PM2.
+2. SSH key path may be `/Users/ningli/Dropbox/...` or `/Users/ningli/Library/CloudStorage/Dropbox/...` - verify with `ls` first.
 
 **Questions?** Read `CLAUDE.md` for project details, or check specific docs above.
 
-**Test Users:** admin (super_admin), ning (owner), expert1 (member), testuser123 (individual) - all with password `password123`
+**Test Users:** admin (super_admin) - password `password123`

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expert Note User Guide</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --text: #1f2937;
+      --bg: #ffffff;
+      --border: #e5e7eb;
+      --code-bg: #f3f4f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: var(--text);
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    h1 { font-size: 2.5em; margin: 1em 0 0.5em; color: var(--primary); border-bottom: 3px solid var(--primary); padding-bottom: 0.3em; }
+    h2 { font-size: 1.8em; margin: 1.5em 0 0.5em; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 0.2em; }
+    h3 { font-size: 1.4em; margin: 1.2em 0 0.4em; }
+    h4 { font-size: 1.1em; margin: 1em 0 0.3em; }
+    p { margin: 0.8em 0; }
+    ul, ol { margin: 0.8em 0 0.8em 1.5em; }
+    li { margin: 0.3em 0; }
+    code {
+      background: var(--code-bg);
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 0.9em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1em 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.6em 0.8em;
+      text-align: left;
+    }
+    th { background: var(--code-bg); font-weight: 600; }
+    tr:nth-child(even) { background: #f9fafb; }
+    hr {
+      border: none;
+      border-top: 2px solid var(--border);
+      margin: 2em 0;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { font-weight: 600; }
+    @media print {
+      body { max-width: 100%; padding: 20px; }
+      h1, h2 { page-break-after: avoid; }
+      table, ul, ol { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<h1>Expert Note User Guide</h1>
+<p><strong>Annotation-Based Knowledge Capture System</strong></p>
+<hr>
+<p><strong>Version:</strong> 1.0<br><strong>Last Updated:</strong> January 2026</p>
+<hr>
+<h2>About This Guide</h2>
+<p>This guide provides comprehensive instructions for using Expert Note, an annotation-based knowledge capture system designed to help you:</p>
+<ul><li><strong>Capture</strong> documents from multiple sources (text, PDF, Word)</li><li><strong>Annotate</strong> content using a structured three-level system</li><li><strong>Extract</strong> knowledge through AI-powered analysis</li><li><strong>Collaborate</strong> with your organization members</li></ul>
+<h2>Who Should Read This Guide</h2>
+<table><tr><td>If you are...</td><td>Start with...</td></tr></table>
+<table><tr><td>New to Expert Note</td><td>Chapter 1: Getting Started</td></tr></table>
+<table><tr><td>An Organization Owner</td><td>Chapter 2: Owner Features</td></tr></table>
+<table><tr><td>An Organization Member</td><td>Chapter 3: Member Features</td></tr></table>
+<table><tr><td>Looking for reference info</td><td>Chapter 4: Common Features</td></tr></table>
+<h2>Table of Contents</h2>
+<ol><li><strong>Getting Started</strong></li><li>   - Introduction</li><li>   - Logging In</li><li>   - Registration</li><li>   - Understanding Your Role</li><li>   - Dashboard Overview</li></ol>
+<ol><li><strong>Organization Owner Features</strong></li><li>   - Creating Documents</li><li>   - Annotating Documents</li><li>   - Extracting Knowledge</li><li>   - Sharing Content</li><li>   - Managing Members</li><li>   - Creating Invitation Codes</li></ol>
+<ol><li><strong>Organization Member Features</strong></li><li>   - Your Role as a Member</li><li>   - Viewing Shared Documents</li><li>   - Editing Shared Documents</li><li>   - Viewing Knowledge &amp; Prompts</li><li>   - Managing Your Account</li></ol>
+<ol><li><strong>Common Features &amp; Quick Reference</strong></li><li>   - Understanding Annotations</li><li>   - Search and Filtering</li><li>   - Tag Management</li><li>   - Trash &amp; Recovery</li><li>   - Account Settings</li><li>   - Keyboard Shortcuts</li><li>   - Glossary</li></ol>
+<hr>
+<p><em>For technical support, contact your system administrator.</em></p>
+<hr>
+<h1>Getting Started with Expert Note</h1>
+<p>This guide will help you get up and running with Expert Note, an annotation-based knowledge capture system designed for structured expert note-taking.</p>
+<hr>
+<h2>What is Expert Note?</h2>
+<p>Expert Note is a knowledge management system that helps you:</p>
+<ul><li><strong>Capture documents</strong> - Upload and organize markdown documents, PDFs, and Word files</li><li><strong>Annotate with precision</strong> - Add structured annotations at three levels (Macro, Meso, Micro)</li><li><strong>Extract knowledge</strong> - Use AI to transform your annotations into organized knowledge entries</li><li><strong>Generate prompts</strong> - Create AI system prompts based on your extracted knowledge</li></ul>
+<p>The system is built around organizations, allowing teams to collaborate on shared content while maintaining individual ownership of documents and knowledge.</p>
+<hr>
+<h2>Logging In</h2>
+<h3>Accessing the System</h3>
+<ol><li>Open your web browser and navigate to the Expert Note URL provided by your administrator</li><li>You will see the login page with the Expert Note title</li></ol>
+<h3>Sign In Steps</h3>
+<ol><li>Enter your <strong>Username</strong> in the first field</li><li>Enter your <strong>Password</strong> in the second field</li><li>Click the <strong>Sign In</strong> button</li></ol>
+<ul><li>If your credentials are correct, you will be redirected to your dashboard. If you see an error message:</li><li>Double-check your username and password for typos</li><li>Ensure your account has been activated by your administrator</li><li>Contact your organization owner or system administrator if problems persist</li></ul>
+<h3>First-Time Users</h3>
+<p>If you do not have an account yet, click the <strong>Register with invitation code</strong> link below the sign-in form to create a new account.</p>
+<hr>
+<h2>Registration</h2>
+<p>New users must register using an invitation code. This ensures that only authorized individuals can access the system.</p>
+<h3>Prerequisites</h3>
+<ul><li>Before registering, you will need:</li><li>An <strong>invitation code</strong> from your organization administrator or system administrator</li><li>A web browser with internet access</li></ul>
+<h3>Registration Steps</h3>
+<ol><li>Navigate to the login page and click <strong>Register with invitation code</strong></li></ol>
+<ol><li>Fill in the registration form:</li></ol>
+<p>| Field | Required | Description |<br>   |-------|----------|-------------|<br>   | <strong>Invitation Code</strong> | Yes | The code provided by your administrator (case-insensitive) |<br>   | <strong>Username</strong> | Yes | Your unique login name (minimum 3 characters) |<br>   | <strong>Display Name</strong> | No | How your name appears to other users |<br>   | <strong>Phone Number</strong> | No | Your contact phone number |<br>   | <strong>Email</strong> | No | Your email address for notifications |<br>   | <strong>Password</strong> | Yes | Your account password (minimum 8 characters) |<br>   | <strong>Confirm Password</strong> | Yes | Re-enter your password to confirm |</p>
+<ol><li>Click <strong>Create Account</strong></li></ol>
+<ol><li>Upon successful registration, you will be automatically logged in and redirected to your dashboard</li></ol>
+<h3>Important Notes</h3>
+<ul><li>Your username cannot be changed after registration</li><li>Choose a strong password that you can remember</li><li>The invitation code determines your role and organization membership</li><li>If you receive an error about the invitation code, verify it with the person who provided it</li></ul>
+<hr>
+<h2>Understanding Your Role</h2>
+<p>Expert Note uses a role-based permission system. Your role determines what features you can access and what actions you can perform.</p>
+<h3>Organization Owner</h3>
+<p>As an <strong>Organization Owner</strong>, you have full administrative access within your organization:</p>
+<ul><li><strong>Create and manage documents</strong> - Upload, edit, and delete your own documents</li><li><strong>Share content</strong> - Control sharing settings for your documents and knowledge entries</li><li><strong>Manage organization members</strong> - View member list and manage member accounts</li><li><strong>Create invitation codes</strong> - Generate codes to invite new members to your organization</li><li><strong>Access all shared content</strong> - View and (if permitted) edit content shared by members</li><li><strong>Manage tags</strong> - Create and organize tags for categorizing content</li></ul>
+<h3>Organization Member</h3>
+<p>As an <strong>Organization Member</strong>, you have access to collaborative features:</p>
+<ul><li><strong>Create your own content</strong> - Upload and manage your own documents and knowledge entries</li><li><strong>View shared content</strong> - Access documents and knowledge shared by your organization</li><li><strong>Edit shared content</strong> - Modify shared content when edit permission is granted</li><li><strong>Use knowledge extraction</strong> - Transform annotations into knowledge entries</li><li><strong>Generate prompts</strong> - Create AI prompts based on available knowledge</li></ul>
+<h3>Key Differences</h3>
+<table><tr><td>Capability</td><td>Owner</td><td>Member</td></tr></table>
+<table><tr><td>Create own documents</td><td>Yes</td><td>Yes</td></tr></table>
+<table><tr><td>View shared content</td><td>Yes</td><td>Yes</td></tr></table>
+<table><tr><td>Edit shared content (when allowed)</td><td>Yes</td><td>Yes</td></tr></table>
+<table><tr><td>Manage organization members</td><td>Yes</td><td>No</td></tr></table>
+<table><tr><td>Create invitation codes</td><td>Yes</td><td>No</td></tr></table>
+<table><tr><td>Access Settings &gt; Members</td><td>Yes</td><td>No</td></tr></table>
+<table><tr><td>Access Settings &gt; Invites</td><td>Yes</td><td>No</td></tr></table>
+<hr>
+<h2>Dashboard Overview</h2>
+<p>After logging in, you will see the main dashboard. This is your central hub for accessing all Expert Note features.</p>
+<h3>Navigation Bar</h3>
+<p>The navigation bar at the top of the screen provides quick access to main sections:</p>
+<table><tr><td>Link</td><td>Description</td></tr></table>
+<table><tr><td><strong>Expert Note</strong> (logo)</td><td>Returns to the Documents dashboard</td></tr></table>
+<table><tr><td><strong>Knowledge Base</strong></td><td>View and manage extracted knowledge entries</td></tr></table>
+<table><tr><td><strong>Prompts</strong></td><td>Create and manage AI system prompts</td></tr></table>
+<table><tr><td><strong>Settings</strong></td><td>Access account settings, tags, and administration</td></tr></table>
+<table><tr><td><strong>Logout</strong></td><td>Sign out of your account</td></tr></table>
+<p>Your display name (or username) appears in the top right corner to confirm you are logged in.</p>
+<h3>Documents Dashboard</h3>
+<p>The main dashboard displays your documents in a table format:</p>
+<ul><li><strong>Title</strong> - The document name (click to open)</li><li><strong>Status</strong> - Current state: Raw, Annotated, or Refined</li><li><strong>Annotations</strong> - Count of Macro, Meso, and Micro annotations</li><li><strong>Tags</strong> - Category labels assigned to the document</li><li><strong>Uploaded By</strong> - Who created the document</li><li><strong>Updated</strong> - When the document was last modified</li><li><strong>Sharing</strong> - Whether the document is shared with your organization</li><li><strong>Edit</strong> - Whether shared users can edit (owners only see this for their documents)</li><li><strong>Actions</strong> - Download and delete options</li></ul>
+<h3>Creating a New Document</h3>
+<ul><li>Click the <strong>+ New Document</strong> button in the top right to:</li><li>Type or paste markdown content directly</li><li>Upload files (Markdown, PDF, or DOCX)</li></ul>
+<h3>Search and Filters</h3>
+<p>The filter bar below the page title helps you find specific documents:</p>
+<ul><li><strong>Search</strong> - Type to filter by document title</li><li><strong>Tags</strong> - Filter by one or more tags</li><li><strong>Status</strong> - Show only Raw, Annotated, or Refined documents</li><li><strong>User</strong> - Filter by document creator</li></ul>
+<p>Click any active filter to remove it, or use <strong>Clear All</strong> to reset all filters.</p>
+<h3>Statistics Panel</h3>
+<p>At the bottom of the dashboard, three statistics cards summarize your workspace:</p>
+<ul><li><strong>Total Documents</strong> - Number of documents in your current view</li><li><strong>Annotated</strong> - Documents with status Annotated or Refined</li><li><strong>Total Annotations</strong> - Sum of all Macro, Meso, and Micro annotations</li></ul>
+<hr>
+<h2>Next Steps</h2>
+<p>Now that you understand the basics, you are ready to start using Expert Note:</p>
+<ol><li><strong>Create your first document</strong> - Click "+ New Document" and add some content</li><li><strong>Add annotations</strong> - Learn about the three annotation levels (Macro, Meso, Micro)</li><li><strong>Extract knowledge</strong> - Use AI to process your annotations</li><li><strong>Generate prompts</strong> - Create AI system prompts from your knowledge base</li></ol>
+<p>For detailed instructions on each feature, see the other guides in this documentation.</p>
+<hr>
+<p><em>Need help? Contact your organization administrator or system administrator for support.</em></p>
+<hr>
+<h1>Organization Owner Features</h1>
+<p>This guide covers the features available to organization owners in Expert Note. As an owner, you can create and annotate documents, extract knowledge, share content with your team, manage members, and create invitation codes.</p>
+<hr>
+<h2>Table of Contents</h2>
+<ol><li><a href="#creating-documents">Creating Documents</a></li><li><a href="#annotating-documents">Annotating Documents</a></li><li><a href="#extracting-knowledge">Extracting Knowledge</a></li><li><a href="#sharing-content">Sharing Content</a></li><li><a href="#managing-members">Managing Members</a></li><li><a href="#creating-invitation-codes">Creating Invitation Codes</a></li></ol>
+<hr>
+<h2>Creating Documents</h2>
+<h3>Single Document</h3>
+<p>To create a new document:</p>
+<ol><li>Click <strong>"New Document"</strong> from the dashboard</li><li>Enter a <strong>Document Title</strong> (required)</li><li>Optionally select or create <strong>Tags</strong> to categorize your document</li><li>Choose one of the following methods to add content:</li><li>   - <strong>Type directly</strong>: Enter markdown content in the text area</li><li>   - <strong>Upload a file</strong>: Click the upload zone to select a file</li></ol>
+<ul><li><strong>Supported file formats:</strong></li><li><code>.md</code> (Markdown) - loaded directly</li><li><code>.txt</code> (Plain text) - loaded directly</li><li><code>.pdf</code> (PDF document) - automatically converted to markdown</li><li><code>.docx</code> (Word document) - automatically converted to markdown</li></ul>
+<ol><li>Click <strong>"Create Document"</strong> to save</li></ol>
+<p><strong>Tip:</strong> When uploading PDF or DOCX files, the system converts them to markdown and populates the form. You can edit the title, tags, and content before saving.</p>
+<h3>Bulk Upload</h3>
+<p>To upload multiple documents at once:</p>
+<ol><li>Click <strong>"New Document"</strong> from the dashboard</li><li>Click the <strong>"Bulk Upload"</strong> tab at the top</li><li>Drag and drop a folder or multiple files into the upload zone</li><li>   - Or click to browse and select files</li><li>Review the list of files to be uploaded</li><li>   - Remove any unwanted files by clicking the X icon</li><li>Click <strong>"Upload X Files"</strong> to process all documents</li></ol>
+<ul><li><strong>Limits:</strong></li><li>Maximum 100 files per batch</li><li>Supported formats: <code>.md</code>, <code>.txt</code>, <code>.pdf</code>, <code>.docx</code></li></ul>
+<p>After upload completes, you will see a summary showing successful uploads and any errors.</p>
+<hr>
+<h2>Annotating Documents</h2>
+<p>Annotations are the core of Expert Note. They capture your expert insights at three levels of abstraction.</p>
+<h3>Annotation Levels</h3>
+<table><tr><td>Level</td><td>Color</td><td>Shortcut</td><td>Purpose</td></tr></table>
+<table><tr><td><strong>MACRO</strong></td><td>Red</td><td>Cmd+1</td><td>High-level themes, overarching arguments, strategic principles</td></tr></table>
+<table><tr><td><strong>MESO</strong></td><td>Yellow</td><td>Cmd+2</td><td>Supporting ideas, evidence, section-level patterns</td></tr></table>
+<table><tr><td><strong>MICRO</strong></td><td>Green</td><td>Cmd+3</td><td>Specific details, exact wording, granular techniques</td></tr></table>
+<h3>How to Annotate</h3>
+<ol><li>Open a document from the dashboard</li><li>Place your cursor where you want to add an annotation</li><li>Add an annotation using one of these methods:</li><li>   - <strong>Click the toolbar button</strong> for MACRO, MESO, or MICRO</li><li>   - <strong>Use keyboard shortcuts</strong>: Cmd+1 (MACRO), Cmd+2 (MESO), Cmd+3 (MICRO)</li><li>In the modal that appears, enter your annotation text</li><li>Click <strong>"Add Annotation"</strong> to insert it</li></ol>
+<p><strong>Annotation format in the document:</strong><br>``<code><br>[[MACRO: Your high-level insight here]]<br>[[MESO: Your supporting idea here]]<br>[[MICRO: Your specific detail here]]<br></code>`<code></p>
+<h3>Viewing Annotation Counts</h3>
+<ul><li>The right sidebar shows your annotation statistics:</li><li>Total count for each level (MACRO, MESO, MICRO)</li><li>Document status (draft, annotated, processed)</li></ul>
+<h3>Keyboard Shortcuts Reference</h3>
+<table><tr><td>Action</td><td>Shortcut</td></tr></table>
+<table><tr><td>Add MACRO annotation</td><td>Cmd+1</td></tr></table>
+<table><tr><td>Add MESO annotation</td><td>Cmd+2</td></tr></table>
+<table><tr><td>Add MICRO annotation</td><td>Cmd+3</td></tr></table>
+<table><tr><td>Save document</td><td>Cmd+S</td></tr></table>
+<table><tr><td>Switch document</td><td>Cmd+K</td></tr></table>
+<hr>
+<h2>Extracting Knowledge</h2>
+<p>Once you have annotated a document, you can extract structured knowledge entries from your annotations using AI.</p>
+<h3>Steps to Extract Knowledge</h3>
+<ol><li>Open an annotated document</li><li>In the right sidebar, locate the <strong>Actions</strong> section</li><li>Select an <strong>Extraction Guide</strong> from the dropdown</li><li>   - The default guide works for most cases</li><li>   - Specialized guides may be available for specific domains</li><li>Click <strong>"Extract Knowledge"</strong></li><li>(Optional) In the modal, add <strong>Custom Instructions</strong> to guide the AI</li><li>   - Example: "Focus on generalizing principles for academic writing"</li><li>   - Example: "Preserve domain-specific terminology"</li><li>Click <strong>"Extract"</strong> to begin processing</li></ol>
+<h3>What Happens During Extraction</h3>
+<ul><li>The AI analyzes each annotation in your document and creates knowledge entries that include:</li><li><strong>Background/Context</strong>: The surrounding text and situation</li><li><strong>Refined Content</strong>: A generalized, reusable version of your insight</li><li><strong>Annotation Level</strong>: Preserved from the original (MACRO, MESO, or MICRO)</li><li><strong>Tags</strong>: Inherited from the source document</li></ul>
+<p>After extraction completes, you will see a confirmation showing how many knowledge entries were created. You can view and edit these entries from the Knowledge page.</p>
+<hr>
+<h2>Sharing Content</h2>
+<p>Share your documents and knowledge entries with other members of your organization.</p>
+<h3>Sharing a Document</h3>
+<ol><li>Open the document you want to share</li><li>Look for the <strong>sharing toggle</strong> in the document settings</li><li>Enable sharing by toggling it <strong>ON</strong></li><li>Configure edit permissions:</li><li>   - <strong>Read-only</strong>: Members can view but not edit</li><li>   - <strong>Allow edits</strong>: Members can view and modify the content</li></ol>
+<h3>Important Notes About Sharing</h3>
+<ul><li>Only the document <strong>owner</strong> (creator) can toggle sharing on/off</li><li>Shared content is visible <strong>only to members of your organization</strong></li><li>When viewing a shared document you did not create, you will see a banner indicating it is "View only" with the owner's name</li><li>Knowledge entries extracted from shared documents can also be shared</li></ul>
+<h3>Who Can See Shared Content?</h3>
+<ul><li>All members in your organization can view shared documents</li><li>If "Allow edits" is enabled, members can also modify the content</li><li>Only the owner can delete the document</li></ul>
+<hr>
+<h2>Managing Members</h2>
+<p>Organization owners can manage the members of their organization from the Settings page.</p>
+<h3>Accessing Member Management</h3>
+<ol><li>Click your profile or navigate to <strong>Settings</strong></li><li>Select <strong>"Members"</strong> from the settings menu</li></ol>
+<h3>Viewing Members</h3>
+<ul><li>The Members page displays all organization members in a table with:</li><li>Username</li><li>Display name</li><li>Email</li><li>Account status (Active/Disabled)</li><li>Creation date</li></ul>
+<p>Use the search bar to find members by username, display name, or email.</p>
+<h3>Resetting a Member's Password</h3>
+<p>If a member forgets their password:</p>
+<ol><li>Find the member in the table</li><li>Click the <strong>"Reset Password"</strong> action button</li><li>Confirm the action when prompted</li><li>A modal will display the <strong>temporary password</strong></li><li>   - This password is shown only once</li><li>   - Share it securely with the member</li><li>The member must use this temporary password to log in and should change it afterward</li></ol>
+<h3>Enabling/Disabling Member Accounts</h3>
+<p>To disable a member's access:</p>
+<ol><li>Find the member in the table</li><li>Click <strong>"Disable"</strong> in the actions column</li><li>Confirm the action</li></ol>
+<p>Disabled members cannot log in until re-enabled. To re-enable:</p>
+<ol><li>Find the disabled member</li><li>Click <strong>"Enable"</strong></li><li>The member can now log in again</li></ol>
+<h3>Removing Members</h3>
+<p>To remove a member from your organization:</p>
+<ol><li>Find the member in the table</li><li>Click <strong>"Delete"</strong> in the actions column</li><li>Confirm the deletion</li></ol>
+<p><strong>Note:</strong> This is a soft delete - the user's data is preserved but they can no longer access the organization.</p>
+<hr>
+<h2>Creating Invitation Codes</h2>
+<p>Invitation codes allow new users to register and automatically join your organization.</p>
+<h3>Accessing Invitation Management</h3>
+<ol><li>Navigate to <strong>Settings</strong></li><li>Select <strong>"Invitations"</strong> from the menu</li></ol>
+<h3>Creating a New Invitation Code</h3>
+<ol><li>Click the <strong>"Create Member Code"</strong> button</li><li>Set the <strong>Usage Limit</strong>:</li><li>   - Enter a number (e.g., </code>1<code> for single-use, </code>5<code> for five uses)</li><li>   - Enter </code>0<code> for unlimited uses</li><li>Click <strong>"Create Code"</strong></li></ol>
+<p>The new code will appear in your codes table.</p>
+<h3>Managing Invitation Codes</h3>
+<p>The codes table shows:</p>
+<table><tr><td>Column</td><td>Description</td></tr></table>
+<table><tr><td><strong>Code</strong></td><td>The invitation code string</td></tr></table>
+<table><tr><td><strong>Type</strong></td><td>Badge showing "Owner" (blue) or "Member" (green)</td></tr></table>
+<table><tr><td><strong>Usage</strong></td><td>Current uses / Maximum uses (e.g., "2/5" or "3/infinite")</td></tr></table>
+<table><tr><td><strong>Created</strong></td><td>Date the code was created</td></tr></table>
+<table><tr><td><strong>Actions</strong></td><td>Delete button (only for unused codes)</td></tr></table>
+<h3>Copying and Sharing Codes</h3>
+<ol><li>Find an available code in the table</li><li>Click the <strong>copy icon</strong> next to the code</li><li>Share the code with the person you want to invite</li></ol>
+<h3>Deleting Unused Codes</h3>
+<p>You can only delete codes that have never been used:</p>
+<ol><li>Find an unused code (0 uses)</li><li>Click <strong>"Delete"</strong> in the actions column</li><li>Confirm the deletion</li></ol>
+<h3>How New Members Use Invitation Codes</h3>
+<ol><li>Share the code with the new member</li><li>They visit the registration page</li><li>They enter the invitation code during registration</li><li>Upon successful registration, they automatically join your organization as a member</li></ol>
+<h3>Filter Options</h3>
+<ul><li>Use the checkbox to show or hide fully used codes:</li><li><strong>Show fully used codes</strong>: See all codes including exhausted ones</li><li><strong>Hide fully used codes</strong>: Only show codes that can still be used</li></ul>
+<hr>
+<h2>Summary</h2>
+<p>As an organization owner, you have full control over:</p>
+<table><tr><td>Feature</td><td>What You Can Do</td></tr></table>
+<table><tr><td><strong>Documents</strong></td><td>Create, edit, annotate, share, and delete your documents</td></tr></table>
+<table><tr><td><strong>Knowledge</strong></td><td>Extract, edit, and share knowledge entries</td></tr></table>
+<table><tr><td><strong>Members</strong></td><td>View, reset passwords, enable/disable, and remove members</td></tr></table>
+<table><tr><td><strong>Invitations</strong></td><td>Create and manage invitation codes for new members</td></tr></table>
+<p>For additional help, consult the other sections of this user guide or contact your system administrator.</p>
+<hr>
+<h1>Organization Member Features</h1>
+<p>As an organization member, you have access to content shared by your organization's owners and can collaborate on documents when editing is enabled.</p>
+<hr>
+<h2>Your Role as a Member</h2>
+<ul><li>Organization members can:</li><li>View documents, knowledge entries, and prompts shared by organization owners</li><li>Edit shared content when the owner has enabled edit permissions</li><li>Create and manage your own tags for organizing content</li><li>Update your profile and security settings</li></ul>
+<hr>
+<h2>Viewing Shared Documents</h2>
+<h3>Accessing Documents</h3>
+<ol><li>Go to the <strong>Documents</strong> page from the main navigation</li><li>Shared documents from your organization appear in your document list</li><li>Each document shows:</li><li>   - Title and tags</li><li>   - Annotation counts (MACRO, MESO, MICRO)</li><li>   - The creator's name</li><li>   - Last updated date</li></ol>
+<h3>Opening a Document</h3>
+<ul><li>Click on any document in the list to open it in the document viewer. You can:</li><li>Read the full content with all annotations</li><li>See highlighted annotations at each level</li><li>Navigate between annotation markers</li></ul>
+<hr>
+<h2>Editing Shared Documents</h2>
+<h3>When Editing Is Enabled</h3>
+<p>If the document owner has enabled edit permissions, you can:</p>
+<ol><li>Click on the document to open the editor</li><li>Use the annotation toolbar to add annotations:</li><li>   - <strong>MACRO</strong> (Cmd+1): High-level themes and main arguments</li><li>   - <strong>MESO</strong> (Cmd+2): Supporting ideas and evidence</li><li>   - <strong>MICRO</strong> (Cmd+3): Specific details and quotes</li><li>Select text and click an annotation level to create a new annotation</li><li>Changes are saved automatically</li></ol>
+<h3>When Editing Is Disabled</h3>
+<ul><li>If the document is view-only:</li><li>You can read the document and all its annotations</li><li>The editor will be in read-only mode</li><li>You cannot add or modify annotations</li></ul>
+<hr>
+<h2>Viewing Knowledge Entries</h2>
+<h3>Accessing Knowledge</h3>
+<ol><li>Go to the <strong>Knowledge Base</strong> page</li><li>Shared knowledge entries appear in your list</li><li>Use the search bar to find specific entries</li><li>Filter by tags to narrow your results</li></ol>
+<h3>Working with Knowledge Entries</h3>
+<ul><li>Click on any entry to view:</li><li>Background context</li><li>All extracted annotations organized by level</li><li>Source document reference (if available)</li><li>Associated tags</li></ul>
+<p>When editing is enabled by the owner, you can modify the content and annotations.</p>
+<hr>
+<h2>Viewing Generation Guides (Prompts)</h2>
+<h3>Accessing Prompts</h3>
+<ol><li>Go to the <strong>Prompts</strong> page</li><li>Shared prompts from your organization are visible in the list</li><li>Search by title or filter by tags</li></ol>
+<h3>Using Prompts</h3>
+<ul><li>You can:</li><li>View prompt content and configuration</li><li>See version history</li><li>Use shared prompts as templates for AI generation</li></ul>
+<p>When editing is enabled, you can modify the prompt content.</p>
+<hr>
+<h2>Managing Your Tags</h2>
+<p>You can create and manage your own tags for organizing content:</p>
+<ol><li>Go to <strong>Settings &gt; Tags</strong></li><li>Create new tags with custom names and colors</li><li>Delete tags you created (tags created by others cannot be deleted)</li><li>Tags you create are available when you have permission to edit documents</li></ol>
+<hr>
+<h2>Account Settings</h2>
+<h3>Updating Your Profile</h3>
+<ol><li>Go to <strong>Settings &gt; Account</strong></li><li>Update your <strong>Display Name</strong> - this appears throughout the application</li><li>Click <strong>Save Changes</strong> to apply</li></ol>
+<p>Note: Your username cannot be changed after account creation.</p>
+<h3>Changing Your Password</h3>
+<ol><li>Go to <strong>Settings &gt; Account</strong></li><li>Scroll to the <strong>Change Password</strong> section</li><li>Enter your current password</li><li>Enter and confirm your new password (minimum 8 characters)</li><li>Click <strong>Change Password</strong></li></ol>
+<hr>
+<h2>Quick Reference</h2>
+<table><tr><td>Action</td><td>Available to Members</td></tr></table>
+<table><tr><td>View shared documents</td><td>Yes</td></tr></table>
+<table><tr><td>Edit shared documents (when allowed)</td><td>Yes</td></tr></table>
+<table><tr><td>Create new documents</td><td>No</td></tr></table>
+<table><tr><td>Share documents</td><td>No</td></tr></table>
+<table><tr><td>View shared knowledge</td><td>Yes</td></tr></table>
+<table><tr><td>Edit shared knowledge (when allowed)</td><td>Yes</td></tr></table>
+<table><tr><td>View shared prompts</td><td>Yes</td></tr></table>
+<table><tr><td>Create/manage your own tags</td><td>Yes</td></tr></table>
+<table><tr><td>Delete tags created by others</td><td>No</td></tr></table>
+<table><tr><td>Update your display name</td><td>Yes</td></tr></table>
+<table><tr><td>Change your password</td><td>Yes</td></tr></table>
+<table><tr><td>Manage organization members</td><td>No</td></tr></table>
+<table><tr><td>Create invitation codes</td><td>No</td></tr></table>
+<hr>
+<p><em>For questions about accessing content, contact your organization owner.</em></p>
+<hr>
+<h1>Common Features &amp; Quick Reference</h1>
+<p>This section covers the features and concepts you will use throughout Expert Note.</p>
+<hr>
+<h2>Understanding Annotations</h2>
+<p>Annotations are the core of Expert Note. They help you structure your reading by categorizing highlighted text into three levels:</p>
+<table><tr><td>Level</td><td>Color</td><td>Purpose</td><td>Examples</td></tr></table>
+<table><tr><td><strong>MACRO</strong></td><td>Red</td><td>Theme-level annotations</td><td>Main arguments, conclusions, key themes, thesis statements</td></tr></table>
+<table><tr><td><strong>MESO</strong></td><td>Yellow</td><td>Evidence-level annotations</td><td>Supporting points, examples, data, case studies</td></tr></table>
+<table><tr><td><strong>MICRO</strong></td><td>Green</td><td>Detail-level annotations</td><td>Specific quotes, definitions, technical terms, fine details</td></tr></table>
+<h3>How Annotations Work</h3>
+<ol><li><strong>Select text</strong> in your document</li><li><strong>Choose a category</strong> (MACRO, MESO, or MICRO)</li><li><strong>Add optional notes</strong> to capture your thoughts</li><li><strong>Save</strong> to preserve your annotations</li></ol>
+<ul><li>Annotations serve two purposes:</li><li><strong>Structure your reading</strong>: Organize content by importance and type</li><li><strong>Enable knowledge extraction</strong>: Generate structured knowledge entries from your annotations using AI</li></ul>
+<hr>
+<h2>Search and Filtering</h2>
+<p>All list views (Documents, Knowledge Entries, Generation Guides) support search and filtering.</p>
+<h3>Search Box</h3>
+- Type in the search box to find items by title
+- Search updates results as you type
+- Clear the search box to show all items
+<h3>Status Filter</h3>
+Filter documents by their current state:
+- <strong>Raw</strong>: Newly uploaded, not yet annotated
+- <strong>Annotated</strong>: Has annotations but not refined
+- <strong>Refined</strong>: Fully processed with knowledge extracted
+<h3>Tag Filter</h3>
+- Click a tag to filter by that tag
+- Click multiple tags to combine filters (shows items matching ALL selected tags)
+- Click a selected tag again to remove it from the filter
+<h3>Creator Filter</h3>
+For shared content within your organization:
+- Filter to see only your own content
+- Filter to see content from specific team members
+<hr>
+<h2>Tag Management</h2>
+<p>Access tag management from <strong>Settings &gt; Tags</strong>.</p>
+<h3>Viewing Tags</h3>
+- All tags are displayed with their assigned colors
+- Tags show a usage count (how many items use each tag)
+<h3>Creating Tags</h3>
+1. Click the <strong>"+ Create Tag"</strong> button
+2. Enter a tag name
+3. Select a color from 10 available options:
+   - Red, Orange, Yellow, Green, Teal
+   - Blue, Indigo, Purple, Pink, Gray
+4. Click <strong>Create</strong> to save
+<h3>Tag Ownership</h3>
+Tags display badges indicating who created them:
+- <strong>System</strong>: Default tags that cannot be deleted
+- <strong>Yours</strong>: Tags you created (you can delete these)
+- <strong>Shared</strong>: Tags created by others in your organization (only super admins can delete)
+<h3>Deleting Tags</h3>
+- Click the delete icon next to a tag you own
+- System tags cannot be deleted
+- Deleting a tag removes it from all associated items
+<hr>
+<h2>Trash &amp; Recovery</h2>
+<p>Access trash from <strong>Settings &gt; Trash</strong>.</p>
+<h3>How Trash Works</h3>
+- Deleted items go to trash first (soft delete)
+- Items remain in trash until permanently deleted
+- You can recover items from trash at any time
+<h3>Filtering Trash</h3>
+Filter by item type:
+- <strong>Documents</strong>: Deleted text documents
+- <strong>Prompts</strong>: Deleted generation guides
+- <strong>Knowledge</strong>: Deleted knowledge entries
+<h3>Recovering Items</h3>
+1. Find the item in trash
+2. Click the <strong>"Restore"</strong> button
+3. Item returns to its original location
+<h3>Permanent Deletion</h3>
+- <strong>Single item</strong>: Click "Permanently Delete" next to an item
+- <strong>All items</strong>: Click "Empty Trash" to remove everything at once
+<p><strong>Warning</strong>: Permanent deletion cannot be undone. Data is removed from the database entirely.</p>
+<hr>
+<h2>Account Settings</h2>
+<p>Access your account from <strong>Settings &gt; Account</strong>.</p>
+<h3>Edit Display Name</h3>
+1. Enter your new display name in the field
+2. Click <strong>Save Changes</strong>
+3. Your name updates across the application
+<h3>Change Password</h3>
+1. Enter your <strong>current password</strong>
+2. Enter your <strong>new password</strong>
+3. Enter your new password again to <strong>confirm</strong>
+4. Click <strong>Change Password</strong>
+<ul><li>Password requirements:</li><li>Minimum 8 characters</li><li>Must differ from current password</li></ul>
+<hr>
+<h2>Keyboard Shortcuts</h2>
+<p>Use these shortcuts to work faster in the document editor:</p>
+<table><tr><td>Shortcut</td><td>Action</td></tr></table>
+<table><tr><td></code>Cmd + K<code></td><td>Open document switcher</td></tr></table>
+<table><tr><td></code>Cmd + S<code></td><td>Save current document</td></tr></table>
+<table><tr><td></code>Cmd + 1<code></td><td>Add MACRO annotation (red)</td></tr></table>
+<table><tr><td></code>Cmd + 2<code></td><td>Add MESO annotation (yellow)</td></tr></table>
+<table><tr><td></code>Cmd + 3<code></td><td>Add MICRO annotation (green)</td></tr></table>
+<p><strong>Note</strong>: On Windows/Linux, use </code>Ctrl<code> instead of </code>Cmd`.</p>
+<hr>
+<h2>Glossary</h2>
+<table><tr><td>Term</td><td>Definition</td></tr></table>
+<table><tr><td><strong>Document</strong></td><td>A text file you upload and annotate. Supports plain text, PDF, and DOCX formats.</td></tr></table>
+<table><tr><td><strong>Annotation</strong></td><td>Highlighted text with a category (MACRO, MESO, or MICRO) and optional notes.</td></tr></table>
+<table><tr><td><strong>Knowledge Entry</strong></td><td>Structured information extracted from your annotations, organized with background context, key points, and tags.</td></tr></table>
+<table><tr><td><strong>Generation Guide</strong></td><td>A template for AI prompt generation. Defines how to convert annotations into useful output (called "Prompt Template" in code).</td></tr></table>
+<table><tr><td><strong>Organization</strong></td><td>A group of users working together who can share documents, knowledge entries, and generation guides.</td></tr></table>
+<table><tr><td><strong>Tag</strong></td><td>A label applied to documents, knowledge entries, or generation guides for organization and filtering.</td></tr></table>
+<table><tr><td><strong>Soft Delete</strong></td><td>Moving an item to trash without permanently removing it. Can be restored.</td></tr></table>
+<table><tr><td><strong>Hard Delete</strong></td><td>Permanently removing an item from the database. Cannot be undone.</td></tr></table>
+<hr>
+<h2>Tips for Effective Use</h2>
+<ol><li><strong>Start with MACRO annotations</strong>: Identify the main themes before drilling into details</li><li><strong>Use consistent tagging</strong>: Create a tag system and apply it uniformly</li><li><strong>Extract knowledge early</strong>: Generate knowledge entries while the content is fresh</li><li><strong>Review trash regularly</strong>: Permanently delete items you no longer need to keep your workspace clean</li><li><strong>Use keyboard shortcuts</strong>: Speed up annotation with Cmd+1/2/3 shortcuts</li></ol>
+</body>
+</html>

@@ -213,20 +213,36 @@ ${customInstructions.trim()}
 }
 
 /**
+ * Group annotations by level
+ */
+function groupAnnotationsByLevel<T extends { level: AnnotationLevel }>(
+  annotations: T[]
+): Record<AnnotationLevel, T[]> {
+  return {
+    MACRO: annotations.filter(a => a.level === 'MACRO'),
+    MESO: annotations.filter(a => a.level === 'MESO'),
+    MICRO: annotations.filter(a => a.level === 'MICRO'),
+  };
+}
+
+/**
+ * Format a list of annotations for the user prompt
+ */
+function formatAnnotationList(
+  annotations: ExtractionInput['annotations'],
+  level: string
+): string {
+  if (annotations.length === 0) return `No ${level} annotations.`;
+  return annotations.map((a, i) =>
+    `${i + 1}. **Line ${a.lineNumber || 'unknown'}**: "${a.content}"\n   Surrounding text: "${a.surroundingContext.substring(0, 200)}..."`
+  ).join('\n');
+}
+
+/**
  * Build the user prompt with full document content and annotations
  */
 function buildUserPrompt(input: ExtractionInput): string {
-  // Group annotations by level for the prompt
-  const macroAnnotations = input.annotations.filter(a => a.level === 'MACRO');
-  const mesoAnnotations = input.annotations.filter(a => a.level === 'MESO');
-  const microAnnotations = input.annotations.filter(a => a.level === 'MICRO');
-
-  const formatAnnotationList = (annotations: typeof input.annotations, level: string) => {
-    if (annotations.length === 0) return `No ${level} annotations.`;
-    return annotations.map((a, i) => `
-${i + 1}. **Line ${a.lineNumber || 'unknown'}**: "${a.content}"
-   Surrounding text: "${a.surroundingContext.substring(0, 200)}..."`).join('\n');
-  };
+  const grouped = groupAnnotationsByLevel(input.annotations);
 
   return `## DOCUMENT TO ANALYZE
 
@@ -242,14 +258,14 @@ ${input.documentContent}
 
 ## ANNOTATIONS TO PROCESS
 
-### MACRO Annotations (${macroAnnotations.length} total)
-${formatAnnotationList(macroAnnotations, 'MACRO')}
+### MACRO Annotations (${grouped.MACRO.length} total)
+${formatAnnotationList(grouped.MACRO, 'MACRO')}
 
-### MESO Annotations (${mesoAnnotations.length} total)
-${formatAnnotationList(mesoAnnotations, 'MESO')}
+### MESO Annotations (${grouped.MESO.length} total)
+${formatAnnotationList(grouped.MESO, 'MESO')}
 
-### MICRO Annotations (${microAnnotations.length} total)
-${formatAnnotationList(microAnnotations, 'MICRO')}
+### MICRO Annotations (${grouped.MICRO.length} total)
+${formatAnnotationList(grouped.MICRO, 'MICRO')}
 
 ---
 
@@ -365,34 +381,35 @@ export async function extractKnowledge(input: ExtractionInput): Promise<Extracti
   }
 }
 
+/** Level display configuration */
+const LEVEL_DISPLAY = {
+  MACRO: { emoji: '🔴', label: 'MACRO' },
+  MESO: { emoji: '🟡', label: 'MESO' },
+  MICRO: { emoji: '🟢', label: 'MICRO' },
+} as const;
+
 /**
  * Build fallback markdown content when AI extraction fails
  */
 function buildFallbackMarkdown(input: ExtractionInput): string {
-  const macroAnnotations = input.annotations.filter(a => a.level === 'MACRO');
-  const mesoAnnotations = input.annotations.filter(a => a.level === 'MESO');
-  const microAnnotations = input.annotations.filter(a => a.level === 'MICRO');
+  const grouped = groupAnnotationsByLevel(input.annotations);
 
-  let markdown = `## Document Context\n\n`;
-  markdown += `**Source**: ${input.documentBackground}\n\n`;
-  markdown += `---\n\n`;
+  let markdown = `## Document Context\n\n**Source**: ${input.documentBackground}\n\n---\n\n`;
 
-  const formatAnnotations = (annotations: typeof input.annotations, level: string, emoji: string) => {
-    if (annotations.length === 0) return '';
-    let section = `## ${emoji} ${level} Annotations\n\n`;
+  for (const level of ['MACRO', 'MESO', 'MICRO'] as const) {
+    const annotations = grouped[level];
+    if (annotations.length === 0) continue;
+
+    const { emoji, label } = LEVEL_DISPLAY[level];
+    markdown += `## ${emoji} ${label} Annotations\n\n`;
+
     annotations.forEach((a, i) => {
-      section += `### ${i + 1}. ${a.lineNumber ? `Line ${a.lineNumber}` : `Annotation ${i + 1}`}\n\n`;
-      section += `**Text referred to**:\n> ${a.surroundingContext.substring(0, 200)}...\n\n`;
-      section += `**Expert comment**:\n> ${a.content}\n\n`;
-      section += `**Contextualized**: ${a.content}\n\n`;
-      section += `---\n\n`;
+      markdown += `### ${i + 1}. ${a.lineNumber ? `Line ${a.lineNumber}` : `Annotation ${i + 1}`}\n\n`;
+      markdown += `**Text referred to**:\n> ${a.surroundingContext.substring(0, 200)}...\n\n`;
+      markdown += `**Expert comment**:\n> ${a.content}\n\n`;
+      markdown += `**Contextualized**: ${a.content}\n\n---\n\n`;
     });
-    return section;
-  };
-
-  markdown += formatAnnotations(macroAnnotations, 'MACRO', '🔴');
-  markdown += formatAnnotations(mesoAnnotations, 'MESO', '🟡');
-  markdown += formatAnnotations(microAnnotations, 'MICRO', '🟢');
+  }
 
   return markdown;
 }
