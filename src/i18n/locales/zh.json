@@ -424,5 +424,25 @@
     "failedToExtract": "提取知识失败",
     "failedToCreateTag": "创建标签失败",
     "tagNameRequired": "标签名称为必填项"
+  },
+  "landing": {
+    "tagline": "赋能人类智慧",
+    "headline1": "您的专业见解",
+    "headline2": "永久保存",
+    "headline3": "无限放大",
+    "subheadline": "在人工智能无限生成的时代，唯一的稀缺资源是判断力。捕捉您的直觉，让 AI 真正为您所用。",
+    "step1Title": "上传文档",
+    "step1Desc": "导入 PDF、Word 或随手记。",
+    "step2Title": "标注洞察",
+    "step2Desc": "标记宏观、中观和微观模式。",
+    "step3Title": "AI 知识提取",
+    "step3Desc": "系统学习您的决策逻辑。",
+    "step4Title": "生成提示词",
+    "step4Desc": "让 AI 的思维方式与您同步。",
+    "loginTitle": "登录",
+    "loginSub": "进入您的专家知识库",
+    "usernameOrEmail": "用户名或邮箱",
+    "startThinking": "开启智能",
+    "wisdomEngine": "智慧引擎"
   }
 }

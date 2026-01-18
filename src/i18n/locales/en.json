@@ -423,5 +423,25 @@
     "failedToExtract": "Failed to extract knowledge",
     "failedToCreateTag": "Failed to create tag",
     "tagNameRequired": "Tag name is required"
+  },
+  "landing": {
+    "tagline": "Empowering Human Judgment",
+    "headline1": "Your Expertise",
+    "headline2": "Preserved",
+    "headline3": "Amplified",
+    "subheadline": "In the era of infinite AI generation, the only thing that matters is knowing what's good. Capture your judgment, scale your thinking.",
+    "step1Title": "Upload Documents",
+    "step1Desc": "Import PDFs, Word docs, or notes.",
+    "step2Title": "Annotate Insights",
+    "step2Desc": "Tag Macro, Meso, and Micro patterns.",
+    "step3Title": "AI Distillation",
+    "step3Desc": "The system learns your decision logic.",
+    "step4Title": "Custom Prompts",
+    "step4Desc": "AI that finally thinks just like you.",
+    "loginTitle": "Sign In",
+    "loginSub": "Access your expert knowledge base",
+    "usernameOrEmail": "Username or Email",
+    "startThinking": "Start Thinking",
+    "wisdomEngine": "Wisdom Engine"
   }
 }
