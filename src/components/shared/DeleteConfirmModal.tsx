@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from '@/i18n';
+
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   title: string;
@@ -23,11 +25,13 @@ export default function DeleteConfirmModal({
   isPermanent = false,
   customMessage,
 }: DeleteConfirmModalProps) {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   const defaultMessage = isPermanent
-    ? `Are you sure you want to permanently delete "${itemName}"? This action cannot be undone.`
-    : `Are you sure you want to delete "${itemName}"? It will be moved to the trash and can be restored later.`;
+    ? `${t('modals.deleteConfirm.permanentWarning')} "${itemName}"`
+    : `"${itemName}"`;
 
   const message = customMessage || defaultMessage;
 
@@ -55,7 +59,7 @@ export default function DeleteConfirmModal({
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             <p className="text-sm text-gray-500">
-              {isPermanent ? 'This action cannot be undone.' : 'This item will be moved to trash.'}
+              {isPermanent ? t('modals.deleteConfirm.permanentWarning') : t('modals.deleteConfirm.trashWarning')}
             </p>
           </div>
         </div>
@@ -64,7 +68,7 @@ export default function DeleteConfirmModal({
           <p className="text-sm text-gray-700">{message}</p>
           {!isPermanent && (
             <p className="text-sm text-gray-500 mt-2">
-              You can restore it from the Trash in Settings.
+              {t('modals.deleteConfirm.canRestore')}
             </p>
           )}
         </div>
@@ -75,7 +79,7 @@ export default function DeleteConfirmModal({
             disabled={isDeleting}
             className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -86,7 +90,7 @@ export default function DeleteConfirmModal({
                 : 'bg-amber-600 hover:bg-amber-700'
             }`}
           >
-            {isDeleting ? 'Deleting...' : isPermanent ? 'Delete Permanently' : 'Delete'}
+            {isDeleting ? t('modals.deleteConfirm.deleting') : isPermanent ? t('modals.deleteConfirm.deletePermanently') : t('common.delete')}
           </button>
         </div>
       </div>

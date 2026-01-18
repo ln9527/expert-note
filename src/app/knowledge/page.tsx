@@ -6,6 +6,7 @@ import { KnowledgeEntry, Tag } from '@/types';
 import { KnowledgeCard, KnowledgeTable, TagFilter } from '@/components/knowledge';
 import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
 import ViewModeToggle from '@/components/common/ViewModeToggle';
+import { useTranslation } from '@/i18n';
 
 // Extended entry with optional fields from API
 interface ExtendedKnowledgeEntry extends KnowledgeEntry {
@@ -23,6 +24,7 @@ type SortColumn = 'source' | 'created' | 'updated';
 type SortDirection = 'asc' | 'desc';
 
 export default function KnowledgeListPage() {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<ExtendedKnowledgeEntry[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -335,7 +337,7 @@ export default function KnowledgeListPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-500">Loading knowledge entries...</div>
+        <div className="text-gray-500">{t('common.loading')}</div>
       </div>
     );
   }
@@ -355,9 +357,9 @@ export default function KnowledgeListPage() {
       {/* Page header */}
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Knowledge Entries</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('knowledge.title')}</h2>
           <p className="mt-1 text-gray-600">
-            Browse and search through your captured knowledge
+            {t('knowledge.createFirst')}
           </p>
         </div>
         <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
@@ -369,14 +371,14 @@ export default function KnowledgeListPage() {
           {/* Search */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search
+              {t('common.search')}
             </label>
             <div className="relative">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search in content..."
+                placeholder={t('knowledge.searchPlaceholder')}
                 className="w-full px-3 py-2 pl-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <svg
@@ -398,25 +400,25 @@ export default function KnowledgeListPage() {
           {/* Tag filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tags
+              {t('documents.tableHeaders.tags')}
             </label>
             <TagFilter
               tags={tags}
               selectedTags={selectedTags}
               onChange={setSelectedTags}
-              placeholder="Filter by tags..."
+              placeholder={t('filters.selectTags')}
             />
           </div>
 
           {/* Stats */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Statistics
+              {t('knowledge.statistics.totalEntries')}
             </label>
             <div className="flex items-center gap-4 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
-              <span>{totalEntries} entries</span>
+              <span>{totalEntries} {t('knowledge.statistics.totalEntries').toLowerCase()}</span>
               <span className="text-gray-300">|</span>
-              <span>{totalAnnotations} annotations</span>
+              <span>{totalAnnotations} {t('documents.tableHeaders.annotations').toLowerCase()}</span>
             </div>
           </div>
         </div>
@@ -425,7 +427,7 @@ export default function KnowledgeListPage() {
         {(searchQuery || selectedTags.length > 0) && (
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
             <span className="text-sm text-gray-600">
-              Showing {filteredEntries.length} of {entries.length} entries
+              {t('common.showing', { count: filteredEntries.length, item: entries.length.toString() })}
             </span>
             <button
               onClick={() => {
@@ -434,7 +436,7 @@ export default function KnowledgeListPage() {
               }}
               className="text-sm text-blue-600 hover:text-blue-800"
             >
-              Clear all filters
+              {t('filters.clearAll')}
             </button>
           </div>
         )}
@@ -460,8 +462,8 @@ export default function KnowledgeListPage() {
           </div>
           <p className="text-gray-500">
             {entries.length === 0
-              ? 'No knowledge entries yet. Start by annotating documents!'
-              : 'No entries match your filters.'}
+              ? t('knowledge.noEntries')
+              : t('knowledge.noEntriesMatch')}
           </p>
         </div>
       ) : viewMode === 'table' ? (
@@ -497,7 +499,7 @@ export default function KnowledgeListPage() {
       {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
         isOpen={!!deletingEntry}
-        title="Delete Knowledge Entry"
+        title={t('knowledge.deleteEntry')}
         itemName={deletingEntry?.background?.slice(0, 50) || `Knowledge #${deletingEntry?.id.slice(0, 8)}`}
         itemType="knowledge"
         onConfirm={handleDeleteConfirm}

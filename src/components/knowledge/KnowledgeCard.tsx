@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { KnowledgeEntry, Tag, ANNOTATION_COLORS, LEVEL_CONFIG, AnnotationLevel } from '@/types';
+import { formatDateShort } from '@/lib/utils/date';
 
 interface ExtendedKnowledgeEntry extends KnowledgeEntry {
   sourceDocumentName?: string;
@@ -28,15 +29,6 @@ export default function KnowledgeCard({ entry, onDelete, onDownload, currentUser
   const previewText = backgroundText.length > 200
     ? backgroundText.substring(0, 200) + '...'
     : backgroundText;
-
-  const formatDate = (date: Date | string) => {
-    const d = new Date(date);
-    return d.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
 
   // Get total annotation count
   const totalAnnotations = entry.annotationCount || 0;
@@ -93,7 +85,7 @@ export default function KnowledgeCard({ entry, onDelete, onDownload, currentUser
           </div>
           <div className="flex items-center gap-2 ml-2">
             <span className="text-xs text-gray-400 whitespace-nowrap">
-              {formatDate(entry.createdAt)}
+              {formatDateShort(entry.createdAt)}
             </span>
             {onDownload && (
               <button

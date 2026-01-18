@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { buildApiPath, getBasePath } from '@/lib/utils/pathHelper';
 import { SessionUser } from '@/types';
+import { useTranslation, LanguageSwitcher } from '@/i18n';
 
 interface AppHeaderProps {
   /**
@@ -29,6 +30,7 @@ export default function AppHeader({
 }: AppHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [user, setUser] = useState<SessionUser | null>(externalUser || null);
   const [loading, setLoading] = useState(!externalUser);
 
@@ -87,9 +89,9 @@ export default function AppHeader({
 
   // Navigation links configuration
   const navLinks = [
-    { href: '/knowledge', label: 'Knowledge Base' },
-    { href: '/prompts', label: 'Prompts' },
-    { href: '/settings', label: 'Settings' },
+    { href: '/knowledge', labelKey: 'nav.knowledgeBase' },
+    { href: '/prompts', labelKey: 'nav.prompts' },
+    { href: '/settings', labelKey: 'nav.settings' },
   ];
 
   if (loading && showLoadingOnAuth) {
@@ -133,21 +135,22 @@ export default function AppHeader({
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               ))}
             </nav>
 
-            {/* User Info + Logout */}
+            {/* User Info + Language + Logout */}
             <div className="flex items-center gap-3 pl-6 border-l">
               <span className="text-sm text-gray-600">
                 {user?.displayName || user?.username || 'User'}
               </span>
+              <LanguageSwitcher />
               <button
                 onClick={handleLogout}
                 className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
               >
-                Logout
+                {t('common.logout')}
               </button>
             </div>
           </div>

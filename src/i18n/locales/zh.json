@@ -1,0 +1,241 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "create": "创建",
+    "yes": "是",
+    "no": "否",
+    "logout": "退出登录",
+    "close": "关闭",
+    "download": "下载",
+    "copy": "复制",
+    "search": "搜索",
+    "filter": "筛选",
+    "clearFilters": "清除筛选",
+    "none": "无",
+    "all": "全部",
+    "actions": "操作",
+    "back": "返回",
+    "preview": "预览",
+    "submit": "提交",
+    "reset": "重置",
+    "confirm": "确认",
+    "showing": "显示 {count} 个{item}",
+    "filtered": "(已筛选)",
+    "noTags": "无标签"
+  },
+  "nav": {
+    "knowledgeBase": "知识库",
+    "prompts": "生成指南",
+    "settings": "设置",
+    "documents": "文档"
+  },
+  "auth": {
+    "signIn": "登录",
+    "signingIn": "登录中...",
+    "signInToContinue": "登录以继续",
+    "username": "用户名",
+    "password": "密码",
+    "enterUsername": "请输入用户名",
+    "enterPassword": "请输入密码",
+    "dontHaveAccount": "没有账户？",
+    "registerWithCode": "使用邀请码注册",
+    "loginFailed": "登录失败",
+    "networkError": "网络错误，请重试。",
+    "accountDisabled": "您的账户已被禁用。",
+    "invalidCredentials": "用户名或密码无效。"
+  },
+  "documents": {
+    "title": "文档",
+    "newDocument": "+ 新建文档",
+    "createDocument": "创建文档",
+    "noDocuments": "暂无文档",
+    "noDocumentsMatch": "没有匹配的文档",
+    "getStarted": "创建您的第一个文档开始使用。",
+    "tryAdjustFilters": "尝试调整筛选条件或清除筛选以查看所有文档。",
+    "tableHeaders": {
+      "title": "标题",
+      "status": "状态",
+      "annotations": "标注",
+      "tags": "标签",
+      "uploadedBy": "上传者",
+      "updated": "更新时间",
+      "sharing": "共享",
+      "edit": "编辑",
+      "actions": "操作"
+    },
+    "status": {
+      "raw": "原始",
+      "annotated": "已标注",
+      "refined": "已优化"
+    },
+    "annotations": {
+      "macro": "宏观",
+      "meso": "中观",
+      "micro": "微观"
+    },
+    "loadingDocuments": "加载文档中...",
+    "totalDocuments": "文档总数",
+    "annotatedCount": "已标注",
+    "totalAnnotations": "标注总数",
+    "deleteDocument": "删除文档",
+    "downloadAsMd": "下载为 .md",
+    "shared": "已共享",
+    "private": "私有",
+    "clickToShare": "私有（点击共享）",
+    "clickToMakePrivate": "已共享（点击取消共享）",
+    "membersCanEdit": "成员可编辑（点击禁用）",
+    "readOnlyForMembers": "成员只读（点击允许编辑）"
+  },
+  "knowledge": {
+    "title": "知识库",
+    "searchPlaceholder": "搜索知识条目...",
+    "noEntries": "暂无知识条目",
+    "noEntriesMatch": "没有匹配的条目",
+    "createFirst": "从文档中提取知识以构建您的知识库。",
+    "tryAdjustFilters": "尝试调整筛选条件或清除筛选以查看所有条目。",
+    "tableHeaders": {
+      "title": "标题",
+      "source": "来源",
+      "tags": "标签",
+      "created": "创建时间",
+      "actions": "操作"
+    },
+    "statistics": {
+      "totalEntries": "条目总数",
+      "totalTags": "标签总数",
+      "recentlyAdded": "最近添加"
+    },
+    "deleteEntry": "删除条目",
+    "downloadEntry": "下载条目"
+  },
+  "prompts": {
+    "title": "生成指南",
+    "newPrompt": "+ 新建指南",
+    "noPrompts": "暂无生成指南",
+    "noPromptsMatch": "没有匹配的指南",
+    "createFirst": "创建您的第一个生成指南以帮助 AI 生成更好的内容。",
+    "tableHeaders": {
+      "title": "标题",
+      "description": "描述",
+      "version": "版本",
+      "tags": "标签",
+      "created": "创建时间",
+      "actions": "操作"
+    },
+    "deletePrompt": "删除指南",
+    "downloadPrompt": "下载指南"
+  },
+  "settings": {
+    "title": "设置",
+    "tabs": {
+      "tags": "标签",
+      "trash": "回收站",
+      "users": "用户",
+      "invitations": "邀请码"
+    },
+    "tags": {
+      "title": "管理标签",
+      "createTag": "创建标签",
+      "tagName": "标签名称",
+      "tagColor": "颜色",
+      "noTags": "暂无标签",
+      "systemTag": "系统",
+      "yourTag": "我的",
+      "sharedTag": "共享",
+      "deleteTag": "删除标签"
+    },
+    "trash": {
+      "title": "回收站",
+      "emptyTrash": "清空回收站",
+      "restore": "恢复",
+      "permanentDelete": "永久删除",
+      "noTrash": "回收站为空",
+      "trashEmpty": "删除的项目将在此保留 30 天，之后将被永久删除。"
+    },
+    "users": {
+      "title": "用户管理",
+      "createUser": "创建用户",
+      "resetPassword": "重置密码",
+      "disableUser": "禁用用户",
+      "enableUser": "启用用户",
+      "deleteUser": "删除用户",
+      "noUsers": "未找到用户",
+      "tableHeaders": {
+        "username": "用户名",
+        "displayName": "显示名称",
+        "role": "角色",
+        "organization": "组织",
+        "status": "状态",
+        "created": "创建时间",
+        "actions": "操作"
+      },
+      "roles": {
+        "superAdmin": "超级管理员",
+        "orgOwner": "组织所有者",
+        "member": "成员"
+      },
+      "status": {
+        "active": "活跃",
+        "disabled": "已禁用"
+      }
+    },
+    "invitations": {
+      "title": "邀请码",
+      "createCode": "创建邀请码",
+      "noInvitations": "暂无邀请码",
+      "tableHeaders": {
+        "code": "邀请码",
+        "usage": "使用情况",
+        "type": "类型",
+        "created": "创建时间",
+        "actions": "操作"
+      },
+      "types": {
+        "owner": "所有者",
+        "member": "成员"
+      },
+      "deleteCode": "删除邀请码",
+      "copyCode": "复制邀请码"
+    }
+  },
+  "modals": {
+    "deleteConfirm": {
+      "title": "确认删除",
+      "permanentWarning": "此操作无法撤销。",
+      "trashWarning": "此项目将被移至回收站。",
+      "canRestore": "您可以在设置中的回收站恢复它。",
+      "deleting": "删除中...",
+      "deletePermanently": "永久删除"
+    },
+    "tempPassword": {
+      "title": "临时密码",
+      "message": "请保存此密码，它只会显示一次。",
+      "copyPassword": "复制密码"
+    }
+  },
+  "filters": {
+    "status": {
+      "all": "全部状态",
+      "raw": "原始",
+      "annotated": "已标注",
+      "refined": "已优化"
+    },
+    "createdBy": "创建者",
+    "selectUser": "选择用户...",
+    "selectTags": "选择标签...",
+    "clearAll": "清除全部"
+  },
+  "errors": {
+    "networkError": "网络错误，请重试。",
+    "loadFailed": "加载数据失败。",
+    "saveFailed": "保存更改失败。",
+    "deleteFailed": "删除项目失败。",
+    "unauthorized": "您没有权限执行此操作。",
+    "notFound": "请求的资源未找到。",
+    "serverError": "服务器错误，请稍后重试。"
+  }
+}

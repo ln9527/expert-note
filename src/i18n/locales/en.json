@@ -1,0 +1,241 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "yes": "Yes",
+    "no": "No",
+    "logout": "Logout",
+    "close": "Close",
+    "download": "Download",
+    "copy": "Copy",
+    "search": "Search",
+    "filter": "Filter",
+    "clearFilters": "Clear Filters",
+    "none": "None",
+    "all": "All",
+    "actions": "Actions",
+    "back": "Back",
+    "preview": "Preview",
+    "submit": "Submit",
+    "reset": "Reset",
+    "confirm": "Confirm",
+    "showing": "Showing {count} {item}",
+    "filtered": "(filtered)",
+    "noTags": "No tags"
+  },
+  "nav": {
+    "knowledgeBase": "Knowledge Base",
+    "prompts": "Prompts",
+    "settings": "Settings",
+    "documents": "Documents"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "signInToContinue": "Sign in to continue",
+    "username": "Username",
+    "password": "Password",
+    "enterUsername": "Enter username",
+    "enterPassword": "Enter password",
+    "dontHaveAccount": "Don't have an account?",
+    "registerWithCode": "Register with invitation code",
+    "loginFailed": "Login failed",
+    "networkError": "Network error. Please try again.",
+    "accountDisabled": "Your account has been disabled.",
+    "invalidCredentials": "Invalid username or password."
+  },
+  "documents": {
+    "title": "Documents",
+    "newDocument": "+ New Document",
+    "createDocument": "Create Document",
+    "noDocuments": "No documents yet",
+    "noDocumentsMatch": "No documents match your filters",
+    "getStarted": "Get started by creating your first document.",
+    "tryAdjustFilters": "Try adjusting your filters or clear them to see all documents.",
+    "tableHeaders": {
+      "title": "Title",
+      "status": "Status",
+      "annotations": "Annotations",
+      "tags": "Tags",
+      "uploadedBy": "Uploaded By",
+      "updated": "Updated",
+      "sharing": "Sharing",
+      "edit": "Edit",
+      "actions": "Actions"
+    },
+    "status": {
+      "raw": "raw",
+      "annotated": "annotated",
+      "refined": "refined"
+    },
+    "annotations": {
+      "macro": "macro",
+      "meso": "meso",
+      "micro": "micro"
+    },
+    "loadingDocuments": "Loading documents...",
+    "totalDocuments": "Total Documents",
+    "annotatedCount": "Annotated",
+    "totalAnnotations": "Total Annotations",
+    "deleteDocument": "Delete Document",
+    "downloadAsMd": "Download as .md",
+    "shared": "Shared",
+    "private": "Private",
+    "clickToShare": "Private (click to share)",
+    "clickToMakePrivate": "Shared (click to make private)",
+    "membersCanEdit": "Members can edit (click to disable)",
+    "readOnlyForMembers": "Read-only for members (click to allow editing)"
+  },
+  "knowledge": {
+    "title": "Knowledge Base",
+    "searchPlaceholder": "Search knowledge entries...",
+    "noEntries": "No knowledge entries yet",
+    "noEntriesMatch": "No entries match your filters",
+    "createFirst": "Extract knowledge from documents to build your knowledge base.",
+    "tryAdjustFilters": "Try adjusting your filters or clear them to see all entries.",
+    "tableHeaders": {
+      "title": "Title",
+      "source": "Source",
+      "tags": "Tags",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "statistics": {
+      "totalEntries": "Total Entries",
+      "totalTags": "Total Tags",
+      "recentlyAdded": "Recently Added"
+    },
+    "deleteEntry": "Delete Entry",
+    "downloadEntry": "Download Entry"
+  },
+  "prompts": {
+    "title": "Generation Guides",
+    "newPrompt": "+ New Guide",
+    "noPrompts": "No generation guides yet",
+    "noPromptsMatch": "No guides match your filters",
+    "createFirst": "Create your first generation guide to help AI generate better content.",
+    "tableHeaders": {
+      "title": "Title",
+      "description": "Description",
+      "version": "Version",
+      "tags": "Tags",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "deletePrompt": "Delete Guide",
+    "downloadPrompt": "Download Guide"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "tags": "Tags",
+      "trash": "Trash",
+      "users": "Users",
+      "invitations": "Invitations"
+    },
+    "tags": {
+      "title": "Manage Tags",
+      "createTag": "Create Tag",
+      "tagName": "Tag Name",
+      "tagColor": "Color",
+      "noTags": "No tags yet",
+      "systemTag": "System",
+      "yourTag": "Yours",
+      "sharedTag": "Shared",
+      "deleteTag": "Delete Tag"
+    },
+    "trash": {
+      "title": "Trash",
+      "emptyTrash": "Empty Trash",
+      "restore": "Restore",
+      "permanentDelete": "Delete Permanently",
+      "noTrash": "No items in trash",
+      "trashEmpty": "Items you delete will appear here for 30 days before being permanently removed."
+    },
+    "users": {
+      "title": "User Management",
+      "createUser": "Create User",
+      "resetPassword": "Reset Password",
+      "disableUser": "Disable User",
+      "enableUser": "Enable User",
+      "deleteUser": "Delete User",
+      "noUsers": "No users found",
+      "tableHeaders": {
+        "username": "Username",
+        "displayName": "Display Name",
+        "role": "Role",
+        "organization": "Organization",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "roles": {
+        "superAdmin": "Super Admin",
+        "orgOwner": "Org Owner",
+        "member": "Member"
+      },
+      "status": {
+        "active": "Active",
+        "disabled": "Disabled"
+      }
+    },
+    "invitations": {
+      "title": "Invitation Codes",
+      "createCode": "Create Code",
+      "noInvitations": "No invitation codes yet",
+      "tableHeaders": {
+        "code": "Code",
+        "usage": "Usage",
+        "type": "Type",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "types": {
+        "owner": "Owner",
+        "member": "Member"
+      },
+      "deleteCode": "Delete Code",
+      "copyCode": "Copy Code"
+    }
+  },
+  "modals": {
+    "deleteConfirm": {
+      "title": "Confirm Delete",
+      "permanentWarning": "This action cannot be undone.",
+      "trashWarning": "This item will be moved to trash.",
+      "canRestore": "You can restore it from the Trash in Settings.",
+      "deleting": "Deleting...",
+      "deletePermanently": "Delete Permanently"
+    },
+    "tempPassword": {
+      "title": "Temporary Password",
+      "message": "Please save this password. It will only be shown once.",
+      "copyPassword": "Copy Password"
+    }
+  },
+  "filters": {
+    "status": {
+      "all": "All Status",
+      "raw": "Raw",
+      "annotated": "Annotated",
+      "refined": "Refined"
+    },
+    "createdBy": "Created By",
+    "selectUser": "Select user...",
+    "selectTags": "Select tags...",
+    "clearAll": "Clear All"
+  },
+  "errors": {
+    "networkError": "Network error. Please try again.",
+    "loadFailed": "Failed to load data.",
+    "saveFailed": "Failed to save changes.",
+    "deleteFailed": "Failed to delete item.",
+    "unauthorized": "You are not authorized to perform this action.",
+    "notFound": "The requested resource was not found.",
+    "serverError": "Server error. Please try again later."
+  }
+}

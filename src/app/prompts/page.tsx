@@ -8,6 +8,7 @@ import { PromptCard, PromptUpload, PromptsTable } from '@/components/prompts';
 import TagFilter from '@/components/knowledge/TagFilter';
 import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
 import ViewModeToggle from '@/components/common/ViewModeToggle';
+import { useTranslation } from '@/i18n';
 
 interface FilterOption {
   value: string;
@@ -19,6 +20,7 @@ type SortColumn = 'title' | 'created' | 'updated';
 type SortDirection = 'asc' | 'desc';
 
 export default function PromptsListPage() {
+  const { t } = useTranslation();
   const [prompts, setPrompts] = useState<SystemPrompt[]>([]);
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -324,9 +326,9 @@ export default function PromptsListPage() {
       {/* Header with actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Your Prompts</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('prompts.title')}</h2>
           <p className="mt-1 text-sm text-gray-500">
-            {prompts.length} prompt{prompts.length !== 1 ? 's' : ''} total
+            {t('common.showing', { count: prompts.length, item: t('prompts.title').toLowerCase() })}
           </p>
         </div>
 
@@ -348,7 +350,7 @@ export default function PromptsListPage() {
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Generate New Prompt
+            {t('prompts.newPrompt')}
           </Link>
         </div>
       </div>
@@ -369,7 +371,7 @@ export default function PromptsListPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search prompts..."
+            placeholder={t('knowledge.searchPlaceholder')}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           {searchQuery && (
@@ -391,7 +393,7 @@ export default function PromptsListPage() {
             selectedTags={selectedTags}
             onChange={setSelectedTags}
             onTagCreated={handleTagCreated}
-            placeholder="Filter by tags..."
+            placeholder={t('filters.selectTags')}
             allowCreate={true}
           />
         </div>
@@ -439,11 +441,11 @@ export default function PromptsListPage() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No prompts found</h3>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">{t('prompts.noPrompts')}</h3>
           <p className="mt-2 text-gray-500">
             {searchQuery || selectedTags.length > 0 || filter !== 'all'
-              ? 'Try adjusting your search or filters.'
-              : 'Get started by generating or uploading your first prompt.'}
+              ? t('prompts.noPromptsMatch')
+              : t('prompts.createFirst')}
           </p>
           <div className="mt-4 flex items-center justify-center gap-3">
             <button
@@ -459,7 +461,7 @@ export default function PromptsListPage() {
               href="/prompts/generate"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
             >
-              Generate Your First Prompt
+              {t('prompts.newPrompt')}
             </Link>
           </div>
         </div>
@@ -495,7 +497,7 @@ export default function PromptsListPage() {
       {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
         isOpen={!!deletingPrompt}
-        title="Delete Prompt"
+        title={t('prompts.deletePrompt')}
         itemName={deletingPrompt?.title || ''}
         itemType="prompt"
         onConfirm={handleDeleteConfirm}

@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { buildApiPath } from '@/lib/utils/pathHelper';
+import { useTranslation, LanguageSwitcher } from '@/i18n';
 
 export default function LoginForm() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -46,9 +48,13 @@ export default function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full mx-4">
         <div className="bg-white rounded-lg shadow-lg p-8">
+          {/* Language switcher at top right */}
+          <div className="flex justify-end mb-4">
+            <LanguageSwitcher />
+          </div>
           <h1 className="text-2xl font-bold text-center mb-2">Expert Note</h1>
           <p className="text-gray-600 text-center mb-8">
-            Sign in to continue
+            {t('auth.signInToContinue')}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -60,7 +66,7 @@ export default function LoginForm() {
 
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                Username
+                {t('auth.username')}
               </label>
               <input
                 id="username"
@@ -70,13 +76,13 @@ export default function LoginForm() {
                 required
                 autoComplete="username"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter username"
+                placeholder={t('auth.enterUsername')}
               />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                {t('auth.password')}
               </label>
               <input
                 id="password"
@@ -86,7 +92,7 @@ export default function LoginForm() {
                 required
                 autoComplete="current-password"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter password"
+                placeholder={t('auth.enterPassword')}
               />
             </div>
 
@@ -95,14 +101,14 @@ export default function LoginForm() {
               disabled={loading}
               className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? t('auth.signingIn') : t('auth.signIn')}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm">
-            <span className="text-gray-600">Don't have an account? </span>
+            <span className="text-gray-600">{t('auth.dontHaveAccount')} </span>
             <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              Register with invitation code
+              {t('auth.registerWithCode')}
             </Link>
           </div>
         </div>

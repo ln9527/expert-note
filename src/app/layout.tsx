@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "@/components/providers/Providers";
 
 export const metadata: Metadata = {
   title: "Expert Note - Annotation-based Knowledge Capture",
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="antialiased font-sans h-full">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

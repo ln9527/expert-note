@@ -8,9 +8,11 @@ import { Document, SessionUser, Tag, User } from '@/types';
 import { AppHeader } from '@/components/layout';
 import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
 import DocumentFilters from '@/components/documents/DocumentFilters';
+import { useTranslation } from '@/i18n';
 
 export default function Dashboard() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -259,7 +261,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-gray-500">{t('common.loading')}</div>
       </div>
     );
   }
@@ -273,13 +275,13 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Action Buttons */}
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900">Documents</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">{t('documents.title')}</h2>
           <div className="flex gap-3">
             <Link
               href="/documents/new"
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
             >
-              + New Document
+              {t('documents.newDocument')}
             </Link>
           </div>
         </div>
@@ -309,9 +311,9 @@ export default function Dashboard() {
         {/* Result Count */}
         {!loading && (
           <div className="mb-4 text-sm text-gray-600">
-            Showing {documents.length} document{documents.length !== 1 ? 's' : ''}
+            {t('common.showing', { count: documents.length, item: t('nav.documents').toLowerCase() })}
             {(searchTerm || selectedTagIds.length > 0 || statusFilter !== 'all' || userFilter) && (
-              <span className="ml-1 text-blue-600">(filtered)</span>
+              <span className="ml-1 text-blue-600">{t('common.filtered')}</span>
             )}
           </div>
         )}
@@ -336,33 +338,33 @@ export default function Dashboard() {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {searchTerm || selectedTagIds.length > 0 || statusFilter !== 'all' || userFilter
-                ? 'No documents match your filters'
-                : 'No documents yet'}
+                ? t('documents.noDocumentsMatch')
+                : t('documents.noDocuments')}
             </h3>
             <p className="text-gray-500 mb-6">
               {searchTerm || selectedTagIds.length > 0 || statusFilter !== 'all' || userFilter
-                ? 'Try adjusting your filters or clear them to see all documents.'
-                : 'Get started by creating your first document.'}
+                ? t('documents.tryAdjustFilters')
+                : t('documents.getStarted')}
             </p>
             {searchTerm || selectedTagIds.length > 0 || statusFilter !== 'all' || userFilter ? (
               <button
                 onClick={handleClearAllFilters}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
               >
-                Clear Filters
+                {t('common.clearFilters')}
               </button>
             ) : (
               <Link
                 href="/documents/new"
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
               >
-                Create Document
+                {t('documents.createDocument')}
               </Link>
             )}
           </div>
         ) : loading ? (
           <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
-            <div className="text-gray-500">Loading documents...</div>
+            <div className="text-gray-500">{t('documents.loadingDocuments')}</div>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm border overflow-x-auto">
@@ -370,31 +372,31 @@ export default function Dashboard() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Title
+                    {t('documents.tableHeaders.title')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    {t('documents.tableHeaders.status')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Annotations
+                    {t('documents.tableHeaders.annotations')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tags
+                    {t('documents.tableHeaders.tags')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Uploaded By
+                    {t('documents.tableHeaders.uploadedBy')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Updated
+                    {t('documents.tableHeaders.updated')}
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sharing
+                    {t('documents.tableHeaders.sharing')}
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Edit
+                    {t('documents.tableHeaders.edit')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                    {t('documents.tableHeaders.actions')}
                   </th>
                 </tr>
               </thead>
@@ -421,23 +423,23 @@ export default function Dashboard() {
                       <div className="flex gap-2 text-xs">
                         {doc.annotationCounts.macro > 0 && (
                           <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded">
-                            {doc.annotationCounts.macro} macro
+                            {doc.annotationCounts.macro} {t('documents.annotations.macro')}
                           </span>
                         )}
                         {doc.annotationCounts.meso > 0 && (
                           <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded">
-                            {doc.annotationCounts.meso} meso
+                            {doc.annotationCounts.meso} {t('documents.annotations.meso')}
                           </span>
                         )}
                         {doc.annotationCounts.micro > 0 && (
                           <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded">
-                            {doc.annotationCounts.micro} micro
+                            {doc.annotationCounts.micro} {t('documents.annotations.micro')}
                           </span>
                         )}
                         {doc.annotationCounts.macro === 0 &&
                           doc.annotationCounts.meso === 0 &&
                           doc.annotationCounts.micro === 0 && (
-                            <span className="text-gray-400">None</span>
+                            <span className="text-gray-400">{t('common.none')}</span>
                           )}
                       </div>
                     </td>
@@ -457,7 +459,7 @@ export default function Dashboard() {
                             </span>
                           ))
                         ) : (
-                          <span className="text-xs text-gray-400">No tags</span>
+                          <span className="text-xs text-gray-400">{t('common.noTags')}</span>
                         )}
                         {doc.tags.length > 3 && (
                           <span className="text-xs text-gray-400">+{doc.tags.length - 3}</span>
@@ -482,14 +484,14 @@ export default function Dashboard() {
                               ? 'opacity-50 cursor-wait'
                               : 'hover:underline'
                           } ${doc.isShared ? 'text-green-600' : 'text-gray-500'}`}
-                          title={doc.isShared ? 'Shared (click to make private)' : 'Private (click to share)'}
+                          title={doc.isShared ? t('documents.clickToMakePrivate') : t('documents.clickToShare')}
                         >
-                          {doc.isShared ? 'Yes' : 'No'}
+                          {doc.isShared ? t('common.yes') : t('common.no')}
                         </button>
                       ) : (
                         // Non-owner: read-only text
                         <span className={`text-sm ${doc.isShared ? 'text-green-600' : 'text-gray-500'}`}>
-                          {doc.isShared ? 'Yes' : 'No'}
+                          {doc.isShared ? t('common.yes') : t('common.no')}
                         </span>
                       )}
                     </td>
@@ -508,14 +510,14 @@ export default function Dashboard() {
                               ? 'opacity-50 cursor-wait'
                               : 'hover:underline'
                           } ${doc.allowEdit ? 'text-green-600' : 'text-gray-500'}`}
-                          title={doc.allowEdit ? 'Members can edit (click to disable)' : 'Read-only for members (click to allow editing)'}
+                          title={doc.allowEdit ? t('documents.membersCanEdit') : t('documents.readOnlyForMembers')}
                         >
-                          {doc.allowEdit ? 'Yes' : 'No'}
+                          {doc.allowEdit ? t('common.yes') : t('common.no')}
                         </button>
                       ) : (
                         // Non-owner: read-only text
                         <span className={`text-sm ${doc.allowEdit ? 'text-green-600' : 'text-gray-500'}`}>
-                          {doc.allowEdit ? 'Yes' : 'No'}
+                          {doc.allowEdit ? t('common.yes') : t('common.no')}
                         </span>
                       )}
                     </td>
@@ -524,7 +526,7 @@ export default function Dashboard() {
                         <button
                           onClick={(e) => handleDownload(doc, e)}
                           className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Download as .md"
+                          title={t('documents.downloadAsMd')}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -535,7 +537,7 @@ export default function Dashboard() {
                           <button
                             onClick={(e) => handleDeleteClick(doc, e)}
                             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete"
+                            title={t('common.delete')}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -554,17 +556,17 @@ export default function Dashboard() {
         {/* Quick Stats */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="text-sm text-gray-500 mb-1">Total Documents</div>
+            <div className="text-sm text-gray-500 mb-1">{t('documents.totalDocuments')}</div>
             <div className="text-2xl font-semibold text-gray-900">{documents.length}</div>
           </div>
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="text-sm text-gray-500 mb-1">Annotated</div>
+            <div className="text-sm text-gray-500 mb-1">{t('documents.annotatedCount')}</div>
             <div className="text-2xl font-semibold text-blue-600">
               {documents.filter((d) => d.status === 'annotated' || d.status === 'refined').length}
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="text-sm text-gray-500 mb-1">Total Annotations</div>
+            <div className="text-sm text-gray-500 mb-1">{t('documents.totalAnnotations')}</div>
             <div className="text-2xl font-semibold text-gray-900">
               {documents.reduce(
                 (sum, d) =>

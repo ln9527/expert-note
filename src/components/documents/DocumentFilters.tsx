@@ -3,6 +3,7 @@
 import SearchBox from '@/components/common/SearchBox';
 import TagFilter from '@/components/knowledge/TagFilter';
 import { Tag, User } from '@/types';
+import { useTranslation } from '@/i18n';
 
 interface DocumentFiltersProps {
   searchTerm: string;
@@ -55,6 +56,7 @@ export default function DocumentFilters({
   availableUsers,
   onClearAll,
 }: DocumentFiltersProps) {
+  const { t } = useTranslation();
   const hasActiveFilters =
     searchTerm ||
     selectedTagIds.length > 0 ||
@@ -78,7 +80,7 @@ export default function DocumentFilters({
         <SearchBox
           value={searchTerm}
           onChange={onSearchChange}
-          placeholder="Search documents..."
+          placeholder={t('knowledge.searchPlaceholder')}
           className="md:col-span-1"
         />
 
@@ -88,9 +90,9 @@ export default function DocumentFilters({
           onChange={(e) => onStatusChange(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
         >
-          <option value="all">All Status</option>
-          <option value="raw">Raw</option>
-          <option value="annotated">Annotated</option>
+          <option value="all">{t('filters.status.all')}</option>
+          <option value="raw">{t('filters.status.raw')}</option>
+          <option value="annotated">{t('filters.status.annotated')}</option>
         </select>
 
         {/* Tag Filter */}
@@ -98,7 +100,7 @@ export default function DocumentFilters({
           tags={availableTags}
           selectedTags={selectedTagIds}
           onChange={onTagsChange}
-          placeholder="Filter by tags..."
+          placeholder={t('filters.selectTags')}
           allowCreate={false}
         />
 
@@ -108,7 +110,7 @@ export default function DocumentFilters({
           onChange={(e) => onUserChange(e.target.value ? parseInt(e.target.value) : null)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
         >
-          <option value="">All Users</option>
+          <option value="">{t('filters.selectUser')}</option>
           {availableUsers.map((user) => (
             <option key={user.userId} value={user.userId}>
               {user.displayName || user.username}
@@ -120,11 +122,11 @@ export default function DocumentFilters({
       {/* Active Filters + Clear All */}
       {hasActiveFilters && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-gray-600 font-medium">Active filters:</span>
+          <span className="text-sm text-gray-600 font-medium">{t('common.filter')}:</span>
 
           {searchTerm && (
             <FilterBadge
-              label="Search"
+              label={t('common.search')}
               value={searchTerm}
               onRemove={() => onSearchChange('')}
             />
@@ -136,7 +138,7 @@ export default function DocumentFilters({
               tag && (
                 <FilterBadge
                   key={id}
-                  label="Tag"
+                  label={t('documents.tableHeaders.tags')}
                   value={tag.name}
                   onRemove={() => handleRemoveTag(id)}
                 />
@@ -146,15 +148,15 @@ export default function DocumentFilters({
 
           {statusFilter !== 'all' && (
             <FilterBadge
-              label="Status"
-              value={statusFilter}
+              label={t('documents.tableHeaders.status')}
+              value={t(`filters.status.${statusFilter}`)}
               onRemove={() => onStatusChange('all')}
             />
           )}
 
           {userFilter && (
             <FilterBadge
-              label="User"
+              label={t('filters.createdBy')}
               value={getUserName(userFilter)}
               onRemove={() => onUserChange(null)}
             />
@@ -164,7 +166,7 @@ export default function DocumentFilters({
             onClick={onClearAll}
             className="text-sm text-blue-600 hover:text-blue-800 font-medium ml-2"
           >
-            Clear all filters
+            {t('filters.clearAll')}
           </button>
         </div>
       )}
