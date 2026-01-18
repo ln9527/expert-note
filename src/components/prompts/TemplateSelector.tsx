@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { PromptTemplate } from '@/types';
+import { useTranslation } from '@/i18n';
 
 interface TemplateSelectorProps {
   value: string;
@@ -12,6 +13,7 @@ interface TemplateSelectorProps {
 }
 
 export default function TemplateSelector({ value, onChange, disabled = false }: TemplateSelectorProps) {
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +40,7 @@ export default function TemplateSelector({ value, onChange, disabled = false }: 
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">
-        Generation Guide
+        {t('generate.generationGuide')}
       </label>
       <select
         value={value}
@@ -46,7 +48,7 @@ export default function TemplateSelector({ value, onChange, disabled = false }: 
         disabled={disabled || loading}
         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
       >
-        <option value="">{loading ? 'Loading guides...' : 'Select a guide...'}</option>
+        <option value="">{loading ? t('generate.loadingGuides') : t('generate.selectGuide')}</option>
         {templates.map((template) => (
           <option key={template.id} value={template.templateType || template.name}>
             {template.name}
@@ -60,9 +62,9 @@ export default function TemplateSelector({ value, onChange, disabled = false }: 
       )}
       {!loading && templates.length === 0 && (
         <p className="text-sm text-amber-600 mt-1">
-          No generation guides found.{' '}
+          {t('generate.noGuidesFound')}{' '}
           <Link href="/settings/prompts" className="text-blue-600 hover:text-blue-700 underline">
-            Create one in Settings
+            {t('generate.createInSettings')}
           </Link>
         </p>
       )}

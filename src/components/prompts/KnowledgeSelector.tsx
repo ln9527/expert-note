@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { KnowledgeEntryWithAnnotations, Tag, AnnotationLevel, ANNOTATION_COLORS, LEVEL_CONFIG } from '@/types';
+import { useTranslation } from '@/i18n';
 
 interface KnowledgeSelectorProps {
   knowledgeEntries: KnowledgeEntryWithAnnotations[];
@@ -16,6 +17,7 @@ export default function KnowledgeSelector({
   onChange,
   availableTags = [],
 }: KnowledgeSelectorProps) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [levelFilter, setLevelFilter] = useState<AnnotationLevel | 'all'>('all');
   const [tagFilter, setTagFilter] = useState<number | 'all'>('all');
@@ -96,7 +98,7 @@ export default function KnowledgeSelector({
   return (
     <div className="space-y-4">
       <label className="block text-sm font-medium text-gray-700">
-        Knowledge Entries ({selectedIds.length} selected)
+        {t('generate.knowledgeEntriesCount', { count: selectedIds.length })}
       </label>
 
       {/* Filters */}
@@ -105,7 +107,7 @@ export default function KnowledgeSelector({
         <div className="flex-1 min-w-[200px]">
           <input
             type="text"
-            placeholder="Search entries..."
+            placeholder={t('generate.searchEntries')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -118,10 +120,10 @@ export default function KnowledgeSelector({
           onChange={(e) => setLevelFilter(e.target.value as AnnotationLevel | 'all')}
           className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="all">All Levels</option>
-          <option value="MACRO">Macro</option>
-          <option value="MESO">Meso</option>
-          <option value="MICRO">Micro</option>
+          <option value="all">{t('common.allLevels')}</option>
+          <option value="MACRO">{t('documents.annotations.macro')}</option>
+          <option value="MESO">{t('documents.annotations.meso')}</option>
+          <option value="MICRO">{t('documents.annotations.micro')}</option>
         </select>
 
         {/* Tag filter */}
@@ -131,7 +133,7 @@ export default function KnowledgeSelector({
             onChange={(e) => setTagFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10))}
             className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="all">All Tags</option>
+            <option value="all">{t('common.allTags')}</option>
             {allTags.map((tag) => (
               <option key={tag.id} value={tag.id}>
                 {tag.name}
@@ -144,7 +146,7 @@ export default function KnowledgeSelector({
       {/* Select all button */}
       <div className="flex justify-between items-center">
         <span className="text-sm text-gray-500">
-          Showing {filteredEntries.length} of {knowledgeEntries.length} entries
+          {t('generate.showingOf', { shown: filteredEntries.length, total: knowledgeEntries.length })}
         </span>
         <button
           type="button"
@@ -152,8 +154,8 @@ export default function KnowledgeSelector({
           className="text-sm text-blue-600 hover:text-blue-700 font-medium"
         >
           {filteredEntries.every((e) => selectedIds.includes(e.id))
-            ? 'Deselect All'
-            : 'Select All'}
+            ? t('generate.deselectAll')
+            : t('common.selectAll')}
         </button>
       </div>
 
@@ -161,7 +163,7 @@ export default function KnowledgeSelector({
       <div className="border border-gray-200 rounded-lg max-h-80 overflow-y-auto">
         {filteredEntries.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
-            No knowledge entries found
+            {t('generate.noEntriesFound')}
           </div>
         ) : (
           filteredEntries.map((entry) => {

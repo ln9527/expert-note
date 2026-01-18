@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { SystemPrompt } from '@/types';
+import { useTranslation } from '@/i18n';
 
 interface BasePromptSelectorProps {
   prompts: SystemPrompt[];
@@ -16,6 +17,7 @@ export default function BasePromptSelector({
   onChange,
   onPromptLoaded,
 }: BasePromptSelectorProps) {
+  const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
 
   const selectedPrompt = prompts.find(p => p.id === selectedPromptId);
@@ -40,10 +42,10 @@ export default function BasePromptSelector({
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">
-        Base Prompt <span className="text-gray-400 font-normal">(optional)</span>
+        {t('generate.basePrompt')} <span className="text-gray-400 font-normal">{t('common.optional')}</span>
       </label>
       <p className="text-xs text-gray-500 -mt-2">
-        Update an existing prompt to create a new version
+        {t('generate.basePromptHelp')}
       </p>
 
       <div className="flex gap-2">
@@ -52,7 +54,7 @@ export default function BasePromptSelector({
           onChange={handleChange}
           className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">None - Create new prompt</option>
+          <option value="">{t('generate.noneCreateNew')}</option>
           {prompts.map((prompt) => (
             <option key={prompt.id} value={prompt.id}>
               {prompt.title} (v{prompt.version})
@@ -94,7 +96,7 @@ export default function BasePromptSelector({
               onClick={() => setShowDetails(!showDetails)}
               className="text-sm text-blue-600 hover:text-blue-700 ml-2"
             >
-              {showDetails ? 'Hide' : 'Show'} details
+              {showDetails ? t('generate.hideDetails') : t('generate.showDetails')}
             </button>
           </div>
 
@@ -104,10 +106,10 @@ export default function BasePromptSelector({
               {selectedPrompt.sourceKnowledgeIds.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-gray-700 mb-1">
-                    Knowledge Entries ({selectedPrompt.sourceKnowledgeIds.length})
+                    {t('generate.knowledgeEntriesCount', { count: selectedPrompt.sourceKnowledgeIds.length })}
                   </p>
                   <p className="text-xs text-gray-500">
-                    These sources will be included automatically
+                    {t('generate.sourcesIncluded')}
                   </p>
                 </div>
               )}
@@ -116,10 +118,10 @@ export default function BasePromptSelector({
               {selectedPrompt.sourceDocumentIds.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-gray-700 mb-1">
-                    Documents ({selectedPrompt.sourceDocumentIds.length})
+                    {t('generate.documentsCount', { count: selectedPrompt.sourceDocumentIds.length })}
                   </p>
                   <p className="text-xs text-gray-500">
-                    These sources will be included automatically
+                    {t('generate.sourcesIncluded')}
                   </p>
                 </div>
               )}
@@ -127,7 +129,7 @@ export default function BasePromptSelector({
               {/* Tags */}
               {selectedPrompt.tags && selectedPrompt.tags.length > 0 && (
                 <div>
-                  <p className="text-xs font-medium text-gray-700 mb-1">Tags</p>
+                  <p className="text-xs font-medium text-gray-700 mb-1">{t('generate.tags')}</p>
                   <div className="flex flex-wrap gap-1">
                     {selectedPrompt.tags.map((tag) => (
                       <span
@@ -146,7 +148,7 @@ export default function BasePromptSelector({
               )}
 
               {selectedPrompt.sourceKnowledgeIds.length === 0 && selectedPrompt.sourceDocumentIds.length === 0 && (
-                <p className="text-xs text-gray-500 italic">No sources in base prompt</p>
+                <p className="text-xs text-gray-500 italic">{t('generate.noSourcesInBase')}</p>
               )}
             </div>
           )}
