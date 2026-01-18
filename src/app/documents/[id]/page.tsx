@@ -6,6 +6,7 @@ import { buildApiPath } from '@/lib/utils/pathHelper';
 import { Document, Tag, PromptTemplate } from '@/types';
 import MarkdownEditor from '@/components/editor/MarkdownEditor';
 import DocumentSwitcher from '@/components/documents/DocumentSwitcher';
+import { useTranslation } from '@/i18n';
 
 // Predefined colors for new tags
 const TAG_COLORS = [
@@ -20,6 +21,7 @@ const TAG_COLORS = [
 ];
 
 export default function DocumentEditorPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
   const documentId = params.id as string;
@@ -415,7 +417,7 @@ export default function DocumentEditorPage() {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-gray-500">Loading document...</div>
+        <div className="text-gray-500">{t('editor.loadingDocument')}</div>
       </div>
     );
   }
@@ -429,7 +431,7 @@ export default function DocumentEditorPage() {
             onClick={() => router.push('/')}
             className="text-blue-600 hover:text-blue-700"
           >
-            Back to Dashboard
+            {t('editor.backToDashboard')}
           </button>
         </div>
       </div>
@@ -513,10 +515,10 @@ export default function DocumentEditorPage() {
               }`}
             >
               {saveStatus === 'saved'
-                ? 'Saved'
+                ? t('common.saved')
                 : saveStatus === 'saving'
-                ? 'Saving...'
-                : 'Unsaved'}
+                ? t('common.saving')
+                : t('common.unsaved')}
             </span>
           </div>
         </div>
@@ -560,15 +562,15 @@ export default function DocumentEditorPage() {
       {/* Right Panel - Metadata */}
       <div className="w-64 bg-white border-l flex flex-col flex-shrink-0">
         <div className="p-3 border-b">
-          <h3 className="text-sm font-medium text-gray-900 mb-0.5">Document Info</h3>
-          <p className="text-xs text-gray-500">Manage tags and actions</p>
+          <h3 className="text-sm font-medium text-gray-900 mb-0.5">{t('editor.documentInfo')}</h3>
+          <p className="text-xs text-gray-500">{t('editor.manageTagsActions')}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
           {/* Status */}
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-              Status
+              {t('editor.status')}
             </label>
             <span
               className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
@@ -586,17 +588,17 @@ export default function DocumentEditorPage() {
           {/* Annotation Counts */}
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-              Annotations
+              {t('editor.annotations')}
             </label>
             <div className="flex gap-2">
               <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">
-                {document?.annotationCounts.macro || 0} macro
+                {document?.annotationCounts.macro || 0} {t('documents.annotations.macro')}
               </span>
               <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">
-                {document?.annotationCounts.meso || 0} meso
+                {document?.annotationCounts.meso || 0} {t('documents.annotations.meso')}
               </span>
               <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
-                {document?.annotationCounts.micro || 0} micro
+                {document?.annotationCounts.micro || 0} {t('documents.annotations.micro')}
               </span>
             </div>
           </div>
@@ -604,7 +606,7 @@ export default function DocumentEditorPage() {
           {/* Tags */}
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-              Tags
+              {t('editor.tags')}
             </label>
             <div className="relative">
               <button
@@ -613,8 +615,8 @@ export default function DocumentEditorPage() {
               >
                 <span className="text-gray-600">
                   {selectedTagIds.length === 0
-                    ? 'Select tags...'
-                    : `${selectedTagIds.length} selected`}
+                    ? t('editor.selectTags')
+                    : `${selectedTagIds.length} ${t('common.selected')}`}
                 </span>
                 <svg
                   className={`w-4 h-4 transition-transform ${showTagDropdown ? 'rotate-180' : ''}`}
@@ -663,7 +665,7 @@ export default function DocumentEditorPage() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    Create new tag
+                    {t('editor.createNewTag')}
                   </button>
                 </div>
               )}
@@ -699,14 +701,14 @@ export default function DocumentEditorPage() {
           {/* Actions */}
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-              Actions
+              {t('editor.actions')}
             </label>
             <div className="space-y-2">
               {/* Extraction Guide Selector */}
               {extractionGuides.length > 0 && (
                 <div className="mb-3">
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                    Extraction Guide
+                    {t('editor.extractionGuide')}
                   </label>
                   <select
                     value={selectedGuideId}
@@ -715,12 +717,12 @@ export default function DocumentEditorPage() {
                   >
                     {extractionGuides.map((guide) => (
                       <option key={guide.id} value={guide.id}>
-                        {guide.name} {guide.isDefault ? '(Default)' : ''}
+                        {guide.name} {guide.isDefault ? t('editor.default') : ''}
                       </option>
                     ))}
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Choose which guide to use for extracting knowledge
+                    {t('editor.chooseGuide')}
                   </p>
                 </div>
               )}
@@ -730,7 +732,7 @@ export default function DocumentEditorPage() {
                 disabled={extracting || !canEdit}
                 className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {extracting ? 'Extracting...' : 'Extract Knowledge'}
+                {extracting ? t('common.extracting') : t('editor.extractKnowledge')}
               </button>
               <button
                 onClick={handleDownload}
@@ -739,14 +741,14 @@ export default function DocumentEditorPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Download
+                {t('editor.download')}
               </button>
               {isOwner && (
                 <button
                   onClick={handleDelete}
                   className="w-full px-3 py-2 border border-red-300 text-red-600 text-sm rounded-lg hover:bg-red-50 transition-colors"
                 >
-                  Delete Document
+                  {t('editor.deleteDocument')}
                 </button>
               )}
             </div>
@@ -755,27 +757,27 @@ export default function DocumentEditorPage() {
           {/* Keyboard Shortcuts */}
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-              Shortcuts
+              {t('editor.shortcuts')}
             </label>
             <div className="text-xs text-gray-500 space-y-1">
               <div className="flex justify-between">
-                <span>Switch document</span>
+                <span>{t('editor.switchDocument')}</span>
                 <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">Cmd+K</kbd>
               </div>
               <div className="flex justify-between">
-                <span>Save</span>
+                <span>{t('editor.save')}</span>
                 <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">Cmd+S</kbd>
               </div>
               <div className="flex justify-between">
-                <span>Macro annotation</span>
+                <span>{t('editor.macroAnnotation')}</span>
                 <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">Cmd+1</kbd>
               </div>
               <div className="flex justify-between">
-                <span>Meso annotation</span>
+                <span>{t('editor.mesoAnnotation')}</span>
                 <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">Cmd+2</kbd>
               </div>
               <div className="flex justify-between">
-                <span>Micro annotation</span>
+                <span>{t('editor.microAnnotation')}</span>
                 <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">Cmd+3</kbd>
               </div>
             </div>
@@ -797,7 +799,7 @@ export default function DocumentEditorPage() {
             <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full">
               <div className="px-6 py-4 border-b flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Create New Tag
+                  {t('editor.createNewTagTitle')}
                 </h2>
                 <button
                   onClick={() => setShowCreateTagModal(false)}
@@ -813,7 +815,7 @@ export default function DocumentEditorPage() {
                 {/* Tag Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tag Name
+                    {t('editor.tagName')}
                   </label>
                   <input
                     ref={newTagInputRef}
@@ -826,14 +828,14 @@ export default function DocumentEditorPage() {
                       }
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    placeholder="Enter tag name..."
+                    placeholder={t('editor.enterTagName')}
                   />
                 </div>
 
                 {/* Color Picker */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tag Color
+                    {t('editor.tagColor')}
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {TAG_COLORS.map((color) => (
@@ -855,7 +857,7 @@ export default function DocumentEditorPage() {
                 {/* Preview */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preview
+                    {t('common.preview')}
                   </label>
                   <span
                     className="inline-flex px-3 py-1 text-sm rounded"
@@ -864,7 +866,7 @@ export default function DocumentEditorPage() {
                       color: newTagColor,
                     }}
                   >
-                    {newTagName || 'Tag name'}
+                    {newTagName || t('editor.tagName')}
                   </span>
                 </div>
               </div>
@@ -874,14 +876,14 @@ export default function DocumentEditorPage() {
                   onClick={() => setShowCreateTagModal(false)}
                   className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleCreateTag}
                   disabled={creatingTag || !newTagName.trim()}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {creatingTag ? 'Creating...' : 'Create Tag'}
+                  {creatingTag ? t('common.creating') : t('settings.tags.createTag')}
                 </button>
               </div>
             </div>
@@ -903,7 +905,7 @@ export default function DocumentEditorPage() {
             <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full">
               <div className="px-6 py-4 border-b flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Extract Knowledge
+                  {t('editor.extractKnowledgeTitle')}
                 </h2>
                 <button
                   onClick={() => setShowExtractModal(false)}
@@ -918,25 +920,25 @@ export default function DocumentEditorPage() {
               <div className="p-6 space-y-4">
                 <div>
                   <p className="text-sm text-gray-600 mb-4">
-                    Extract knowledge from {document?.annotationCounts ?
+                    {t('editor.extractFromAnnotations', { count: document?.annotationCounts ?
                       (document.annotationCounts.macro + document.annotationCounts.meso + document.annotationCounts.micro) : 0
-                    } annotations in this document.
+                    })}
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Instructions (Optional)
+                    {t('editor.customInstructions')} {t('common.optional')}
                   </label>
                   <textarea
                     value={customInstructions}
                     onChange={(e) => setCustomInstructions(e.target.value)}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    placeholder="Add any specific instructions to guide the AI extraction...&#10;&#10;Examples:&#10;- Focus on generalizing principles for academic writing&#10;- Preserve domain-specific terminology&#10;- Keep examples concrete but transferable"
+                    placeholder={t('editor.customInstructionsPlaceholder')}
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    These instructions will be appended to the system prompt to customize the extraction behavior.
+                    {t('editor.customInstructionsHelp')}
                   </p>
                 </div>
               </div>
@@ -946,14 +948,14 @@ export default function DocumentEditorPage() {
                   onClick={() => setShowExtractModal(false)}
                   className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleExtractKnowledge}
                   disabled={extracting}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {extracting ? 'Extracting...' : 'Extract'}
+                  {extracting ? t('common.extracting') : t('common.extract')}
                 </button>
               </div>
             </div>

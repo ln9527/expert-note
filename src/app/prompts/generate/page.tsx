@@ -6,8 +6,10 @@ import { buildApiPath } from '@/lib/utils/pathHelper';
 import { KnowledgeEntryWithAnnotations, Tag, PromptTemplate, Document, SystemPrompt } from '@/types';
 import { TemplateSelector, KnowledgeSelector, DocumentSelector, BasePromptSelector, PromptPreview } from '@/components/prompts';
 import TagFilter from '@/components/knowledge/TagFilter';
+import { useTranslation } from '@/i18n';
 
 export default function PromptGeneratorPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -250,9 +252,9 @@ export default function PromptGeneratorPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Generate System Prompt</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('generate.title')}</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Create a new AI system prompt from your knowledge base
+          {t('generate.subtitle')}
         </p>
       </div>
 
@@ -268,22 +270,22 @@ export default function PromptGeneratorPage() {
         {/* Left Panel - Configuration */}
         <div className="space-y-6">
           <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">Configuration</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('generate.configuration')}</h3>
 
             {/* Purpose */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Purpose <span className="text-red-500">*</span>
+                {t('generate.purpose')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Review academic paper introductions for clarity"
+                placeholder={t('generate.purposePlaceholder')}
               />
               <p className="text-xs text-gray-500">
-                Describe what you want the AI to do with this prompt
+                {t('generate.purposeHelp')}
               </p>
             </div>
 
@@ -303,9 +305,9 @@ export default function PromptGeneratorPage() {
             {/* Source Selection - Use Tabs for Knowledge vs Documents */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Sources <span className="text-red-500">*</span>
+                {t('generate.sources')} <span className="text-red-500">*</span>
                 <span className="text-gray-500 font-normal ml-2">
-                  Select knowledge entries and/or annotated documents
+                  {t('generate.sourcesHelp')}
                 </span>
               </label>
 
@@ -321,7 +323,7 @@ export default function PromptGeneratorPage() {
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    Knowledge Entries
+                    {t('generate.knowledgeEntries')}
                     {selectedKnowledgeIds.length > 0 && (
                       <span className="ml-2 py-0.5 px-2 rounded-full text-xs bg-blue-100 text-blue-600">
                         {selectedKnowledgeIds.length}
@@ -337,7 +339,7 @@ export default function PromptGeneratorPage() {
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    Annotated Documents
+                    {t('generate.annotatedDocuments')}
                     {selectedDocumentIds.length > 0 && (
                       <span className="ml-2 py-0.5 px-2 rounded-full text-xs bg-blue-100 text-blue-600">
                         {selectedDocumentIds.length}
@@ -371,17 +373,17 @@ export default function PromptGeneratorPage() {
             {/* Tags for Generated Prompt - NEW */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Tags <span className="text-gray-400 font-normal">(optional)</span>
+                {t('generate.tags')} <span className="text-gray-400 font-normal">{t('common.optional')}</span>
               </label>
               <p className="text-xs text-gray-500 -mt-2">
-                Organize this prompt with tags
+                {t('generate.tagsHelp')}
               </p>
               <TagFilter
                 tags={availableTags}
                 selectedTags={selectedTagIds}
                 onChange={setSelectedTagIds}
                 onTagCreated={(newTag) => setAvailableTags(prev => [...prev, newTag])}
-                placeholder="Select or create tags..."
+                placeholder={t('generate.selectOrCreateTags')}
                 allowCreate={true}
                 dropdownPosition="down"
               />
@@ -390,14 +392,14 @@ export default function PromptGeneratorPage() {
             {/* Additional Instructions */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Additional Instructions (optional)
+                {t('generate.additionalInstructions')} {t('common.optional')}
               </label>
               <textarea
                 value={additionalInstructions}
                 onChange={(e) => setAdditionalInstructions(e.target.value)}
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-                placeholder="Add any specific requirements or focus areas for the prompt..."
+                placeholder={t('generate.additionalInstructionsPlaceholder')}
               />
             </div>
 
@@ -413,10 +415,10 @@ export default function PromptGeneratorPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Generating...
+                  {t('common.generating')}
                 </span>
               ) : (
-                'Generate Prompt'
+                t('generate.generatePrompt')
               )}
             </button>
           </div>
@@ -424,31 +426,31 @@ export default function PromptGeneratorPage() {
           {/* Save Options - Only show after generation */}
           {generatedContent && (
             <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Save Prompt</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('generate.savePrompt')}</h3>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Title <span className="text-red-500">*</span>
+                  {t('generate.promptTitle')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={promptTitle}
                   onChange={(e) => setPromptTitle(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter prompt title"
+                  placeholder={t('generate.enterPromptTitle')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description (optional)
+                  {t('generate.promptDescription')} {t('common.optional')}
                 </label>
                 <input
                   type="text"
                   value={promptDescription}
                   onChange={(e) => setPromptDescription(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Brief description of the prompt"
+                  placeholder={t('generate.briefDescription')}
                 />
               </div>
 
@@ -457,7 +459,7 @@ export default function PromptGeneratorPage() {
                 disabled={saving || !promptTitle.trim()}
                 className="w-full py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
               >
-                {saving ? 'Saving...' : 'Save Prompt'}
+                {saving ? t('common.saving') : t('generate.savePrompt')}
               </button>
             </div>
           )}
