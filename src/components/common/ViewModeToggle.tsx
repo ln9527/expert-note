@@ -1,11 +1,15 @@
 'use client';
 
+import { useTranslation } from '@/i18n';
+
 interface ViewModeToggleProps {
   mode: 'table' | 'card';
   onChange: (mode: 'table' | 'card') => void;
 }
 
 export default function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm">
       <button
@@ -18,7 +22,7 @@ export default function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) 
               : 'text-gray-700 hover:bg-gray-50 border-r border-gray-300'
           }
         `}
-        title="Table view"
+        title={t('common.table')}
       >
         <svg
           className="w-4 h-4"
@@ -33,7 +37,7 @@ export default function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) 
             d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
           />
         </svg>
-        <span>Table</span>
+        <span>{t('common.table')}</span>
       </button>
       <button
         onClick={() => onChange('card')}
@@ -45,7 +49,7 @@ export default function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) 
               : 'text-gray-700 hover:bg-gray-50'
           }
         `}
-        title="Card view"
+        title={t('common.card')}
       >
         <svg
           className="w-4 h-4"
@@ -60,7 +64,7 @@ export default function ViewModeToggle({ mode, onChange }: ViewModeToggleProps) 
             d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
           />
         </svg>
-        <span>Card</span>
+        <span>{t('common.card')}</span>
       </button>
     </div>
   );

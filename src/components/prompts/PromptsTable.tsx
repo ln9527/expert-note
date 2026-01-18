@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { SystemPrompt } from '@/types';
+import { useTranslation } from '@/i18n';
 
 interface PromptsTableProps {
   prompts: SystemPrompt[];
@@ -40,6 +41,8 @@ export default function PromptsTable({
   onEditToggle,
   togglingPromptId,
 }: PromptsTableProps) {
+  const { t } = useTranslation();
+
   const formatDate = (date: Date | string) => {
     const d = new Date(date);
     return d.toLocaleDateString('en-US', {
@@ -106,7 +109,7 @@ export default function PromptsTable({
                 onClick={() => onSort('title')}
               >
                 <div className="flex items-center gap-2">
-                  <span>Title</span>
+                  <span>{t('prompts.tableHeaders.title')}</span>
                   {renderSortIcon('title')}
                 </div>
               </th>
@@ -114,19 +117,19 @@ export default function PromptsTable({
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Guide
+                {t('prompts.tableHeaders.guide')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Tags
+                {t('prompts.tableHeaders.tags')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Details
+                {t('prompts.tableHeaders.details')}
               </th>
               <th
                 scope="col"
@@ -134,7 +137,7 @@ export default function PromptsTable({
                 onClick={() => onSort('created')}
               >
                 <div className="flex items-center gap-2">
-                  <span>Created</span>
+                  <span>{t('prompts.tableHeaders.created')}</span>
                   {renderSortIcon('created')}
                 </div>
               </th>
@@ -144,7 +147,7 @@ export default function PromptsTable({
                 onClick={() => onSort('updated')}
               >
                 <div className="flex items-center gap-2">
-                  <span>Updated</span>
+                  <span>{t('prompts.tableHeaders.updated')}</span>
                   {renderSortIcon('updated')}
                 </div>
               </th>
@@ -152,22 +155,22 @@ export default function PromptsTable({
                 scope="col"
                 className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Sharing
+                {t('prompts.tableHeaders.sharing')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Edit
+                {t('prompts.tableHeaders.edit')}
               </th>
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+                {t('prompts.tableHeaders.actions')}
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {prompts.map((prompt) => {
-              const templateLabel = prompt.templateType || 'No Guide';
+              const templateLabel = prompt.templateType || t('common.noGuide');
               const templateColor = prompt.templateType
                 ? getTemplateColor(prompt.templateType)
                 : 'bg-gray-100 text-gray-700';
@@ -208,7 +211,7 @@ export default function PromptsTable({
                           )}
                         </>
                       ) : (
-                        <span className="text-xs text-gray-400">No tags</span>
+                        <span className="text-xs text-gray-400">{t('common.noTags')}</span>
                       )}
                     </div>
                   </td>
@@ -255,14 +258,14 @@ export default function PromptsTable({
                             ? 'opacity-50 cursor-wait'
                             : 'hover:underline'
                         } ${prompt.isShared ? 'text-green-600' : 'text-gray-500'}`}
-                        title={prompt.isShared ? 'Shared (click to make private)' : 'Private (click to share)'}
+                        title={prompt.isShared ? t('documents.clickToMakePrivate') : t('documents.clickToShare')}
                       >
-                        {prompt.isShared ? 'Yes' : 'No'}
+                        {prompt.isShared ? t('common.yes') : t('common.no')}
                       </button>
                     ) : (
                       // Non-owner: read-only text
                       <span className={`text-sm ${prompt.isShared ? 'text-green-600' : 'text-gray-500'}`}>
-                        {prompt.isShared ? 'Yes' : 'No'}
+                        {prompt.isShared ? t('common.yes') : t('common.no')}
                       </span>
                     )}
                   </td>
@@ -285,14 +288,14 @@ export default function PromptsTable({
                             ? 'opacity-50 cursor-wait'
                             : 'hover:underline'
                         } ${prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}`}
-                        title={prompt.allowEdit ? 'Members can edit (click to disable)' : 'Read-only for members (click to allow editing)'}
+                        title={prompt.allowEdit ? t('documents.membersCanEdit') : t('documents.readOnlyForMembers')}
                       >
-                        {prompt.allowEdit ? 'Yes' : 'No'}
+                        {prompt.allowEdit ? t('common.yes') : t('common.no')}
                       </button>
                     ) : (
                       // Non-owner: read-only text
                       <span className={`text-sm ${prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}`}>
-                        {prompt.allowEdit ? 'Yes' : 'No'}
+                        {prompt.allowEdit ? t('common.yes') : t('common.no')}
                       </span>
                     )}
                   </td>
@@ -302,7 +305,7 @@ export default function PromptsTable({
                       <button
                         onClick={(e) => handleDownloadClick(e, prompt)}
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Download as .md"
+                        title={t('common.downloadAsMd')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -313,7 +316,7 @@ export default function PromptsTable({
                         <button
                           onClick={(e) => handleDeleteClick(e, prompt)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
+                          title={t('common.delete')}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -332,7 +335,7 @@ export default function PromptsTable({
       {/* Mobile Card List */}
       <div className="md:hidden divide-y divide-gray-200">
         {prompts.map((prompt) => {
-          const templateLabel = prompt.templateType || 'No Guide';
+          const templateLabel = prompt.templateType || t('common.noGuide');
           const templateColor = prompt.templateType
             ? getTemplateColor(prompt.templateType)
             : 'bg-gray-100 text-gray-700';
@@ -401,7 +404,7 @@ export default function PromptsTable({
                   {/* Sharing status for mobile */}
                   <div className="flex items-center gap-4 text-xs">
                     <div className="flex items-center gap-1">
-                      <span className="text-gray-500">Shared:</span>
+                      <span className="text-gray-500">{t('common.shared')}:</span>
                       {currentUserId && prompt.creator?.id === currentUserId ? (
                         <button
                           onClick={(e) => {
@@ -416,17 +419,17 @@ export default function PromptsTable({
                               : 'hover:underline'
                           } ${prompt.isShared ? 'text-green-600' : 'text-gray-500'}`}
                         >
-                          {prompt.isShared ? 'Yes' : 'No'}
+                          {prompt.isShared ? t('common.yes') : t('common.no')}
                         </button>
                       ) : (
                         <span className={prompt.isShared ? 'text-green-600' : 'text-gray-500'}>
-                          {prompt.isShared ? 'Yes' : 'No'}
+                          {prompt.isShared ? t('common.yes') : t('common.no')}
                         </span>
                       )}
                     </div>
                     {prompt.isShared && (
                       <div className="flex items-center gap-1">
-                        <span className="text-gray-500">Edit:</span>
+                        <span className="text-gray-500">{t('common.edit')}:</span>
                         {currentUserId && prompt.creator?.id === currentUserId ? (
                           <button
                             onClick={(e) => {
@@ -441,11 +444,11 @@ export default function PromptsTable({
                                 : 'hover:underline'
                             } ${prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}`}
                           >
-                            {prompt.allowEdit ? 'Yes' : 'No'}
+                            {prompt.allowEdit ? t('common.yes') : t('common.no')}
                           </button>
                         ) : (
                           <span className={prompt.allowEdit ? 'text-green-600' : 'text-gray-500'}>
-                            {prompt.allowEdit ? 'Yes' : 'No'}
+                            {prompt.allowEdit ? t('common.yes') : t('common.no')}
                           </span>
                         )}
                       </div>
@@ -460,7 +463,7 @@ export default function PromptsTable({
                 <button
                   onClick={(e) => handleDownloadClick(e, prompt)}
                   className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Download as .md"
+                  title={t('common.downloadAsMd')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -471,7 +474,7 @@ export default function PromptsTable({
                   <button
                     onClick={(e) => handleDeleteClick(e, prompt)}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Delete"
+                    title={t('common.delete')}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -487,7 +490,7 @@ export default function PromptsTable({
       {/* Empty state */}
       {prompts.length === 0 && (
         <div className="p-8 text-center text-gray-500">
-          No prompts to display
+          {t('common.noPromptsToDisplay')}
         </div>
       )}
     </div>

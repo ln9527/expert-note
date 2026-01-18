@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { KnowledgeEntry, Tag, ANNOTATION_COLORS, AnnotationLevel } from '@/types';
+import { useTranslation } from '@/i18n';
 
 interface ExtendedKnowledgeEntry extends KnowledgeEntry {
   sourceDocumentName?: string;
@@ -37,6 +38,8 @@ export default function KnowledgeTable({
   onEditToggle,
   togglingEntryId,
 }: KnowledgeTableProps) {
+  const { t } = useTranslation();
+
   const formatDate = (date: Date | string) => {
     const d = new Date(date);
     return d.toLocaleDateString('en-US', {
@@ -76,7 +79,7 @@ export default function KnowledgeTable({
       const total = entry.annotationCount || 0;
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-          {total} total
+          {total} {t('common.total')}
         </span>
       );
     }
@@ -128,7 +131,7 @@ export default function KnowledgeTable({
                 onClick={() => onSort('source')}
               >
                 <div className="flex items-center gap-2">
-                  <span>Source & Content</span>
+                  <span>{t('knowledge.tableHeaders.sourceAndContent')}</span>
                   {renderSortIcon('source')}
                 </div>
               </th>
@@ -136,13 +139,13 @@ export default function KnowledgeTable({
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Tags
+                {t('knowledge.tableHeaders.tags')}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Annotations
+                {t('knowledge.tableHeaders.annotations')}
               </th>
               <th
                 scope="col"
@@ -150,7 +153,7 @@ export default function KnowledgeTable({
                 onClick={() => onSort('created')}
               >
                 <div className="flex items-center gap-2">
-                  <span>Created</span>
+                  <span>{t('knowledge.tableHeaders.created')}</span>
                   {renderSortIcon('created')}
                 </div>
               </th>
@@ -160,7 +163,7 @@ export default function KnowledgeTable({
                 onClick={() => onSort('updated')}
               >
                 <div className="flex items-center gap-2">
-                  <span>Updated</span>
+                  <span>{t('knowledge.tableHeaders.updated')}</span>
                   {renderSortIcon('updated')}
                 </div>
               </th>
@@ -168,16 +171,16 @@ export default function KnowledgeTable({
                 scope="col"
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Sharing
+                {t('knowledge.tableHeaders.sharing')}
               </th>
               <th
                 scope="col"
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Edit
+                {t('knowledge.tableHeaders.edit')}
               </th>
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+                {t('knowledge.tableHeaders.actions')}
               </th>
             </tr>
           </thead>
@@ -198,7 +201,7 @@ export default function KnowledgeTable({
                       )}
                       {/* Background preview */}
                       <div className="text-sm text-gray-900 line-clamp-2 max-w-xl">
-                        {entry.background || 'No background description'}
+                        {entry.background || t('common.noBackgroundDescription')}
                       </div>
                     </div>
                   </Link>
@@ -222,7 +225,7 @@ export default function KnowledgeTable({
                         )}
                       </>
                     ) : (
-                      <span className="text-xs text-gray-400">No tags</span>
+                      <span className="text-xs text-gray-400">{t('common.noTags')}</span>
                     )}
                   </div>
                 </td>
@@ -252,11 +255,11 @@ export default function KnowledgeTable({
                           : 'text-gray-500 hover:text-gray-700'
                       }`}
                     >
-                      {togglingEntryId === entry.id ? '...' : entry.isShared ? 'Yes' : 'No'}
+                      {togglingEntryId === entry.id ? '...' : entry.isShared ? t('common.yes') : t('common.no')}
                     </button>
                   ) : (
                     <span className={entry.isShared ? 'text-green-600' : 'text-gray-400'}>
-                      {entry.isShared ? 'Yes' : 'No'}
+                      {entry.isShared ? t('common.yes') : t('common.no')}
                     </span>
                   )}
                 </td>
@@ -278,13 +281,13 @@ export default function KnowledgeTable({
                           ? 'text-green-600 hover:text-green-800'
                           : 'text-gray-500 hover:text-gray-700'
                       }`}
-                      title={!entry.isShared ? 'Enable sharing first' : undefined}
+                      title={!entry.isShared ? t('common.enableSharingFirst') : undefined}
                     >
-                      {togglingEntryId === entry.id ? '...' : entry.allowEdit ? 'Yes' : 'No'}
+                      {togglingEntryId === entry.id ? '...' : entry.allowEdit ? t('common.yes') : t('common.no')}
                     </button>
                   ) : (
                     <span className={entry.allowEdit ? 'text-green-600' : 'text-gray-400'}>
-                      {entry.allowEdit ? 'Yes' : 'No'}
+                      {entry.allowEdit ? t('common.yes') : t('common.no')}
                     </span>
                   )}
                 </td>
@@ -294,7 +297,7 @@ export default function KnowledgeTable({
                     <button
                       onClick={(e) => handleDownloadClick(e, entry)}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Download as .md"
+                      title={t('common.downloadAsMd')}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -305,7 +308,7 @@ export default function KnowledgeTable({
                       <button
                         onClick={(e) => handleDeleteClick(e, entry)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete"
+                        title={t('common.delete')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -345,7 +348,7 @@ export default function KnowledgeTable({
 
                 {/* Background */}
                 <div className="text-sm text-gray-900 line-clamp-3">
-                  {entry.background || 'No background description'}
+                  {entry.background || t('common.noBackgroundDescription')}
                 </div>
 
                 {/* Tags */}
@@ -375,7 +378,7 @@ export default function KnowledgeTable({
                 {/* Sharing Status */}
                 <div className="flex items-center gap-4 text-xs">
                   <div className="flex items-center gap-1">
-                    <span className="text-gray-500">Shared:</span>
+                    <span className="text-gray-500">{t('common.shared')}:</span>
                     {currentUserId && entry.createdBy === currentUserId ? (
                       <button
                         onClick={(e) => {
@@ -392,16 +395,16 @@ export default function KnowledgeTable({
                             : 'text-gray-500'
                         }`}
                       >
-                        {togglingEntryId === entry.id ? '...' : entry.isShared ? 'Yes' : 'No'}
+                        {togglingEntryId === entry.id ? '...' : entry.isShared ? t('common.yes') : t('common.no')}
                       </button>
                     ) : (
                       <span className={entry.isShared ? 'text-green-600' : 'text-gray-400'}>
-                        {entry.isShared ? 'Yes' : 'No'}
+                        {entry.isShared ? t('common.yes') : t('common.no')}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-gray-500">Allow Edit:</span>
+                    <span className="text-gray-500">{t('common.allowEdit')}:</span>
                     {currentUserId && entry.createdBy === currentUserId ? (
                       <button
                         onClick={(e) => {
@@ -420,11 +423,11 @@ export default function KnowledgeTable({
                             : 'text-gray-500'
                         }`}
                       >
-                        {togglingEntryId === entry.id ? '...' : entry.allowEdit ? 'Yes' : 'No'}
+                        {togglingEntryId === entry.id ? '...' : entry.allowEdit ? t('common.yes') : t('common.no')}
                       </button>
                     ) : (
                       <span className={entry.allowEdit ? 'text-green-600' : 'text-gray-400'}>
-                        {entry.allowEdit ? 'Yes' : 'No'}
+                        {entry.allowEdit ? t('common.yes') : t('common.no')}
                       </span>
                     )}
                   </div>
@@ -438,7 +441,7 @@ export default function KnowledgeTable({
               <button
                 onClick={(e) => handleDownloadClick(e, entry)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Download as .md"
+                title={t('common.downloadAsMd')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -449,7 +452,7 @@ export default function KnowledgeTable({
                 <button
                   onClick={(e) => handleDeleteClick(e, entry)}
                   className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Delete"
+                  title={t('common.delete')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -464,7 +467,7 @@ export default function KnowledgeTable({
       {/* Empty state */}
       {entries.length === 0 && (
         <div className="p-8 text-center text-gray-500">
-          No entries to display
+          {t('common.noEntriesToDisplay')}
         </div>
       )}
     </div>

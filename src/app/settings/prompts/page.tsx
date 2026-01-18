@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { PromptTemplate, PromptTemplateCategory, UserRole } from '@/types';
+import { useTranslation } from '@/i18n';
 
 type FilterCategory = 'all' | PromptTemplateCategory;
 
@@ -12,6 +13,7 @@ const ADMIN_ROLES: UserRole[] = ['super_admin', 'owner'];
 
 export default function PromptTemplatesPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -144,7 +146,7 @@ export default function PromptTemplatesPage() {
   // Delete template
   const handleDelete = async (template: PromptTemplate) => {
     if (template.isDefault) {
-      setError('Cannot delete default templates');
+      setError(t('common.cannotDeleteDefault'));
       return;
     }
 
@@ -245,9 +247,9 @@ export default function PromptTemplatesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Prompt Generation Guides</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('settings.prompts.title')}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage generation guides for knowledge extraction and prompt generation.
+            {t('settings.prompts.subtitle')}
           </p>
         </div>
 
@@ -258,7 +260,7 @@ export default function PromptTemplatesPage() {
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Create Guide
+          {t('common.createGuide')}
         </button>
       </div>
 
@@ -274,7 +276,7 @@ export default function PromptTemplatesPage() {
                 : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
             }`}
           >
-            {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+            {cat === 'all' ? t('common.all') : cat === 'extraction' ? t('common.extraction') : t('common.generation')}
           </button>
         ))}
       </div>
@@ -284,7 +286,7 @@ export default function PromptTemplatesPage() {
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex justify-between items-center">
           <span>{error}</span>
           <button onClick={() => setError('')} className="text-red-500 hover:text-red-700">
-            Dismiss
+            {t('common.dismiss')}
           </button>
         </div>
       )}
@@ -295,11 +297,11 @@ export default function PromptTemplatesPage() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No guides found</h3>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">{t('common.noGuidesFound')}</h3>
           <p className="mt-2 text-gray-500">
             {filter === 'all'
-              ? 'Get started by creating your first guide.'
-              : `No ${filter} guides available.`}
+              ? t('common.getStartedGuide')
+              : t('common.noGuidesAvailable', { category: filter === 'extraction' ? t('common.extraction').toLowerCase() : t('common.generation').toLowerCase() })}
           </p>
         </div>
       ) : (
@@ -318,7 +320,7 @@ export default function PromptTemplatesPage() {
                       </h3>
                       {template.isDefault && (
                         <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
-                          Default
+                          {t('common.default')}
                         </span>
                       )}
                       <span className={`px-2 py-0.5 text-xs rounded-full ${
@@ -338,7 +340,7 @@ export default function PromptTemplatesPage() {
                       <p className="mt-1 text-sm text-gray-500">{template.description}</p>
                     )}
                     <p className="mt-2 text-xs text-gray-400">
-                      Version {template.version} - Updated {new Date(template.updatedAt).toLocaleDateString()}
+                      {t('common.version')} {template.version} - {t('common.updated')} {new Date(template.updatedAt).toLocaleDateString()}
                     </p>
                   </div>
 
@@ -346,7 +348,7 @@ export default function PromptTemplatesPage() {
                     <button
                       onClick={() => handleEdit(template)}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-                      title="Edit"
+                      title={t('common.edit')}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -355,7 +357,7 @@ export default function PromptTemplatesPage() {
                     <button
                       onClick={() => handleDuplicate(template)}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-                      title="Duplicate"
+                      title={t('common.duplicate')}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -365,7 +367,7 @@ export default function PromptTemplatesPage() {
                       <button
                         onClick={() => handleDelete(template)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
-                        title="Delete"
+                        title={t('common.delete')}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -378,7 +380,7 @@ export default function PromptTemplatesPage() {
                 {/* Content preview */}
                 <details className="mt-3">
                   <summary className="text-sm text-blue-600 cursor-pointer hover:text-blue-700">
-                    View content
+                    {t('common.viewContent')}
                   </summary>
                   <pre className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-700 overflow-x-auto whitespace-pre-wrap">
                     {template.content}
@@ -404,7 +406,7 @@ export default function PromptTemplatesPage() {
             <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {editingTemplate ? 'Edit Guide' : 'Create Guide'}
+                  {editingTemplate ? t('common.editGuide') : t('common.createGuide')}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -420,28 +422,28 @@ export default function PromptTemplatesPage() {
                 {/* Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Name <span className="text-red-500">*</span>
+                    {t('common.name')} {t('common.required')}
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter guide name..."
+                    placeholder={t('common.enterGuideName')}
                   />
                 </div>
 
                 {/* Description */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
+                    {t('common.description')}
                   </label>
                   <input
                     type="text"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Brief description..."
+                    placeholder={t('common.briefDescriptionGuide')}
                   />
                 </div>
 
@@ -449,7 +451,7 @@ export default function PromptTemplatesPage() {
                 {!editingTemplate && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category <span className="text-red-500">*</span>
+                      {t('common.category')} {t('common.required')}
                     </label>
                     <select
                       value={formData.category}
@@ -459,8 +461,8 @@ export default function PromptTemplatesPage() {
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="extraction">Extraction</option>
-                      <option value="generation">Generation</option>
+                      <option value="extraction">{t('common.extraction')}</option>
+                      <option value="generation">{t('common.generation')}</option>
                     </select>
                   </div>
                 )}
@@ -469,7 +471,7 @@ export default function PromptTemplatesPage() {
                 {(formData.category === 'generation' || editingTemplate?.category === 'generation') && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Template Type Identifier
+                      {t('common.templateTypeIdentifier')}
                     </label>
                     <input
                       type="text"
@@ -479,7 +481,7 @@ export default function PromptTemplatesPage() {
                       placeholder="e.g., introduction, methodology, custom-review"
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      Optional identifier used when filtering prompts. Leave empty to use the template name.
+                      {t('common.templateTypeHelp')}
                     </p>
                   </div>
                 )}
@@ -487,14 +489,14 @@ export default function PromptTemplatesPage() {
                 {/* Content */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Content <span className="text-red-500">*</span>
+                    {t('common.content')} {t('common.required')}
                   </label>
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                     rows={12}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                    placeholder="Enter the system prompt guide..."
+                    placeholder={t('common.enterSystemPromptGuide')}
                   />
                 </div>
               </div>
@@ -504,14 +506,14 @@ export default function PromptTemplatesPage() {
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={saving || !formData.name.trim() || !formData.content.trim()}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {saving ? 'Saving...' : editingTemplate ? 'Save Changes' : 'Create Guide'}
+                  {saving ? t('common.saving') : editingTemplate ? t('common.saveChanges') : t('common.createGuide')}
                 </button>
               </div>
             </div>
