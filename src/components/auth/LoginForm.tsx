@@ -109,17 +109,24 @@ export default function LoginForm() {
     <div className="min-h-screen bg-[#06080a] text-slate-200 font-sans selection:bg-indigo-500/30">
       {/* Dynamic Background - Full screen */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,_rgba(63,94,251,0.05)_0%,_rgba(0,0,0,0)_50%)]"></div>
+        {/* Primary gradient - left side emphasis */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,_rgba(63,94,251,0.06)_0%,_rgba(0,0,0,0)_50%)]"></div>
 
-        {/* Animated Particles */}
-        {mounted && [...Array(15)].map((_, i) => (
+        {/* Secondary gradient - right side glow connecting to login panel */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_50%,_rgba(99,102,241,0.04)_0%,_rgba(0,0,0,0)_40%)]"></div>
+
+        {/* Center bridge glow - creates visual connection */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(79,70,229,0.03)_0%,_rgba(0,0,0,0)_60%)]"></div>
+
+        {/* Animated Particles - distributed across full width */}
+        {mounted && [...Array(20)].map((_, i) => (
           <div
             key={i}
             className="absolute bg-white/10 rounded-full blur-sm"
             style={{
               width: `${2 + Math.random() * 3}px`,
               height: `${2 + Math.random() * 3}px`,
-              left: `${Math.random() * 55}%`,
+              left: `${Math.random() * 90}%`,
               top: `${Math.random() * 100}%`,
               animation: `float-particle ${15 + Math.random() * 10}s linear infinite`,
               animationDelay: `${Math.random() * 5}s`
@@ -128,10 +135,10 @@ export default function LoginForm() {
         ))}
       </div>
 
-      {/* Centered Content Container */}
-      <div className="max-w-[1600px] mx-auto min-h-screen flex flex-col lg:flex-row relative">
+      {/* Centered Content Container - Tighter for cohesion */}
+      <div className="max-w-[1280px] mx-auto min-h-screen flex flex-col lg:flex-row relative">
         {/* Left Column: Content */}
-        <div className="flex-1 relative z-10 p-6 sm:p-8 lg:p-12 xl:p-16 overflow-y-auto">
+        <div className="flex-1 relative z-10 p-6 sm:p-8 lg:p-12 xl:pl-16 xl:pr-8 overflow-y-auto">
         {/* Logo/Brand - In normal document flow */}
         <div className="flex items-center gap-3 mb-8 lg:mb-12">
           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 flex-shrink-0">
@@ -143,8 +150,8 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* Hero Section */}
-        <div className={`max-w-2xl transition-all duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+        {/* Hero Section - Removed max-w constraint for better balance */}
+        <div className={`transition-all duration-700 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
           {/* Tagline Badge */}
           <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-indigo-300 text-xs font-medium mb-6 backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5 mr-2 text-indigo-400" />
@@ -152,14 +159,14 @@ export default function LoginForm() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-[1.1] mb-6 tracking-tighter">
+          <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-extrabold text-white leading-[1.15] mb-6 tracking-tight">
             <span className="block">{t('landing.headline1')}.</span>
             <span className="block">{t('landing.headline2')}.</span>
             <span className="block text-indigo-500">{t('landing.headline3')}.</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-base sm:text-lg lg:text-xl text-slate-400 leading-relaxed mb-8 lg:mb-10 max-w-xl">
+          <p className="text-base sm:text-lg text-slate-400 leading-relaxed mb-8 lg:mb-10">
             {t('landing.subheadline')}
           </p>
 
@@ -194,15 +201,22 @@ export default function LoginForm() {
         </div>
       </div>
 
-        {/* Vertical Divider Line - desktop only */}
-        <div className="hidden lg:flex items-center justify-center w-px flex-shrink-0">
-          <div className="h-full w-px bg-gradient-to-b from-transparent via-indigo-500/20 to-transparent relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-indigo-500/40 rounded-full blur-md animate-pulse" />
-          </div>
+        {/* Visual Connector Bridge - desktop only */}
+        <div className="hidden lg:flex items-center justify-center relative flex-shrink-0" style={{ width: '80px' }}>
+          {/* Gradient glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-indigo-500/10 to-indigo-500/5 blur-2xl" />
+
+          {/* Central divider line */}
+          <div className="absolute left-1/2 -translate-x-1/2 h-full w-px bg-gradient-to-b from-transparent via-indigo-500/30 to-transparent" />
+
+          {/* Connecting nodes */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-2 h-2 bg-indigo-500/60 rounded-full shadow-lg shadow-indigo-500/50" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-3 h-3 bg-indigo-500/80 rounded-full blur-sm animate-pulse shadow-lg shadow-indigo-500/50" />
+          <div className="absolute top-2/3 left-1/2 -translate-x-1/2 w-2 h-2 bg-indigo-500/60 rounded-full shadow-lg shadow-indigo-500/50" />
         </div>
 
-        {/* Right Column: Login */}
-        <div className="w-full lg:w-[420px] lg:min-w-[380px] xl:min-w-[420px] flex-shrink-0 relative z-10 p-6 lg:p-8 flex items-center justify-center bg-white/[0.01] lg:bg-white/[0.02] backdrop-blur-xl border-t lg:border-t-0 border-white/5 lg:min-h-screen lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
+        {/* Right Column: Login - Adjusted width for better balance */}
+        <div className="w-full lg:w-[440px] lg:min-w-[400px] xl:min-w-[440px] flex-shrink-0 relative z-10 p-6 lg:p-8 lg:pl-4 flex items-center justify-center bg-white/[0.01] lg:bg-gradient-to-l lg:from-white/[0.03] lg:to-transparent backdrop-blur-xl border-t lg:border-t-0 border-white/5 lg:min-h-screen lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
         {/* Language Toggle */}
         <button
           onClick={toggleLanguage}
