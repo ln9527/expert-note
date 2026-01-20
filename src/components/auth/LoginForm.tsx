@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { buildApiPath } from '@/lib/utils/pathHelper';
+import { buildApiPath, buildPath } from '@/lib/utils/pathHelper';
 import { useTranslation } from '@/i18n';
 import {
   Layers,
@@ -17,7 +17,8 @@ import {
   ArrowRight,
   Globe,
   Mail,
-  Sparkles
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
 
 interface PipelineCardProps {
@@ -166,9 +167,20 @@ export default function LoginForm() {
           </h1>
 
           {/* Subheadline */}
-          <p className="text-base sm:text-lg text-slate-400 leading-relaxed mb-8 lg:mb-10">
+          <p className="text-base sm:text-lg text-slate-400 leading-relaxed mb-4">
             {t('landing.subheadline')}
           </p>
+
+          {/* Learn More Link */}
+          <a
+            href={buildPath('/value-proposition.html')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 text-sm font-medium mb-8 lg:mb-10 transition-colors group"
+          >
+            {t('landing.learnMore')}
+            <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </a>
 
           {/* Pipeline Cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 pb-8">

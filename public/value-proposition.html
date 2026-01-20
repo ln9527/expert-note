@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert Note - The Logic Layer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #1e293b 0%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Subtle Dot Pattern Background */
+        .hero-bg {
+            background-color: #ffffff;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        /* Card Styles */
+        .feature-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
+
+        /* Pipeline Connector Line */
+        .pipeline-connector {
+            position: absolute;
+            top: 2rem;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background: #e2e8f0;
+            z-index: 0;
+            transform: translateX(-50%);
+        }
+        @media (min-width: 768px) {
+            .pipeline-connector {
+                top: 50%;
+                left: 0;
+                width: 100%;
+                height: 2px;
+                transform: translateY(-50%);
+            }
+        }
+
+        /* Infinite Scroller */
+        .scroller {
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+        .scroller-inner {
+            display: flex;
+            gap: 1.5rem;
+            width: max-content;
+            animation: scroll 40s linear infinite;
+        }
+        @keyframes scroll {
+            to { transform: translate(calc(-50% - 0.75rem)); }
+        }
+        .scroller-tag {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            color: #475569;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .hidden { display: none; }
+
+        /* Code snippet styling */
+        .code-snippet {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            color: #334155;
+            line-height: 1.5;
+        }
+        .token-keyword { color: #db2777; }
+        .token-string { color: #16a34a; }
+        .token-comment { color: #94a3b8; font-style: italic; }
+    </style>
+</head>
+<body class="text-slate-600 bg-white selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full bg-white/90 backdrop-blur-md z-50 border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-lg">E</div>
+                <span class="font-bold text-lg text-slate-900 tracking-tight">Expert Note</span>
+            </div>
+            <button id="lang-toggle" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                <span>EN / 中文</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-bg pt-32 pb-20 lg:pt-48 lg:pb-32">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <div class="lang-en">
+                <h1 class="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight mb-8 leading-tight">
+                    AI gets you 80% there.<br/>
+                    <span class="gradient-text">We bridge the final 20%.</span>
+                </h1>
+                <p class="text-xl text-slate-500 mb-10 leading-relaxed max-w-2xl mx-auto">
+                    Standard AI lacks "Tacit Knowledge"—the nuance, intuition, and context only experts possess.
+                    Expert Note captures your judgment to turn "good enough" into <b>perfection</b>.
+                </p>
+                <div class="flex justify-center gap-4">
+                    <a href="#demo" class="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-slate-800 transition-transform hover:-translate-y-0.5 shadow-lg shadow-slate-200">
+                        See How It Works
+                    </a>
+                </div>
+            </div>
+
+            <div class="lang-cn hidden">
+                <h1 class="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight mb-8 leading-tight">
+                    AI 完成前 80%。<br/>
+                    <span class="gradient-text">我们补全最后的 20%。</span>
+                </h1>
+                <p class="text-xl text-slate-500 mb-10 leading-relaxed max-w-2xl mx-auto">
+                    标准 AI 缺乏"隐性知识"——只有专家才具备的细微差别、直觉和语境。
+                    Expert Note 捕捉您的判断力，将"差不多"转化为<b>完美</b>。
+                </p>
+                <div class="flex justify-center gap-4">
+                    <a href="#demo" class="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-slate-800 transition-transform hover:-translate-y-0.5 shadow-lg shadow-slate-200">
+                        查看工作原理
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The 80/20 Visual (Refined) -->
+    <section class="py-12 bg-white border-y border-slate-100">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="bg-slate-50 rounded-2xl p-8 md:p-12 border border-slate-200">
+                <h3 class="text-xl font-bold text-slate-900 mb-8 text-center lang-en uppercase tracking-wider text-sm">The Perfection Gap</h3>
+                <h3 class="text-xl font-bold text-slate-900 mb-8 text-center lang-cn hidden uppercase tracking-wider text-sm">完美差距</h3>
+
+                <div class="relative pt-4 pb-2">
+                    <div class="flex mb-2 items-center justify-between font-semibold text-sm">
+                        <span class="text-slate-500 lang-en">Quality Level</span>
+                        <span class="text-slate-500 lang-cn hidden">质量水平</span>
+                        <span class="text-indigo-600">100%</span>
+                    </div>
+
+                    <div class="flex h-12 rounded-xl overflow-hidden shadow-inner bg-slate-200">
+                        <!-- 80% -->
+                        <div style="width: 80%" class="bg-slate-400 flex items-center justify-center relative border-r border-slate-400/50">
+                            <span class="text-white font-bold text-sm tracking-wide">Standard AI (80%)</span>
+                        </div>
+                        <!-- 20% -->
+                        <div style="width: 20%" class="bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-center relative">
+                            <span class="text-white font-bold text-sm tracking-wide animate-pulse">+ Expert Note (20%)</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between text-sm mt-6">
+                        <div class="w-2/3 pr-8">
+                            <strong class="text-slate-900 block mb-1 lang-en">Explicit Data (Commodity)</strong>
+                            <strong class="text-slate-900 block mb-1 lang-cn hidden">显性数据 (商品化)</strong>
+                            <p class="text-slate-500 leading-relaxed lang-en">Grammar, Facts, Syntax, Generic Structure. Easily retrieved by any LLM.</p>
+                            <p class="text-slate-500 leading-relaxed lang-cn hidden">语法、事实、句法、通用结构。任何大模型都能轻易获取。</p>
+                        </div>
+                        <div class="w-1/3 pl-8 border-l border-indigo-200">
+                            <strong class="text-indigo-700 block mb-1 lang-en">Tacit Knowledge (Asset)</strong>
+                            <strong class="text-indigo-700 block mb-1 lang-cn hidden">隐性知识 (资产)</strong>
+                            <p class="text-slate-500 leading-relaxed lang-en">Context, Style, Strategy, Intuition. Unique to your experts.</p>
+                            <p class="text-slate-500 leading-relaxed lang-cn hidden">语境、风格、策略、直觉。您专家独有的资产。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Concrete Flow Example: Academic Paper -->
+    <section id="demo" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl font-bold text-slate-900 lang-en">How It Works</h2>
+                <h2 class="text-3xl font-bold text-slate-900 lang-cn hidden">工作原理</h2>
+                <p class="text-slate-500 mt-3 lang-en">From raw text to reusable agent in 4 steps.</p>
+                <p class="text-slate-500 mt-3 lang-cn hidden">四步从原始文本到可复用 Agent。</p>
+            </div>
+
+            <div class="relative">
+                <!-- Connector Line -->
+                <div class="hidden md:block pipeline-connector"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+
+                    <!-- Step 1 -->
+                    <div class="feature-card p-6 rounded-2xl relative z-10">
+                        <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-lg font-bold text-slate-500 mb-5 border border-slate-200 mx-auto">1</div>
+                        <h3 class="font-bold text-slate-900 mb-3 text-center lang-en">Upload Docs</h3>
+                        <h3 class="font-bold text-slate-900 mb-3 text-center lang-cn hidden">上传文档</h3>
+
+                        <div class="code-snippet mb-3">
+                            # Thesis_Draft_v1.md<br/><br/>
+                            The methodology uses a qualitative approach...
+                        </div>
+                        <p class="text-xs text-slate-400 text-center lang-en">Raw input. Standard AI just sees text strings.</p>
+                        <p class="text-xs text-slate-400 text-center lang-cn hidden">原始输入。标准 AI 只看到字符串。</p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="feature-card p-6 rounded-2xl relative z-10 ring-2 ring-indigo-500 ring-offset-2">
+                        <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-lg font-bold text-white mb-5 mx-auto shadow-lg shadow-indigo-200">2</div>
+                        <h3 class="font-bold text-indigo-700 mb-3 text-center lang-en">Annotate</h3>
+                        <h3 class="font-bold text-indigo-700 mb-3 text-center lang-cn hidden">专家批注</h3>
+
+                        <div class="code-snippet mb-3 bg-indigo-50 border-indigo-100">
+                            <span class="token-comment">// Expert Comment:</span><br/>
+                            <span class="token-keyword">[[MESO]]</span>: "Too vague. Must justify sample size."
+                        </div>
+                        <p class="text-xs text-indigo-600/80 text-center font-medium lang-en">The Magic Moment. You add judgment.</p>
+                        <p class="text-xs text-indigo-600/80 text-center font-medium lang-cn hidden">关键时刻。您注入判断力。</p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="feature-card p-6 rounded-2xl relative z-10">
+                        <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-lg font-bold text-slate-500 mb-5 border border-slate-200 mx-auto">3</div>
+                        <h3 class="font-bold text-slate-900 mb-3 text-center lang-en">Extract Logic</h3>
+                        <h3 class="font-bold text-slate-900 mb-3 text-center lang-cn hidden">提取逻辑</h3>
+
+                        <div class="code-snippet mb-3">
+                            <span class="token-keyword">IF</span> section == "Methodology"<br/>
+                            <span class="token-keyword">AND</span> sample_size_reason == <span class="token-string">NULL</span><br/>
+                            <span class="token-keyword">THEN</span> flag_error()
+                        </div>
+                        <p class="text-xs text-slate-400 text-center lang-en">AI converts comments into rules.</p>
+                        <p class="text-xs text-slate-400 text-center lang-cn hidden">AI 将评论转化为规则。</p>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="feature-card p-6 rounded-2xl relative z-10">
+                        <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-lg font-bold text-slate-500 mb-5 border border-slate-200 mx-auto">4</div>
+                        <h3 class="font-bold text-slate-900 mb-3 text-center lang-en">Generate Agent</h3>
+                        <h3 class="font-bold text-slate-900 mb-3 text-center lang-cn hidden">生成 Agent</h3>
+
+                        <div class="code-snippet mb-3">
+                            <span class="token-keyword">System Prompt:</span><br/>
+                            "You are a strict grader. Ensure sample limits are defined..."
+                        </div>
+                        <p class="text-xs text-slate-400 text-center lang-en">A reusable asset that thinks like you.</p>
+                        <p class="text-xs text-slate-400 text-center lang-cn hidden">一个像您一样思考的可复用资产。</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Use Cases -->
+    <section class="py-24 bg-slate-50 border-t border-slate-200">
+        <div class="max-w-6xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center lang-en">Applications of Tacit Knowledge</h2>
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center lang-cn hidden">隐性知识的应用</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
+
+                <!-- Use Case 1: Academic -->
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-2xl">🎓</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 lang-en">Grading & Supervision</h3>
+                            <h3 class="text-lg font-bold text-slate-900 lang-cn hidden">评分与指导</h3>
+                            <p class="text-xs text-slate-500 uppercase tracking-wide mt-1">Education</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1 lang-en">The Problem</div>
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1 lang-cn hidden">问题</div>
+                            <p class="text-sm text-slate-600">Professors repeat the same feedback 100 times. AI graders are too generic.</p>
+                        </div>
+                         <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                            <div class="text-xs font-bold text-indigo-500 uppercase mb-1 lang-en">The Solution</div>
+                            <div class="text-xs font-bold text-indigo-500 uppercase mb-1 lang-cn hidden">解决方案</div>
+                            <p class="text-sm text-slate-900 font-medium">Annotate 5 papers. Create a "Virtual TA" that grades 500 students with your exact rubric.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Use Case 2: Legal -->
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-2xl">⚖️</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 lang-en">Contract Compliance</h3>
+                            <h3 class="text-lg font-bold text-slate-900 lang-cn hidden">合同合规审查</h3>
+                            <p class="text-xs text-slate-500 uppercase tracking-wide mt-1">Legal</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1 lang-en">The Problem</div>
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1 lang-cn hidden">问题</div>
+                            <p class="text-sm text-slate-600">Junior associates miss subtle risks. Partners have no time for every draft.</p>
+                        </div>
+                         <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                            <div class="text-xs font-bold text-indigo-500 uppercase mb-1 lang-en">The Solution</div>
+                            <div class="text-xs font-bold text-indigo-500 uppercase mb-1 lang-cn hidden">解决方案</div>
+                            <p class="text-sm text-slate-900 font-medium">Partners annotate <i>why</i> a clause is risky. Create a "Firm Policy Agent" that scans for risk, not just keywords.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Use Case 3: Writing -->
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center text-2xl">✍️</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 lang-en">Voice & Tone Cloning</h3>
+                            <h3 class="text-lg font-bold text-slate-900 lang-cn hidden">语调与风格克隆</h3>
+                            <p class="text-xs text-slate-500 uppercase tracking-wide mt-1">Marketing / Comms</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1 lang-en">The Problem</div>
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1 lang-cn hidden">问题</div>
+                            <p class="text-sm text-slate-600">Generic AI writing sounds robotic, bland, and "obviously AI".</p>
+                        </div>
+                         <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                            <div class="text-xs font-bold text-indigo-500 uppercase mb-1 lang-en">The Solution</div>
+                            <div class="text-xs font-bold text-indigo-500 uppercase mb-1 lang-cn hidden">解决方案</div>
+                            <p class="text-sm text-slate-900 font-medium">Annotate edits on your own drafts. Create an AI that writes <i>exactly like you</i>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Use Case 4: Business -->
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-2xl">💼</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 lang-en">Strategy Alignment</h3>
+                            <h3 class="text-lg font-bold text-slate-900 lang-cn hidden">战略对齐</h3>
+                            <p class="text-xs text-slate-500 uppercase tracking-wide mt-1">Executive</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1 lang-en">The Problem</div>
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1 lang-cn hidden">问题</div>
+                            <p class="text-sm text-slate-600">Strategic goals get diluted as they move down the chain of command.</p>
+                        </div>
+                         <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                            <div class="text-xs font-bold text-indigo-500 uppercase mb-1 lang-en">The Solution</div>
+                            <div class="text-xs font-bold text-indigo-500 uppercase mb-1 lang-cn hidden">解决方案</div>
+                            <p class="text-sm text-slate-900 font-medium">Leaders annotate proposals. Create a "Strategy Checker" to align all initiatives with CEO logic.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scroller for More Contexts -->
+             <div class="text-center mb-8">
+                <span class="text-sm font-semibold text-slate-400 uppercase tracking-widest lang-en">Endless Applications</span>
+                <span class="text-sm font-semibold text-slate-400 uppercase tracking-widest lang-cn hidden">无限应用场景</span>
+            </div>
+
+            <div class="scroller w-full overflow-hidden">
+                <div class="scroller-inner">
+                    <div class="scroller-tag">🏥 Medical Triage</div>
+                    <div class="scroller-tag">🏗️ Code Review</div>
+                    <div class="scroller-tag">💡 VC Investment</div>
+                    <div class="scroller-tag">🎨 UX Audits</div>
+                    <div class="scroller-tag">🤝 Sales Coaching</div>
+                    <div class="scroller-tag">🛡️ Crisis Comms</div>
+                    <div class="scroller-tag">📝 Grant Writing</div>
+                    <div class="scroller-tag">📊 Data Analysis</div>
+                    <!-- Duplicates for loop -->
+                    <div class="scroller-tag">🏥 Medical Triage</div>
+                    <div class="scroller-tag">🏗️ Code Review</div>
+                    <div class="scroller-tag">💡 VC Investment</div>
+                    <div class="scroller-tag">🎨 UX Audits</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-16 text-center">
+        <div class="max-w-2xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-white mb-6 lang-en">Don't settle for 80%.</h2>
+            <h2 class="text-3xl font-bold text-white mb-6 lang-cn hidden">不要满足于 80%。</h2>
+            <p class="mb-10 text-slate-400 lang-en">Start capturing the expert knowledge that makes your organization unique.</p>
+            <p class="mb-10 text-slate-400 lang-cn hidden">开始捕捉让您的组织独一无二的专家知识。</p>
+            <a id="get-started-link" href="./login" class="inline-block bg-white text-slate-900 font-bold py-3.5 px-10 rounded-full hover:bg-indigo-50 transition-colors shadow-lg">
+                <span class="lang-en">Get Started</span>
+                <span class="lang-cn hidden">立即开始</span>
+            </a>
+            <p class="mt-12 text-sm text-slate-600">&copy; 2026 Expert Note. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Language toggle
+        const langToggle = document.getElementById('lang-toggle');
+        const enElements = document.querySelectorAll('.lang-en');
+        const cnElements = document.querySelectorAll('.lang-cn');
+        let currentLang = 'en';
+
+        langToggle.addEventListener('click', () => {
+            if (currentLang === 'en') {
+                enElements.forEach(el => el.classList.add('hidden'));
+                cnElements.forEach(el => el.classList.remove('hidden'));
+                currentLang = 'cn';
+            } else {
+                cnElements.forEach(el => el.classList.add('hidden'));
+                enElements.forEach(el => el.classList.remove('hidden'));
+                currentLang = 'en';
+            }
+        });
+
+        // Fix login link for BASE_PATH - detect current path and construct correct URL
+        (function() {
+            const getStartedLink = document.getElementById('get-started-link');
+            if (getStartedLink) {
+                // Get the current path and extract the base path
+                const currentPath = window.location.pathname;
+                // Remove the filename (value-proposition.html) to get the base
+                const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+                // Set the href to the login page
+                getStartedLink.href = basePath + '/login';
+            }
+        })();
+    </script>
+</body>
+</html>
