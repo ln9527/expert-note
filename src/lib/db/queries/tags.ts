@@ -24,8 +24,15 @@ function mapTagRow(row: TagRow): Tag {
   };
 }
 
+export interface TagFilterOptions {
+  userId: number;
+  orgId: number | null;
+  role: string;
+}
+
 /**
  * Get all tags (excludes deleted)
+ * @deprecated Use getTagsWithFilter for org-based visibility
  */
 export async function getAllTags(): Promise<Tag[]> {
   const sql = `
@@ -35,6 +42,46 @@ export async function getAllTags(): Promise<Tag[]> {
     ORDER BY name ASC
   `;
   const rows = await query<TagRow>(sql);
+  return rows.map(mapTagRow);
+}
+
+/**
+ * Get tags with organization-based filtering
+ * - super_admin: Can see ALL tags
+ * - owner/member: Can see tags created by users in their same org
+ * - individual (no org): Can only see tags they created themselves
+ */
+export async function getTagsWithFilter(options: TagFilterOptions): Promise<Tag[]> {
+  const { userId, orgId, role } = options;
+
+  // super_admin sees all tags
+  if (role === 'super_admin') {
+    return getAllTags();
+  }
+
+  // individual users (no org) see only their own tags
+  if (!orgId) {
+    const sql = `
+      SELECT id, name, color, created_at, created_by, is_deleted, deleted_at
+      FROM tags
+      WHERE is_deleted = FALSE
+        AND created_by = $1
+      ORDER BY name ASC
+    `;
+    const rows = await query<TagRow>(sql, [userId]);
+    return rows.map(mapTagRow);
+  }
+
+  // org members (owner/member) see tags created by users in their org
+  const sql = `
+    SELECT t.id, t.name, t.color, t.created_at, t.created_by, t.is_deleted, t.deleted_at
+    FROM tags t
+    LEFT JOIN users u ON t.created_by = u.id
+    WHERE t.is_deleted = FALSE
+      AND (u.org_id = $1 OR t.created_by IS NULL)
+    ORDER BY t.name ASC
+  `;
+  const rows = await query<TagRow>(sql, [orgId]);
   return rows.map(mapTagRow);
 }
 

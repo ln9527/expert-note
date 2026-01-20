@@ -54,15 +54,34 @@ export interface GetTemplatesOptions {
   templateType?: string;
   isActive?: boolean;
   includeDefaults?: boolean;
+  // Organization-based filtering
+  userRole?: 'super_admin' | 'owner' | 'member' | 'individual';
+  userId?: number;
+  orgId?: number | null;
 }
 
 /**
  * Get all generation guides (code: prompt templates) with optional filtering
+ *
+ * Organization-based visibility:
+ * - System/default templates (is_default = true): Visible to ALL users
+ * - User-created templates (is_default = false):
+ *   - super_admin: Can see ALL templates
+ *   - owner/member: See templates created by users in their org
+ *   - individual: See only templates they created themselves
  */
 export async function getAllPromptTemplates(
   options: GetTemplatesOptions = {}
 ): Promise<PromptTemplate[]> {
-  const { category, templateType, isActive = true, includeDefaults = true } = options;
+  const {
+    category,
+    templateType,
+    isActive = true,
+    includeDefaults = true,
+    userRole,
+    userId,
+    orgId,
+  } = options;
 
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -85,6 +104,22 @@ export async function getAllPromptTemplates(
 
   if (!includeDefaults) {
     conditions.push(`is_default = FALSE`);
+  }
+
+  // Apply organization-based filtering
+  if (userRole && userRole !== 'super_admin') {
+    if (userRole === 'individual') {
+      // Individual users see system templates + only their own templates
+      conditions.push(`(is_default = TRUE OR created_by = $${paramIndex++})`);
+      params.push(userId);
+    } else if ((userRole === 'owner' || userRole === 'member') && orgId) {
+      // Org members see system templates + templates from users in their org
+      conditions.push(
+        `(is_default = TRUE OR created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))`
+      );
+      params.push(orgId);
+    }
+    // super_admin sees everything - no additional filter needed
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

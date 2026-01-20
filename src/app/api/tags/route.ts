@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllTags, createTag } from '@/lib/db/queries/tags';
+import { createTag, getTagsWithFilter } from '@/lib/db/queries/tags';
 import { getSessionUser } from '@/lib/auth/session';
 
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   try {
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const tags = await getAllTags();
+    const tags = await getTagsWithFilter({
+      userId: user.userId,
+      orgId: user.orgId,
+      role: user.role,
+    });
     return NextResponse.json({ success: true, tags });
   } catch (error) {
     console.error('[API] GET /tags error:', error);
@@ -17,7 +21,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const user = await getSessionUser();
     if (!user) {

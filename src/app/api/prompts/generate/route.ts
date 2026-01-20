@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth/session';
 import { createPrompt, getPromptById } from '@/lib/db/queries/prompts';
 import {
+  getKnowledgeEntryById,
   getKnowledgeEntryWithAnnotations,
   KnowledgeEntryWithAnnotations,
 } from '@/lib/db/queries/knowledge';
@@ -9,8 +10,69 @@ import { getDocumentById } from '@/lib/db/queries/documents';
 import { getAllPromptTemplates } from '@/lib/db/queries/promptTemplates';
 import { generateSystemPrompt } from '@/lib/ai/generation';
 import { extractAnnotations } from '@/lib/utils/annotation';
-import { KnowledgeAnnotation } from '@/types';
+import { KnowledgeAnnotation, Session, Document } from '@/types';
 import { handleApiError } from '@/lib/api/errors';
+import { KnowledgeEntry } from '@/lib/db/queries/knowledge';
+
+/**
+ * Check if user can view a document based on permission rules:
+ * - super_admin: Can access all
+ * - owner: Can access docs in their org
+ * - member: Can access own docs + shared docs from same org
+ * - individual: Can only access own docs
+ */
+function canViewDocument(user: Session, document: Document): boolean {
+  if (user.role === 'super_admin') {
+    return true;
+  }
+
+  const isOwner = document.createdBy === user.userId;
+  if (isOwner) {
+    return true;
+  }
+
+  if (user.role === 'owner' && user.orgId) {
+    const creatorOrgId = document.creator?.orgId;
+    return creatorOrgId === user.orgId;
+  }
+
+  if (user.role === 'member' && user.orgId) {
+    const creatorOrgId = document.creator?.orgId;
+    return document.isShared && creatorOrgId === user.orgId;
+  }
+
+  return false;
+}
+
+/**
+ * Check if user can view a knowledge entry based on permission rules:
+ * - super_admin: Can access all
+ * - owner: Can access knowledge in their org
+ * - member: Can access own knowledge + shared knowledge from same org
+ * - individual: Can only access own knowledge
+ */
+function canViewKnowledge(user: Session, entry: KnowledgeEntry): boolean {
+  if (user.role === 'super_admin') {
+    return true;
+  }
+
+  const isOwner = entry.createdBy === user.userId;
+  if (isOwner) {
+    return true;
+  }
+
+  if (user.role === 'owner' && user.orgId) {
+    const creatorOrgId = entry.creator?.orgId;
+    return creatorOrgId === user.orgId;
+  }
+
+  if (user.role === 'member' && user.orgId) {
+    const creatorOrgId = entry.creator?.orgId;
+    return entry.isShared && creatorOrgId === user.orgId;
+  }
+
+  return false;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,7 +147,41 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Process knowledge entries
+    // 2. Validate user has access to all knowledge entries
+    for (const knowledgeId of mergedSourceKnowledgeIds) {
+      const entry = await getKnowledgeEntryById(knowledgeId);
+      if (!entry) {
+        return NextResponse.json(
+          { success: false, error: `Knowledge entry not found: ${knowledgeId}` },
+          { status: 404 }
+        );
+      }
+      if (!canViewKnowledge(user, entry)) {
+        return NextResponse.json(
+          { success: false, error: `Access denied to knowledge entry: ${knowledgeId}` },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 3. Validate user has access to all documents
+    for (const documentId of mergedSourceDocumentIds) {
+      const document = await getDocumentById(documentId);
+      if (!document) {
+        return NextResponse.json(
+          { success: false, error: `Document not found: ${documentId}` },
+          { status: 404 }
+        );
+      }
+      if (!canViewDocument(user, document)) {
+        return NextResponse.json(
+          { success: false, error: `Access denied to document: ${documentId}` },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 4. Process knowledge entries (access already validated)
     for (const knowledgeId of mergedSourceKnowledgeIds) {
       const entry = await getKnowledgeEntryWithAnnotations(knowledgeId);
       if (entry) {
@@ -96,7 +192,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Process documents directly (bypass knowledge extraction)
+    // 5. Process documents directly (access already validated)
     for (const documentId of mergedSourceDocumentIds) {
       const document = await getDocumentById(documentId);
       if (document) {

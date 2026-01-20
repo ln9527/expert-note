@@ -213,9 +213,13 @@ export async function getKnowledgeEntryById(id: string, includeDeleted = false):
         '[]'
       ) as tags,
       (SELECT COUNT(*)::INTEGER FROM annotations WHERE knowledge_id = ke.id) as annotation_count,
-      d.filename as source_document_name
+      d.filename as source_document_name,
+      CASE WHEN u.id IS NOT NULL THEN
+        json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
+      ELSE NULL END as creator
     FROM knowledge_entries ke
     LEFT JOIN documents d ON ke.source_document_id = d.id
+    LEFT JOIN users u ON ke.created_by = u.id
     WHERE ke.id = $1 ${deleteFilter}
   `;
 
@@ -533,6 +537,71 @@ export async function updateAnnotationRefinedComment(
  */
 export async function deleteAnnotation(annotationId: string): Promise<void> {
   await query(`DELETE FROM annotations WHERE id = $1`, [annotationId]);
+}
+
+/**
+ * Annotation with ownership context for permission checks
+ */
+export interface AnnotationWithContext {
+  id: string;
+  knowledgeId: string;
+  knowledgeCreatedBy: number | null;
+  knowledgeCreatorOrgId: number | null;
+  knowledgeIsShared: boolean;
+  knowledgeAllowEdit: boolean;
+  documentCreatedBy: number | null;
+  documentCreatorOrgId: number | null;
+}
+
+/**
+ * Get an annotation with its knowledge entry context for permission validation
+ */
+export async function getAnnotationWithContext(
+  annotationId: string
+): Promise<AnnotationWithContext | null> {
+  const sql = `
+    SELECT
+      a.id,
+      a.knowledge_id,
+      ke.created_by as knowledge_created_by,
+      ku.org_id as knowledge_creator_org_id,
+      ke.is_shared as knowledge_is_shared,
+      ke.allow_edit as knowledge_allow_edit,
+      d.created_by as document_created_by,
+      du.org_id as document_creator_org_id
+    FROM annotations a
+    JOIN knowledge_entries ke ON a.knowledge_id = ke.id
+    LEFT JOIN users ku ON ke.created_by = ku.id
+    LEFT JOIN documents d ON ke.source_document_id = d.id
+    LEFT JOIN users du ON d.created_by = du.id
+    WHERE a.id = $1
+  `;
+
+  const row = await queryOne<{
+    id: string;
+    knowledge_id: string;
+    knowledge_created_by: number | null;
+    knowledge_creator_org_id: number | null;
+    knowledge_is_shared: boolean;
+    knowledge_allow_edit: boolean;
+    document_created_by: number | null;
+    document_creator_org_id: number | null;
+  }>(sql, [annotationId]);
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    knowledgeId: row.knowledge_id,
+    knowledgeCreatedBy: row.knowledge_created_by,
+    knowledgeCreatorOrgId: row.knowledge_creator_org_id,
+    knowledgeIsShared: row.knowledge_is_shared ?? false,
+    knowledgeAllowEdit: row.knowledge_allow_edit ?? false,
+    documentCreatedBy: row.document_created_by,
+    documentCreatorOrgId: row.document_creator_org_id,
+  };
 }
 
 /**

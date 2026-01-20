@@ -36,6 +36,9 @@ export async function GET(request: NextRequest) {
       templateType,
       isActive,
       includeDefaults: true,
+      userRole: user.role as 'super_admin' | 'owner' | 'member' | 'individual',
+      userId: user.userId,
+      orgId: user.orgId,
     });
 
     return NextResponse.json({
