@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 
 interface UseVoiceInputOptions {
   onInterimResult?: (text: string) => void;
@@ -74,8 +75,8 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}) {
       return tokenRef.current.token;
     }
 
-    // Fetch new token from our API
-    const response = await fetch('/api/speech/token');
+    // Fetch new token from our API (use buildApiPath for BASE_PATH support)
+    const response = await fetch(buildApiPath('speech/token'));
     if (!response.ok) {
       throw new Error('Failed to get ASR token');
     }
