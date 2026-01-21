@@ -482,6 +482,46 @@
     "wisdomEngine": "Wisdom Engine",
     "learnMore": "Learn more"
   },
+  "skillsBuilder": {
+    "title": "Skills Builder",
+    "subtitle": "Create a new skill from your knowledge base",
+    "livePreview": "Live Preview",
+    "previewEmpty": "Complete the steps to see a preview",
+    "back": "Back",
+    "next": "Next",
+    "steps": {
+      "sources": "Sources",
+      "instructions": "Instructions",
+      "preview": "Preview",
+      "build": "Build"
+    },
+    "sources": {
+      "title": "Select Sources",
+      "description": "Choose prompts and knowledge entries to include in your skill."
+    },
+    "instructions": {
+      "title": "Skill Instructions",
+      "description": "Provide details about what this skill should do.",
+      "skillTitle": "Skill Title",
+      "titlePlaceholder": "Enter skill name...",
+      "skillDescription": "Description",
+      "descriptionPlaceholder": "Brief description...",
+      "buildInstructions": "Build Instructions",
+      "instructionsPlaceholder": "Describe what this skill should do and how it should behave..."
+    },
+    "preview": {
+      "title": "Preview Plan",
+      "description": "Review the generated skill plan before building.",
+      "generating": "Generating plan...",
+      "noPlan": "No plan generated yet. Go back to complete previous steps."
+    },
+    "build": {
+      "title": "Build Skill",
+      "description": "Create the skill package from the generated plan.",
+      "building": "Building skill...",
+      "createSkill": "Create Skill"
+    }
+  },
   "mcp": {
     "title": "MCP",
     "createMcp": "Create MCP",

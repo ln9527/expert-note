@@ -483,6 +483,46 @@
     "wisdomEngine": "智慧引擎",
     "learnMore": "了解更多"
   },
+  "skillsBuilder": {
+    "title": "技能生成器",
+    "subtitle": "从您的知识库创建新技能",
+    "livePreview": "实时预览",
+    "previewEmpty": "完成步骤后查看预览",
+    "back": "上一步",
+    "next": "下一步",
+    "steps": {
+      "sources": "选择来源",
+      "instructions": "填写说明",
+      "preview": "预览",
+      "build": "生成"
+    },
+    "sources": {
+      "title": "选择来源",
+      "description": "选择要包含在技能中的提示词和知识条目。"
+    },
+    "instructions": {
+      "title": "技能说明",
+      "description": "提供此技能应执行的详细信息。",
+      "skillTitle": "技能名称",
+      "titlePlaceholder": "输入技能名称...",
+      "skillDescription": "描述",
+      "descriptionPlaceholder": "简要描述...",
+      "buildInstructions": "生成说明",
+      "instructionsPlaceholder": "描述此技能应该做什么以及它应该如何表现..."
+    },
+    "preview": {
+      "title": "预览计划",
+      "description": "在生成之前查看生成的技能计划。",
+      "generating": "生成计划中...",
+      "noPlan": "尚未生成计划。请返回完成之前的步骤。"
+    },
+    "build": {
+      "title": "生成技能",
+      "description": "从生成的计划创建技能包。",
+      "building": "生成技能中...",
+      "createSkill": "创建技能"
+    }
+  },
   "mcp": {
     "title": "MCP",
     "createMcp": "创建MCP",
