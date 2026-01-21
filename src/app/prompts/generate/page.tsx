@@ -8,7 +8,6 @@ import { TemplateSelector, KnowledgeSelector, DocumentSelector, BasePromptSelect
 import TagFilter from '@/components/knowledge/TagFilter';
 import { useTranslation } from '@/i18n';
 import VoiceInputButton from '@/components/editor/VoiceInputButton';
-import { useVoiceInput } from '@/hooks/useVoiceInput';
 
 export default function PromptGeneratorPage() {
   const { t } = useTranslation();
@@ -26,21 +25,10 @@ export default function PromptGeneratorPage() {
     documents: string[];
   }>({ knowledge: [], documents: [] });
   const [additionalInstructions, setAdditionalInstructions] = useState('');
-  const [instructionsInterimText, setInstructionsInterimText] = useState('');
   const [promptTitle, setPromptTitle] = useState('');
   const [promptDescription, setPromptDescription] = useState('');
   const [purpose, setPurpose] = useState('');
   const [activeSourceTab, setActiveSourceTab] = useState<'knowledge' | 'documents'>('knowledge');  // NEW
-
-  // Voice input for additional instructions
-  const instructionsVoice = useVoiceInput({
-    onInterimResult: (text) => setInstructionsInterimText(text),
-    onFinalResult: (text) => {
-      setAdditionalInstructions(prev => prev + (prev ? ' ' : '') + text);
-      setInstructionsInterimText('');
-    },
-    onError: () => setInstructionsInterimText(''),
-  });
 
   // Data state
   const [knowledgeEntries, setKnowledgeEntries] = useState<KnowledgeEntryWithAnnotations[]>([]);
@@ -410,30 +398,16 @@ export default function PromptGeneratorPage() {
               <div className="relative">
                 <textarea
                   value={additionalInstructions}
-                  onChange={(e) => {
-                    setAdditionalInstructions(e.target.value);
-                    if (instructionsInterimText) setInstructionsInterimText('');
-                  }}
+                  onChange={(e) => setAdditionalInstructions(e.target.value)}
                   rows={4}
                   className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
                   placeholder={t('generate.additionalInstructionsPlaceholder')}
                 />
                 <div className="absolute top-2 right-2">
                   <VoiceInputButton
-                    isListening={instructionsVoice.isListening}
-                    isConnecting={instructionsVoice.isConnecting}
-                    interimText={instructionsInterimText}
-                    error={instructionsVoice.error}
-                    onStartListening={instructionsVoice.startListening}
-                    onStopListening={instructionsVoice.stopListening}
-                    disabled={!instructionsVoice.isSupported}
+                    onTranscript={(text) => setAdditionalInstructions(prev => prev + (prev ? ' ' : '') + text)}
                   />
                 </div>
-                {instructionsInterimText && (
-                  <div className="absolute bottom-2 left-3 right-12 text-sm text-gray-400 italic truncate pointer-events-none">
-                    {instructionsInterimText}
-                  </div>
-                )}
               </div>
             </div>
 
