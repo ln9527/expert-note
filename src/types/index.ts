@@ -387,6 +387,31 @@ export interface Skill {
   creator?: CreatorInfo | null;
 }
 
+// MCP Prompt type for Model Context Protocol deployable prompts
+export type McpDeploymentStatus = 'draft' | 'deployed' | 'disabled';
+
+export interface McpPrompt {
+  id: string;
+  title: string;
+  description: string | null;
+  namespace: string;
+  content: string;
+  sourcePromptIds: string[];
+  sourceKnowledgeIds: string[];
+  accessToken: string | null;
+  deployedAt: Date | null;
+  deploymentStatus: McpDeploymentStatus;
+  createdBy: number | null;
+  isShared: boolean;
+  allowEdit: boolean;
+  isPublic: boolean;
+  isDeleted: boolean;
+  deletedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  creator?: CreatorInfo | null;
+}
+
 // Generation Guide (user-facing term) / Prompt Template (code term) for extraction/generation
 export type PromptTemplateCategory = 'extraction' | 'generation';
 

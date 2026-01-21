@@ -469,5 +469,31 @@
     "startThinking": "Start Thinking",
     "wisdomEngine": "Wisdom Engine",
     "learnMore": "Learn more"
+  },
+  "mcp": {
+    "title": "MCP",
+    "createMcp": "Create MCP",
+    "noMcp": "No MCP prompts found",
+    "getStarted": "Get started by creating your first MCP prompt.",
+    "namespace": "Namespace",
+    "status": "Status",
+    "draft": "Draft",
+    "deployed": "Deployed",
+    "disabled": "Disabled",
+    "deploy": "Deploy",
+    "disable": "Disable",
+    "regenerateToken": "Regenerate Token",
+    "deleteMcp": "Delete MCP",
+    "confirmDelete": "Are you sure you want to delete this MCP prompt?",
+    "mcpDeleted": "MCP prompt deleted successfully",
+    "backToList": "Back to MCP",
+    "mcpDetails": "MCP Details",
+    "connectPanel": "Connect to AI Tools",
+    "accessUrl": "Access URL",
+    "claudeCodeConfig": "Claude Code Config",
+    "cursorConfig": "Cursor Config",
+    "copyConfig": "Copy Config",
+    "copied": "Copied!",
+    "notDeployed": "Deploy this MCP to get connection details."
   }
 }

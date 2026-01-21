@@ -470,5 +470,31 @@
     "startThinking": "开启智能",
     "wisdomEngine": "智慧引擎",
     "learnMore": "了解更多"
+  },
+  "mcp": {
+    "title": "MCP",
+    "createMcp": "创建MCP",
+    "noMcp": "没有找到MCP提示",
+    "getStarted": "创建你的第一个MCP提示来开始。",
+    "namespace": "命名空间",
+    "status": "状态",
+    "draft": "草稿",
+    "deployed": "已部署",
+    "disabled": "已禁用",
+    "deploy": "部署",
+    "disable": "禁用",
+    "regenerateToken": "重新生成令牌",
+    "deleteMcp": "删除MCP",
+    "confirmDelete": "确定要删除这个MCP提示吗？",
+    "mcpDeleted": "MCP提示删除成功",
+    "backToList": "返回MCP列表",
+    "mcpDetails": "MCP详情",
+    "connectPanel": "连接到AI工具",
+    "accessUrl": "访问URL",
+    "claudeCodeConfig": "Claude Code配置",
+    "cursorConfig": "Cursor配置",
+    "copyConfig": "复制配置",
+    "copied": "已复制！",
+    "notDeployed": "部署此MCP以获取连接详情。"
   }
 }
