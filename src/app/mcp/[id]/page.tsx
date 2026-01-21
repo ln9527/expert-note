@@ -160,10 +160,14 @@ export default function McpDetailPage() {
   };
 
   // Generate config snippets
+  // MCP Base URL - uses env variable or defaults to production URL
+  // This is intentionally showing the production URL since users will
+  // copy these configs to connect their AI tools to the deployed MCP server
+  const mcpBaseUrl = process.env.NEXT_PUBLIC_MCP_BASE_URL || 'https://spansurvey.net/annote/mcp';
+
   const getAccessUrl = () => {
     if (!mcp?.accessToken) return '';
-    // Use the production URL pattern
-    return `https://spansurvey.net/annote/mcp/${mcp.accessToken}`;
+    return `${mcpBaseUrl}/${mcp.accessToken}`;
   };
 
   const getClaudeCodeConfig = () => {
