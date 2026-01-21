@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ Security Fix - Org-Based API Filtering (Jan 19, 2026)
+**Status**: ✅ Voice Input Feature - Deployed to Production (Jan 21, 2026)
 
 ---
 
@@ -12,6 +12,9 @@ Annotation-based knowledge capture system for structured expert note-taking.
 # Development
 npm run dev                    # Start at http://localhost:3000
 npm run build                  # Build for production
+
+# If dev server stuck, clear cache:
+rm -rf .next && npm run dev
 
 # Test credentials (password: password123)
 # admin (super_admin), ning (owner), expert1 (member)
@@ -23,13 +26,18 @@ npm run build                  # Build for production
 - React 19 + TailwindCSS 4
 - PostgreSQL 16 + iron-session
 - OpenRouter (Grok 4.1 Fast model)
+- **Alibaba Cloud ASR** (Voice recognition - Chinese/English)
 
 ## Key Directories
 
 ```
 src/
 ├── app/api/                   # API routes
+│   └── speech/token/          # Aliyun ASR token endpoint (NEW)
 ├── components/                # React components
+│   └── editor/                # AnnotationModal, VoiceInputButton (NEW)
+├── hooks/                     # Custom React hooks (NEW)
+│   └── useVoiceInput.ts       # Voice recognition hook
 ├── i18n/                      # Internationalization (EN/CN)
 ├── lib/
 │   ├── auth/                  # Session management
@@ -44,6 +52,42 @@ sql/migrations/                # Database migrations
 3. **Remove Legacy "Test Organization"** - Clean up seed data
 
 ## Recent Work
+
+### Session 11 (Jan 21, 2026) - Voice Input for Annotations
+
+Added voice recognition using Alibaba Cloud ASR (智能语音交互).
+
+**Status:** ✅ Deployed to Production
+
+**Voice Input Locations:**
+- Annotation Modal (content field)
+- Prompt Generation (Additional Instructions field)
+
+**New Files:**
+| File | Purpose |
+|------|---------|
+| `src/hooks/useVoiceInput.ts` | Voice capture + WebSocket to Aliyun ASR |
+| `src/app/api/speech/token/route.ts` | Token generation for ASR authentication |
+| `src/components/editor/VoiceInputButton.tsx` | Microphone button component |
+
+**Bug Fixes Applied:**
+1. Aliyun requires `message_id`/`task_id` **without dashes** (32 hex chars) → fixed with `.replace(/-/g, '')`
+2. BASE_PATH issue: API calls must use `buildApiPath()` for production `/annote` prefix
+
+**Aliyun Setup:**
+- Service: 智能语音交互 (Intelligent Speech Interaction)
+- Model: 中英自由说 (Chinese-English bilingual)
+- AppKey: `65ah5xG5SNSN42Zf`
+
+**Environment Variables (required in both .env.local and .env.production):**
+```bash
+ALIYUN_ACCESS_KEY_ID=<your-access-key-id>
+ALIYUN_ACCESS_KEY_SECRET=<your-access-key-secret>
+ALIYUN_ASR_APP_KEY=<your-app-key>
+NEXT_PUBLIC_ALIYUN_ASR_APP_KEY=<your-app-key>
+```
+
+**Important:** `NEXT_PUBLIC_` vars must be set at **build time** to be embedded in client bundle.
 
 ### Session 10 (Jan 19, 2026) - Security: Org-Based Filtering
 
@@ -112,4 +156,4 @@ const canEdit =
 
 ---
 
-**Last Updated:** 2026-01-19 (Session 10: Security Fix)
+**Last Updated:** 2026-01-21 (Session 11: Voice Input Feature)
