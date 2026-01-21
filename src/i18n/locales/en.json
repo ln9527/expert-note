@@ -485,6 +485,7 @@
   "mcp": {
     "title": "MCP",
     "createMcp": "Create MCP",
+    "editMcp": "Edit MCP",
     "noMcp": "No MCP prompts found",
     "getStarted": "Get started by creating your first MCP prompt.",
     "namespace": "Namespace",

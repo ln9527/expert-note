@@ -486,6 +486,7 @@
   "mcp": {
     "title": "MCP",
     "createMcp": "创建MCP",
+    "editMcp": "编辑 MCP",
     "noMcp": "没有找到MCP提示",
     "getStarted": "创建你的第一个MCP提示来开始。",
     "namespace": "命名空间",
