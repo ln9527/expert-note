@@ -2,7 +2,7 @@
 
 **Project Start:** 2026-01-21
 **Last Updated:** 2026-01-21
-**Status:** Phase 2 In Progress
+**Status:** Phase 2 Complete
 
 ---
 
@@ -20,7 +20,7 @@ Transform expert-note from a knowledge capture system into an AI skill distribut
 |-------|------|--------|-----------------|
 | 1 | Foundation (Database + Basic UI) | ✅ Complete | 2026-01-21 |
 | 1.5 | Core Features (Download, Edit, MCP Endpoint) | ✅ Complete | 2026-01-21 |
-| 2 | Generation Templates | 🔄 In Progress | - |
+| 2 | Generation Templates | ✅ Complete | 2026-01-21 |
 | 3 | Skills Builder Wizard | ⏳ Pending | - |
 | 4 | MCP Builder Wizard | ⏳ Pending | - |
 | 5 | Polish & Production | ⏳ Pending | - |
@@ -77,7 +77,7 @@ a027b1d feat: Add skill edit page at /skills/[id]/edit
 
 ---
 
-## Phase 2: Generation Templates 🔄 IN PROGRESS
+## Phase 2: Generation Templates ✅ COMPLETE
 
 **Goal:** Create AI prompts that generate high-quality skills and MCP content
 
@@ -87,24 +87,36 @@ a027b1d feat: Add skill edit page at /skills/[id]/edit
 3. Templates guide AI to produce well-structured output
 
 ### Deliverables
-- [ ] Study superpowers writing-skills patterns
-- [ ] Create `skill-generation` category templates:
-  - [ ] `skill-md-generator` - Creates SKILL.md content
-  - [ ] `skill-prompts-generator` - Creates prompts/ folder content
-  - [ ] `skill-examples-generator` - Creates examples/ content
-  - [ ] `skill-tests-generator` - Creates tests/ content
-- [ ] Create `mcp-generation` category templates:
-  - [ ] `mcp-prompt-generator` - Creates deployable MCP prompt content
-- [ ] Seed templates as `is_default: true` in prompt_templates table
-- [ ] Admin can refine templates via existing template UI
+- [x] Study superpowers writing-skills patterns
+- [x] Create `skill-generation` category templates:
+  - [x] `skill-md-generator` - Creates SKILL.md content
+  - [x] `skill-prompts-generator` - Creates prompts/ folder content
+  - [x] `skill-examples-generator` - Creates examples/ content
+  - [x] `skill-tests-generator` - Creates tests/ content
+- [x] Create `mcp-generation` category templates:
+  - [x] `mcp-prompt-generator` - Creates deployable MCP prompt content
+- [x] Seed templates as `is_default: true` in prompt_templates table
+- [x] Update API to support new categories
+
+### Commits
+```
+f13e2a5 feat: Add skill-generation and mcp-generation categories to prompt_templates
+e53ea58 feat: Add skill-generation templates (skill-md, prompts, examples, tests)
+b9cffe2 feat: Add MCP prompt generator template
+7f99d55 feat: Support skill-generation and mcp-generation categories in API
+88c84e4 test: Add Phase 2 generation templates test report
+```
+
+### Test Report
+`test-reports/phase2-generation-templates-test.md`
 
 ### Template Categories (prompt_templates table)
 | Category | Purpose |
 |----------|---------|
 | extraction | (existing) Refine annotations into knowledge |
 | generation | (existing) Synthesize knowledge into prompts |
-| skill-generation | NEW - Generate skill file structures |
-| mcp-generation | NEW - Generate MCP prompt content |
+| skill-generation | Generate skill file structures |
+| mcp-generation | Generate MCP prompt content |
 
 ---
 
@@ -252,14 +264,15 @@ POST /annote/mcp/{token}           → JSON-RPC handler
 |------|---------|-----------|
 | 2026-01-21 | 1 | Phase 1 complete: DB, API, basic UI |
 | 2026-01-21 | 2 | Phase 1.5 complete: Download, Edit, MCP endpoint |
-| 2026-01-21 | 3 | Phase 2 started: Generation templates |
+| 2026-01-21 | 3 | Phase 2 complete: Generation templates (5 templates seeded) |
 
 ---
 
-## Next Actions
+## Next Actions (Phase 3: Skills Builder Wizard)
 
-1. Study superpowers `writing-skills` skill patterns
-2. Design generation template structure
-3. Create seed templates for skill-generation category
-4. Create seed templates for mcp-generation category
-5. Test template quality by generating sample skills
+1. Create wizard UI component (`/skills/build`)
+2. Build source selection component (multi-select prompts/knowledge)
+3. Implement `/api/skills/generate` endpoint
+4. Implement `/api/skills/build` endpoint
+5. Add plan preview with expandable file content
+6. Integrate ZIP download on completion
