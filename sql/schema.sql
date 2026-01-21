@@ -133,7 +133,7 @@ CREATE TABLE prompt_templates (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(255) NOT NULL,
   description TEXT,
-  category VARCHAR(50) NOT NULL CHECK (category IN ('extraction', 'generation')),
+  category VARCHAR(50) NOT NULL CHECK (category IN ('extraction', 'generation', 'skill-generation', 'mcp-generation')),
   template_type VARCHAR(50), -- For generation: introduction, methodology, discussion, academicCoach, custom
   content TEXT NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
