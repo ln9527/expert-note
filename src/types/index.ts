@@ -415,7 +415,7 @@ export interface McpPrompt {
 }
 
 // Generation Guide (user-facing term) / Prompt Template (code term) for extraction/generation
-export type PromptTemplateCategory = 'extraction' | 'generation';
+export type PromptTemplateCategory = 'extraction' | 'generation' | 'skill-generation' | 'mcp-generation';
 
 export interface PromptTemplate {
   id: string;

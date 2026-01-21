@@ -3,6 +3,7 @@ import { getSessionUser } from '@/lib/auth/session';
 import {
   getAllPromptTemplates,
   createPromptTemplate,
+  TemplateCategory,
 } from '@/lib/db/queries/promptTemplates';
 import { UserRole } from '@/types';
 
@@ -14,7 +15,7 @@ const ADMIN_ROLES: UserRole[] = ['super_admin', 'owner'];
  * Get all generation guides (code: prompt templates) with optional filtering
  *
  * Query params:
- * - category: 'extraction' | 'generation'
+ * - category: 'extraction' | 'generation' | 'skill-generation' | 'mcp-generation'
  * - templateType: string (e.g., 'introduction', 'methodology')
  * - active: 'true' | 'false' (default: true)
  */
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category') as 'extraction' | 'generation' | null;
+    const category = searchParams.get('category') as TemplateCategory | null;
     const templateType = searchParams.get('templateType') || undefined;
     const activeParam = searchParams.get('active');
     const isActive = activeParam === null ? true : activeParam === 'true';
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
  * {
  *   name: string,
  *   description?: string,
- *   category: 'extraction' | 'generation',
+ *   category: 'extraction' | 'generation' | 'skill-generation' | 'mcp-generation',
  *   templateType?: string,
  *   content: string
  * }
@@ -84,9 +85,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Name is required' }, { status: 400 });
     }
 
-    if (!category || !['extraction', 'generation'].includes(category)) {
+    const validCategories: TemplateCategory[] = ['extraction', 'generation', 'skill-generation', 'mcp-generation'];
+    if (!category || !validCategories.includes(category)) {
       return NextResponse.json(
-        { success: false, error: 'Category must be "extraction" or "generation"' },
+        { success: false, error: 'Category must be one of: extraction, generation, skill-generation, mcp-generation' },
         { status: 400 }
       );
     }

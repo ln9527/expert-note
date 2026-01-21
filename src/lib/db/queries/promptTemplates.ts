@@ -2,11 +2,14 @@
 
 import { query, queryOne } from '../index';
 
+// Type alias for template categories - reused across all interfaces
+export type TemplateCategory = 'extraction' | 'generation' | 'skill-generation' | 'mcp-generation';
+
 export interface PromptTemplateRow {
   id: string;
   name: string;
   description: string | null;
-  category: 'extraction' | 'generation';
+  category: TemplateCategory;
   template_type: string | null;
   content: string;
   is_default: boolean;
@@ -21,7 +24,7 @@ export interface PromptTemplate {
   id: string;
   name: string;
   description: string | null;
-  category: 'extraction' | 'generation';
+  category: TemplateCategory;
   templateType: string | null;
   content: string;
   isDefault: boolean;
@@ -50,7 +53,7 @@ function mapTemplateRow(row: PromptTemplateRow): PromptTemplate {
 }
 
 export interface GetTemplatesOptions {
-  category?: 'extraction' | 'generation';
+  category?: TemplateCategory;
   templateType?: string;
   isActive?: boolean;
   includeDefaults?: boolean;
@@ -155,7 +158,7 @@ export async function getPromptTemplateById(id: string): Promise<PromptTemplate 
  * and generic defaults to work correctly.
  */
 export async function getDefaultTemplate(
-  category: 'extraction' | 'generation',
+  category: TemplateCategory,
   templateType?: string
 ): Promise<PromptTemplate | null> {
   if (templateType) {
@@ -222,7 +225,7 @@ export async function getDefaultTemplate(
 export interface CreateTemplateData {
   name: string;
   description?: string;
-  category: 'extraction' | 'generation';
+  category: TemplateCategory;
   templateType?: string;
   content: string;
   isDefault?: boolean;
