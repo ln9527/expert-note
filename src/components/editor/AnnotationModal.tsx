@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnnotationLevel, ANNOTATION_COLORS, LEVEL_CONFIG } from '@/types';
 import { validateAnnotationContent } from '@/lib/utils/annotation';
+import VoiceInputButton from './VoiceInputButton';
 
 interface AnnotationModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function AnnotationModal({
 }: AnnotationModalProps) {
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
+  const [interimVoiceText, setInterimVoiceText] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Focus input when modal opens
@@ -33,8 +35,20 @@ export default function AnnotationModal({
     if (!isOpen) {
       setContent('');
       setError('');
+      setInterimVoiceText('');
     }
   }, [isOpen]);
+
+  // Handle voice input transcript
+  const handleVoiceTranscript = (text: string) => {
+    setContent(prev => prev + text);
+    setInterimVoiceText('');
+    setError('');
+  };
+
+  const handleInterimTranscript = (text: string) => {
+    setInterimVoiceText(text);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,17 +106,32 @@ export default function AnnotationModal({
             </div>
           )}
 
-          <textarea
-            ref={inputRef}
-            value={content}
-            onChange={(e) => {
-              setContent(e.target.value);
-              setError('');
-            }}
-            onKeyDown={handleKeyDown}
-            className="w-full h-32 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
-            placeholder={`Enter your ${level.toLowerCase()} annotation...`}
-          />
+          <div className="relative">
+            <textarea
+              ref={inputRef}
+              value={content}
+              onChange={(e) => {
+                setContent(e.target.value);
+                setError('');
+              }}
+              onKeyDown={handleKeyDown}
+              className="w-full h-32 p-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
+              placeholder={`Enter your ${level.toLowerCase()} annotation...`}
+            />
+            {/* Voice input button */}
+            <div className="absolute top-2 right-2">
+              <VoiceInputButton
+                onTranscript={handleVoiceTranscript}
+                onInterimTranscript={handleInterimTranscript}
+              />
+            </div>
+            {/* Interim voice text preview */}
+            {interimVoiceText && (
+              <div className="absolute bottom-2 left-3 right-12 text-xs text-gray-400 italic truncate">
+                {interimVoiceText}
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center justify-between mt-4">
             <span className="text-xs text-gray-500">
