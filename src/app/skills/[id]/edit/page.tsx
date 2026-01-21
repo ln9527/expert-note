@@ -24,6 +24,7 @@ export default function EditSkillPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [skillMd, setSkillMd] = useState('');
+  const [originalContent, setOriginalContent] = useState<SkillContent>({});
   const [isShared, setIsShared] = useState(false);
   const [allowEdit, setAllowEdit] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,7 @@ export default function EditSkillPage() {
         setTitle(skill.title);
         setDescription(skill.description || '');
         setSkillMd(content?.skill_md || '');
+        setOriginalContent(content || {});
         setIsShared(skill.isShared || false);
         setAllowEdit(skill.allowEdit || false);
       } catch (err) {
@@ -78,12 +80,10 @@ export default function EditSkillPage() {
 
     setSaving(true);
     try {
-      // Create content structure matching Claude Code skill format
+      // Preserve existing content (prompts, examples, tests) and only update skill_md
       const content = {
+        ...originalContent,
         skill_md: skillMd,
-        prompts: {},
-        examples: {},
-        tests: {}
       };
 
       const response = await fetch(buildApiPath(`skills/${skillId}`), {
