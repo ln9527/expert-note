@@ -6,7 +6,7 @@ interface DeleteConfirmModalProps {
   isOpen: boolean;
   title: string;
   itemName: string;
-  itemType: 'document' | 'prompt' | 'knowledge' | 'tag' | 'skill';
+  itemType: 'document' | 'prompt' | 'knowledge' | 'tag' | 'skill' | 'mcp';
   onConfirm: () => void;
   onCancel: () => void;
   isDeleting?: boolean;
