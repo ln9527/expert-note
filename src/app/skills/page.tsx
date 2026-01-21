@@ -276,7 +276,7 @@ export default function SkillsListPage() {
         isOpen={!!deletingSkill}
         title={t('skills.deleteSkill')}
         itemName={deletingSkill?.title || ''}
-        itemType="prompt"
+        itemType="skill"
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeletingSkill(null)}
         isDeleting={isDeleting}

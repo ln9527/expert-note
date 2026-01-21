@@ -250,7 +250,7 @@ export default function SkillDetailPage() {
         isOpen={showDeleteModal}
         title={t('skills.deleteSkill')}
         itemName={skill.title}
-        itemType="prompt"
+        itemType="skill"
         onConfirm={handleDeleteConfirm}
         onCancel={() => setShowDeleteModal(false)}
         isDeleting={isDeleting}
