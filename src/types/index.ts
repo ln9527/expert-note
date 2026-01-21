@@ -367,6 +367,26 @@ export interface PromptVersion {
   createdAt: Date;
 }
 
+// Skill type for exportable AI skills/MCP integration
+export type SkillStatus = 'draft' | 'published';
+
+export interface Skill {
+  id: string;
+  title: string;
+  description: string | null;
+  content: Record<string, unknown>;  // Flexible JSON structure for skill definition
+  sourcePromptIds: string[];         // References to source prompts
+  sourceKnowledgeIds: string[];      // References to source knowledge entries
+  status: SkillStatus;
+  downloadCount: number;
+  createdBy: number | null;
+  isDeleted: boolean;
+  deletedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  creator?: CreatorInfo | null;
+}
+
 // Generation Guide (user-facing term) / Prompt Template (code term) for extraction/generation
 export type PromptTemplateCategory = 'extraction' | 'generation';
 
