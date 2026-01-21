@@ -80,6 +80,8 @@
   "nav": {
     "knowledgeBase": "Knowledge Base",
     "prompts": "Prompts",
+    "skills": "Skills",
+    "mcp": "MCP",
     "settings": "Settings",
     "documents": "Documents"
   },
@@ -409,6 +411,7 @@
   },
   "errors": {
     "networkError": "Network error. Please try again.",
+    "titleRequired": "Title is required",
     "loadFailed": "Failed to load data.",
     "saveFailed": "Failed to save changes.",
     "deleteFailed": "Failed to delete item.",
@@ -427,6 +430,7 @@
   "skills": {
     "title": "Skills",
     "createSkill": "Create Skill",
+    "editSkill": "Edit Skill",
     "noSkills": "No skills found",
     "getStarted": "Get started by creating your first skill.",
     "sources": "Sources",
@@ -447,7 +451,15 @@
     "noSourcePrompts": "No source prompts",
     "noSourceKnowledge": "No source knowledge entries",
     "created": "Created",
-    "updated": "Updated"
+    "updated": "Updated",
+    "titlePlaceholder": "Enter skill name...",
+    "descriptionPlaceholder": "Brief description of what this skill does...",
+    "skillMarkdown": "Skill Content (Markdown)",
+    "skillMarkdownHelp": "Write the skill content in Markdown format. This will be the main skill.md file.",
+    "contentRequired": "Skill content is required",
+    "sharing": "Sharing",
+    "sharedHelp": "Share with others in your organization",
+    "allowEditHelp": "Allow others to edit this skill"
   },
   "landing": {
     "tagline": "Empowering Human Judgment",
@@ -494,6 +506,19 @@
     "cursorConfig": "Cursor Config",
     "copyConfig": "Copy Config",
     "copied": "Copied!",
-    "notDeployed": "Deploy this MCP to get connection details."
+    "notDeployed": "Deploy this MCP to get connection details.",
+    "titlePlaceholder": "Enter MCP prompt name...",
+    "descriptionPlaceholder": "Brief description of what this MCP prompt does...",
+    "namespaceRequired": "Namespace is required",
+    "namespaceInvalid": "Namespace must be lowercase alphanumeric with hyphens, starting and ending with alphanumeric",
+    "namespaceHelp": "URL-safe identifier used in MCP endpoint (e.g., my-prompt)",
+    "contentRequired": "Prompt content is required",
+    "promptContent": "Prompt Content",
+    "promptContentHelp": "Write the prompt that AI tools will use. Supports Markdown.",
+    "sharing": "Sharing & Access",
+    "sharedHelp": "Share with others in your organization",
+    "allowEditHelp": "Allow others to edit this MCP prompt",
+    "public": "Public Access",
+    "publicHelp": "Allow anyone with the URL to access (requires deployment)"
   }
 }

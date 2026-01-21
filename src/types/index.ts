@@ -380,6 +380,8 @@ export interface Skill {
   status: SkillStatus;
   downloadCount: number;
   createdBy: number | null;
+  isShared: boolean;
+  allowEdit: boolean;
   isDeleted: boolean;
   deletedAt: Date | null;
   createdAt: Date;

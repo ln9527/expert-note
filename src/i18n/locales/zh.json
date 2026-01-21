@@ -81,6 +81,8 @@
   "nav": {
     "knowledgeBase": "知识库",
     "prompts": "生成指南",
+    "skills": "技能",
+    "mcp": "MCP",
     "settings": "设置",
     "documents": "文档"
   },
@@ -410,6 +412,7 @@
   },
   "errors": {
     "networkError": "网络错误，请重试。",
+    "titleRequired": "标题为必填项",
     "loadFailed": "加载数据失败。",
     "saveFailed": "保存更改失败。",
     "deleteFailed": "删除项目失败。",
@@ -428,6 +431,7 @@
   "skills": {
     "title": "技能",
     "createSkill": "创建技能",
+    "editSkill": "编辑技能",
     "noSkills": "没有找到技能",
     "getStarted": "创建你的第一个技能来开始。",
     "sources": "来源",
@@ -448,7 +452,15 @@
     "noSourcePrompts": "无来源提示词",
     "noSourceKnowledge": "无来源知识条目",
     "created": "创建时间",
-    "updated": "更新时间"
+    "updated": "更新时间",
+    "titlePlaceholder": "输入技能名称...",
+    "descriptionPlaceholder": "简要描述此技能的功能...",
+    "skillMarkdown": "技能内容 (Markdown)",
+    "skillMarkdownHelp": "使用Markdown格式编写技能内容。这将成为主要的skill.md文件。",
+    "contentRequired": "技能内容为必填项",
+    "sharing": "共享设置",
+    "sharedHelp": "与组织内的其他人共享",
+    "allowEditHelp": "允许其他人编辑此技能"
   },
   "landing": {
     "tagline": "赋能人类智慧",
@@ -495,6 +507,19 @@
     "cursorConfig": "Cursor配置",
     "copyConfig": "复制配置",
     "copied": "已复制！",
-    "notDeployed": "部署此MCP以获取连接详情。"
+    "notDeployed": "部署此MCP以获取连接详情。",
+    "titlePlaceholder": "输入MCP提示名称...",
+    "descriptionPlaceholder": "简要描述此MCP提示的功能...",
+    "namespaceRequired": "命名空间为必填项",
+    "namespaceInvalid": "命名空间必须是小写字母数字和连字符，以字母数字开头和结尾",
+    "namespaceHelp": "用于MCP端点的URL安全标识符（例如：my-prompt）",
+    "contentRequired": "提示内容为必填项",
+    "promptContent": "提示内容",
+    "promptContentHelp": "编写AI工具将使用的提示。支持Markdown格式。",
+    "sharing": "共享与访问",
+    "sharedHelp": "与组织内的其他人共享",
+    "allowEditHelp": "允许其他人编辑此MCP提示",
+    "public": "公开访问",
+    "publicHelp": "允许任何拥有URL的人访问（需要先部署）"
   }
 }
