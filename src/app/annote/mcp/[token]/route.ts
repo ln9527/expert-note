@@ -20,6 +20,28 @@ const MCP_PROTOCOL_VERSION = '2024-11-05';
 const MCP_SERVER_VERSION = '1.0.0';
 
 /**
+ * CORS headers for cross-origin requests
+ */
+function corsHeaders(): HeadersInit {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+
+/**
+ * OPTIONS handler for CORS preflight requests
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(),
+  });
+}
+
+/**
  * GET /annote/mcp/[token] - Returns MCP server manifest
  *
  * Looks up mcp_prompts by access_token where deployment_status = 'deployed' and is_deleted = false
@@ -36,7 +58,7 @@ export async function GET(
     if (!token || !/^[a-f0-9]{64}$/.test(token)) {
       return NextResponse.json(
         { error: 'Invalid token format' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       );
     }
 
@@ -46,7 +68,7 @@ export async function GET(
     if (!mcpPrompt) {
       return NextResponse.json(
         { error: 'MCP prompt not found or not deployed' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders() }
       );
     }
 
@@ -63,12 +85,12 @@ export async function GET(
       },
     };
 
-    return NextResponse.json(manifest);
+    return NextResponse.json(manifest, { headers: corsHeaders() });
   } catch (error) {
     console.error('[MCP] GET /annote/mcp/[token] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders() }
     );
   }
 }
@@ -95,7 +117,7 @@ function jsonRpcError(
     jsonrpc: '2.0',
     id,
     error,
-  });
+  }, { headers: corsHeaders() });
 }
 
 /**
@@ -106,7 +128,7 @@ function jsonRpcSuccess(id: string | number | null, result: unknown): NextRespon
     jsonrpc: '2.0',
     id,
     result,
-  });
+  }, { headers: corsHeaders() });
 }
 
 /**
@@ -129,7 +151,7 @@ export async function POST(
     if (!token || !/^[a-f0-9]{64}$/.test(token)) {
       return NextResponse.json(
         { error: 'Invalid token format' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       );
     }
 
@@ -139,7 +161,7 @@ export async function POST(
     if (!mcpPrompt) {
       return NextResponse.json(
         { error: 'MCP prompt not found or not deployed' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders() }
       );
     }
 
@@ -219,7 +241,7 @@ export async function POST(
 
       case 'notifications/initialized':
         // Notification - no response needed, return 204
-        return new NextResponse(null, { status: 204 });
+        return new NextResponse(null, { status: 204, headers: corsHeaders() });
 
       default:
         return jsonRpcError(id ?? null, JSON_RPC_ERRORS.METHOD_NOT_FOUND);
