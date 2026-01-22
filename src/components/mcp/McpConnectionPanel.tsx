@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from '@/i18n';
 
 export interface McpConnectionPanelProps {
@@ -15,6 +15,23 @@ export interface McpConnectionPanelProps {
 export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
   const { t } = useTranslation();
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
+
+  // Clear copied state after 2 seconds with proper cleanup
+  useEffect(() => {
+    if (copiedSection) {
+      const timer = setTimeout(() => setCopiedSection(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copiedSection]);
+
+  // Clear error state after 3 seconds with proper cleanup
+  useEffect(() => {
+    if (copyError) {
+      const timer = setTimeout(() => setCopyError(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [copyError]);
 
   // Construct the access URL
   const getAccessUrl = () => {
@@ -23,21 +40,8 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
     return `${baseUrl}/annote/mcp/${mcp.accessToken || mcp.id}`;
   };
 
-  // Generate Claude Code config
-  const getClaudeCodeConfig = () => {
-    const url = getAccessUrl();
-    return JSON.stringify({
-      mcpServers: {
-        [mcp.namespace]: {
-          command: 'npx',
-          args: ['-y', '@anthropic-ai/mcp-remote', url]
-        }
-      }
-    }, null, 2);
-  };
-
-  // Generate Cursor config
-  const getCursorConfig = () => {
+  // Generate MCP config (shared logic for Claude Code and Cursor)
+  const getMcpConfig = () => {
     const url = getAccessUrl();
     return JSON.stringify({
       mcpServers: {
@@ -53,9 +57,11 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedSection(section);
-      setTimeout(() => setCopiedSection(null), 2000);
+      setCopyError(null);
     } catch (err) {
       console.error('Failed to copy:', err);
+      setCopyError(section);
+      setCopiedSection(null);
     }
   };
 
@@ -69,14 +75,21 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
           <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span className="text-green-600">{t('mcpBuilder.connection.copied')}</span>
+          <span className="text-green-600">{t('mcp.copied')}</span>
+        </>
+      ) : copyError === section ? (
+        <>
+          <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span className="text-red-600">{t('mcp.copyFailed')}</span>
         </>
       ) : (
         <>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
-          <span>{t('mcpBuilder.connection.copy')}</span>
+          <span>{t('mcp.copyConfig')}</span>
         </>
       )}
     </button>
@@ -96,7 +109,7 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
               <circle cx="4" cy="4" r="3" />
             </svg>
           ) : null}
-          {t(`mcpBuilder.connection.status.${mcp.deploymentStatus}`)}
+          {t(`mcp.${mcp.deploymentStatus}`)}
         </span>
       </div>
 
@@ -104,7 +117,7 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            {t('mcpBuilder.connection.accessUrl')}
+            {t('mcp.accessUrl')}
           </label>
           <CopyButton text={getAccessUrl()} section="url" />
         </div>
@@ -119,15 +132,15 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            {t('mcpBuilder.connection.claudeCodeConfig')}
+            {t('mcp.claudeCodeConfig')}
           </label>
-          <CopyButton text={getClaudeCodeConfig()} section="claudeCode" />
+          <CopyButton text={getMcpConfig()} section="claudeCode" />
         </div>
         <p className="text-xs text-gray-500">
-          {t('mcpBuilder.connection.claudeCodeConfigHelp')}
+          {t('mcp.claudeCodeConfigHelp')}
         </p>
         <pre className="p-3 bg-gray-900 text-gray-100 rounded-lg text-sm overflow-auto max-h-48 font-mono">
-          {getClaudeCodeConfig()}
+          {getMcpConfig()}
         </pre>
       </div>
 
@@ -135,15 +148,15 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            {t('mcpBuilder.connection.cursorConfig')}
+            {t('mcp.cursorConfig')}
           </label>
-          <CopyButton text={getCursorConfig()} section="cursor" />
+          <CopyButton text={getMcpConfig()} section="cursor" />
         </div>
         <p className="text-xs text-gray-500">
-          {t('mcpBuilder.connection.cursorConfigHelp')}
+          {t('mcp.cursorConfigHelp')}
         </p>
         <pre className="p-3 bg-gray-900 text-gray-100 rounded-lg text-sm overflow-auto max-h-48 font-mono">
-          {getCursorConfig()}
+          {getMcpConfig()}
         </pre>
       </div>
     </div>
