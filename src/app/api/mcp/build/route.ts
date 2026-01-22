@@ -8,8 +8,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth/session';
-import { createMcpPrompt, deployMcpPrompt } from '@/lib/db/queries/mcpPrompts';
+import { createMcpPrompt, deployMcpPrompt, deleteMcpPrompt } from '@/lib/db/queries/mcpPrompts';
+import { getPromptById, SystemPrompt } from '@/lib/db/queries/prompts';
+import { getKnowledgeEntryById, KnowledgeEntry } from '@/lib/db/queries/knowledge';
 import { handleApiError } from '@/lib/api/errors';
+import { Session } from '@/types';
 
 /**
  * Request body for MCP build
@@ -27,6 +30,60 @@ interface BuildRequest {
   allowEdit?: boolean;
   isPublic?: boolean;
   autoDeploy?: boolean;
+}
+
+/**
+ * Check if user can view a prompt based on permission rules
+ */
+function canViewPrompt(user: Session, prompt: SystemPrompt): boolean {
+  if (user.role === 'super_admin') {
+    return true;
+  }
+
+  const isOwner = prompt.userId === String(user.userId);
+  if (isOwner) {
+    return true;
+  }
+
+  if (user.role === 'owner' && user.orgId) {
+    const creatorOrgId = prompt.creator?.orgId;
+    // Owners can see prompts from their org members
+    return creatorOrgId === user.orgId;
+  }
+
+  if (user.role === 'member' && user.orgId) {
+    const creatorOrgId = prompt.creator?.orgId;
+    // Members can see shared prompts from same org
+    return prompt.isShared && creatorOrgId === user.orgId;
+  }
+
+  return false;
+}
+
+/**
+ * Check if user can view a knowledge entry based on permission rules
+ */
+function canViewKnowledge(user: Session, entry: KnowledgeEntry): boolean {
+  if (user.role === 'super_admin') {
+    return true;
+  }
+
+  const isOwner = entry.createdBy === user.userId;
+  if (isOwner) {
+    return true;
+  }
+
+  if (user.role === 'owner' && user.orgId) {
+    const creatorOrgId = entry.creator?.orgId;
+    return creatorOrgId === user.orgId;
+  }
+
+  if (user.role === 'member' && user.orgId) {
+    const creatorOrgId = entry.creator?.orgId;
+    return entry.isShared && creatorOrgId === user.orgId;
+  }
+
+  return false;
 }
 
 /**
@@ -102,6 +159,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate user has access to all source prompts
+    for (const promptId of sourcePromptIds) {
+      const prompt = await getPromptById(promptId);
+      if (!prompt) {
+        return NextResponse.json(
+          { success: false, error: `Prompt not found: ${promptId}` },
+          { status: 404 }
+        );
+      }
+      if (!canViewPrompt(user, prompt)) {
+        return NextResponse.json(
+          { success: false, error: `Access denied to prompt: ${promptId}` },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Validate user has access to all source knowledge entries
+    for (const knowledgeId of sourceKnowledgeIds) {
+      const entry = await getKnowledgeEntryById(knowledgeId);
+      if (!entry) {
+        return NextResponse.json(
+          { success: false, error: `Knowledge entry not found: ${knowledgeId}` },
+          { status: 404 }
+        );
+      }
+      if (!canViewKnowledge(user, entry)) {
+        return NextResponse.json(
+          { success: false, error: `Access denied to knowledge entry: ${knowledgeId}` },
+          { status: 403 }
+        );
+      }
+    }
+
     console.log('[MCP Build] Creating MCP prompt:', {
       title: title.trim(),
       namespace: normalizedNamespace,
@@ -138,7 +229,13 @@ export async function POST(request: NextRequest) {
           hasAccessToken: !!mcpPrompt.accessToken,
         });
       } else {
-        console.error('[MCP Build] Failed to auto-deploy MCP prompt');
+        console.error('[MCP Build] Failed to auto-deploy MCP prompt, rolling back');
+        // Delete the created MCP since deployment was requested but failed
+        await deleteMcpPrompt(mcpPrompt.id);
+        return NextResponse.json(
+          { success: false, error: 'MCP created but deployment failed. Please try again.' },
+          { status: 500 }
+        );
       }
     }
 
