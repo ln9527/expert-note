@@ -6,19 +6,12 @@ import { useTranslation } from '@/i18n';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { WizardStepIndicator, WizardSourcesStep, WIZARD_STEPS } from '@/components/skills';
 import type { WizardStep } from '@/components/skills';
-
-interface GeneratedMcpPlan {
-  content: string;
-  namespace: string;
-}
-
-interface DeployedMcp {
-  id: string;
-  title: string;
-  namespace: string;
-  accessToken: string | null;
-  deploymentStatus: string;
-}
+import {
+  McpWizardInstructionsStep,
+  McpWizardPreviewStep,
+  McpWizardBuildStep,
+} from '@/components/mcp';
+import type { GeneratedMcpPlan, DeployedMcp } from '@/components/mcp';
 
 // Helper to generate namespace from title
 const generateNamespace = (title: string): string => {
@@ -217,164 +210,36 @@ export default function McpBuilderPage() {
           />
         );
       case 'instructions':
-        // Placeholder for McpWizardInstructionsStep (Task 2)
         return (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {t('mcpBuilder.instructions.title')}
-            </h3>
-            <p className="text-gray-500 text-sm mb-4">
-              [McpWizardInstructionsStep placeholder - will include title, namespace, description, instructions fields, autoDeploy and isPublic checkboxes]
-            </p>
-            {/* Temporary inputs for testing navigation */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('mcpBuilder.instructions.titleLabel')}
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={t('mcpBuilder.instructions.titlePlaceholder')}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('mcpBuilder.instructions.namespaceLabel')}
-                </label>
-                <input
-                  type="text"
-                  value={namespace}
-                  onChange={(e) => setNamespace(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={t('mcpBuilder.instructions.namespacePlaceholder')}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('mcpBuilder.instructions.instructionsLabel')}
-                </label>
-                <textarea
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={t('mcpBuilder.instructions.instructionsPlaceholder')}
-                />
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={autoDeploy}
-                    onChange={(e) => setAutoDeploy(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{t('mcpBuilder.instructions.autoDeploy')}</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isPublic}
-                    onChange={(e) => setIsPublic(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{t('mcpBuilder.instructions.isPublic')}</span>
-                </label>
-              </div>
-            </div>
-          </div>
+          <McpWizardInstructionsStep
+            title={title}
+            namespace={namespace}
+            description={description}
+            instructions={instructions}
+            autoDeploy={autoDeploy}
+            isPublic={isPublic}
+            onTitleChange={handleTitleChange}
+            onNamespaceChange={setNamespace}
+            onDescriptionChange={setDescription}
+            onInstructionsChange={setInstructions}
+            onAutoDeployChange={setAutoDeploy}
+            onPublicChange={setIsPublic}
+          />
         );
       case 'preview':
-        // Placeholder for McpWizardPreviewStep (Task 2)
         return (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {t('mcpBuilder.preview.title')}
-            </h3>
-            {isGenerating ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-                <p className="text-gray-500">{t('mcpBuilder.preview.generating')}</p>
-              </div>
-            ) : generatedPlan ? (
-              <div>
-                <p className="text-gray-500 text-sm mb-4">
-                  [McpWizardPreviewStep placeholder - will show generated content preview]
-                </p>
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Namespace: {generatedPlan.namespace}</p>
-                  <pre className="text-sm text-gray-600 whitespace-pre-wrap overflow-auto max-h-64">
-                    {generatedPlan.content}
-                  </pre>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">
-                {t('mcpBuilder.preview.noPlan')}
-              </p>
-            )}
-          </div>
+          <McpWizardPreviewStep
+            isGenerating={isGenerating}
+            generatedPlan={generatedPlan}
+          />
         );
       case 'build':
-        // Placeholder for McpWizardBuildStep (Task 2)
         return (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {t('mcpBuilder.build.title')}
-            </h3>
-            {isBuilding ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-                <p className="text-gray-500">{t('mcpBuilder.build.building')}</p>
-              </div>
-            ) : deployedMcp ? (
-              <div>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-center gap-2 text-green-700 font-medium mb-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {t('mcpBuilder.build.success')}
-                  </div>
-                  <p className="text-green-600 text-sm">
-                    {t('mcpBuilder.build.mcpCreated', { title: deployedMcp.title })}
-                  </p>
-                </div>
-                <p className="text-gray-500 text-sm mb-4">
-                  [McpWizardBuildStep placeholder - will show connection panel with config snippets]
-                </p>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">Namespace:</p>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">{deployedMcp.namespace}</code>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">Status:</p>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      deployedMcp.deploymentStatus === 'deployed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {deployedMcp.deploymentStatus}
-                    </span>
-                  </div>
-                  <div className="pt-4">
-                    <Link
-                      href={`/mcp/${deployedMcp.id}`}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-                    >
-                      {t('mcpBuilder.build.viewMcp')}
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">
-                {t('mcpBuilder.build.notBuilt')}
-              </p>
-            )}
-          </div>
+          <McpWizardBuildStep
+            isBuilding={isBuilding}
+            deployedMcp={deployedMcp}
+            onBuild={handleBuild}
+          />
         );
       default:
         return null;
