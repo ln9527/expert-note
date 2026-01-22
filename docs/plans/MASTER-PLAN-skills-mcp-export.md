@@ -2,7 +2,7 @@
 
 **Project Start:** 2026-01-21
 **Last Updated:** 2026-01-21
-**Status:** Phase 2 Complete
+**Status:** Phase 3 Complete
 
 ---
 
@@ -21,7 +21,7 @@ Transform expert-note from a knowledge capture system into an AI skill distribut
 | 1 | Foundation (Database + Basic UI) | ✅ Complete | 2026-01-21 |
 | 1.5 | Core Features (Download, Edit, MCP Endpoint) | ✅ Complete | 2026-01-21 |
 | 2 | Generation Templates | ✅ Complete | 2026-01-21 |
-| 3 | Skills Builder Wizard | ⏳ Pending | - |
+| 3 | Skills Builder Wizard | ✅ Complete | 2026-01-21 |
 | 4 | MCP Builder Wizard | ⏳ Pending | - |
 | 5 | Polish & Production | ⏳ Pending | - |
 
@@ -120,7 +120,7 @@ b9cffe2 feat: Add MCP prompt generator template
 
 ---
 
-## Phase 3: Skills Builder Wizard ⏳ PENDING
+## Phase 3: Skills Builder Wizard ✅ COMPLETE
 
 **Goal:** 4-step wizard UI for building skills with AI assistance
 
@@ -131,23 +131,33 @@ b9cffe2 feat: Add MCP prompt generator template
 4. **Build** - Confirm and create skill package
 
 ### Deliverables
-- [ ] Wizard UI component (`/skills/build`)
-- [ ] Source selection component (multi-select prompts/knowledge)
-- [ ] `/api/skills/generate` - AI generates plan from sources
-- [ ] `/api/skills/build` - Assemble files from confirmed plan
-- [ ] Plan preview with expandable file content
-- [ ] Download ZIP on completion
+- [x] Wizard UI component (`/skills/build`)
+- [x] Source selection component (multi-select prompts/knowledge)
+- [x] `/api/skills/generate` - AI generates plan from sources
+- [x] `/api/skills/build` - Assemble files from confirmed plan
+- [x] Plan preview with expandable file content
+- [x] Download ZIP on completion
 
-### API Specs
-```
-POST /api/skills/generate
-Body: { sourcePromptIds[], sourceKnowledgeIds[], title, description, instructions }
-Returns: { plan: { files: [...] }, previewContent: {...} }
+### Components Created
+- `WizardStepIndicator.tsx` - Step progress navigation
+- `WizardSourcesStep.tsx` - Prompt/knowledge selection with tabs
+- `WizardInstructionsStep.tsx` - Title and instructions form
+- `WizardPreviewStep.tsx` - Generated plan preview
+- `WizardBuildStep.tsx` - Build and success state
+- `WizardPreviewPanel.tsx` - Sticky sidebar preview
 
-POST /api/skills/build
-Body: { plan, title, description, isShared, allowEdit }
-Returns: { skill, downloadUrl }
+### Commits
 ```
+ed2f83c docs: Add Phase 3 Skills Builder Wizard implementation plan
+3164c52 feat: Add skills builder wizard page layout
+87f037f feat: Add skills generate API endpoint
+43b8269 feat: Add skills build API endpoint
+286ed0b feat: Enhance source selection step with prompt/knowledge loading
+dc4357f feat: Integrate wizard with generate and build APIs
+```
+
+### Test Report
+`test-reports/phase3-skills-builder-test.md`
 
 ---
 
@@ -265,14 +275,15 @@ POST /annote/mcp/{token}           → JSON-RPC handler
 | 2026-01-21 | 1 | Phase 1 complete: DB, API, basic UI |
 | 2026-01-21 | 2 | Phase 1.5 complete: Download, Edit, MCP endpoint |
 | 2026-01-21 | 3 | Phase 2 complete: Generation templates (5 templates seeded) |
+| 2026-01-21 | 4 | Phase 3 complete: Skills Builder Wizard (6 components, 2 APIs) |
 
 ---
 
-## Next Actions (Phase 3: Skills Builder Wizard)
+## Next Actions (Phase 4: MCP Builder Wizard)
 
-1. Create wizard UI component (`/skills/build`)
-2. Build source selection component (multi-select prompts/knowledge)
-3. Implement `/api/skills/generate` endpoint
-4. Implement `/api/skills/build` endpoint
-5. Add plan preview with expandable file content
-6. Integrate ZIP download on completion
+1. Create wizard UI component (`/mcp/build`)
+2. Build source selection component (reuse from skills wizard)
+3. Implement `/api/mcp/generate` endpoint
+4. Implement `/api/mcp/build` endpoint
+5. Add auto-deploy option after build
+6. Connect panel with config snippets
