@@ -524,6 +524,65 @@
       "download": "Download Skill Package"
     }
   },
+  "mcpBuilder": {
+    "title": "Build an MCP Prompt",
+    "subtitle": "Create a deployable MCP prompt from your knowledge",
+    "back": "Back",
+    "next": "Next",
+    "steps": {
+      "sources": "Select Sources",
+      "instructions": "Instructions",
+      "preview": "Preview",
+      "build": "Build & Deploy"
+    },
+    "instructions": {
+      "title": "MCP Instructions",
+      "description": "Provide details about what this MCP prompt should do.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Enter a title for your MCP prompt",
+      "titleRequired": "Title is required",
+      "namespaceLabel": "Namespace",
+      "namespaceHelp": "Unique identifier for your MCP prompt (auto-generated from title, URL-safe)",
+      "namespaceInvalid": "Namespace must be lowercase alphanumeric with hyphens",
+      "namespacePlaceholder": "my-mcp-prompt",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe what this MCP prompt does",
+      "instructionsLabel": "Build Instructions",
+      "instructionsPlaceholder": "Provide additional instructions for the AI to customize the MCP prompt generation...",
+      "instructionsRequired": "Instructions are required",
+      "autoDeploy": "Auto-deploy after build",
+      "autoDeployHelp": "Immediately deploy and get connection details",
+      "isPublic": "Public access",
+      "isPublicHelp": "Allow anyone with the URL to use this prompt"
+    },
+    "preview": {
+      "title": "Preview Plan",
+      "description": "Review the generated MCP prompt plan before building.",
+      "panelTitle": "Live Preview",
+      "generating": "Generating MCP prompt plan...",
+      "namespace": "Namespace",
+      "contentPreview": "Content Preview",
+      "noPlan": "No plan generated yet. Go back to complete previous steps.",
+      "noContent": "Complete the steps to see a preview"
+    },
+    "build": {
+      "title": "Build & Deploy",
+      "description": "Create the MCP prompt from the generated plan.",
+      "building": "Building and deploying...",
+      "success": "MCP prompt deployed successfully!",
+      "mcpCreated": "MCP \"{title}\" has been created and is ready to use.",
+      "readyToBuild": "Your MCP prompt is ready to be built.",
+      "createMcp": "Build MCP Prompt"
+    },
+    "connection": {
+      "title": "Connection Details",
+      "accessUrl": "Access URL",
+      "claudeCode": "Claude Code Config",
+      "cursor": "Cursor Config",
+      "copy": "Copy",
+      "copied": "Copied!"
+    }
+  },
   "mcp": {
     "title": "MCP",
     "createMcp": "Create MCP",

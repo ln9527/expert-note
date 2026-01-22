@@ -525,6 +525,65 @@
       "download": "下载技能包"
     }
   },
+  "mcpBuilder": {
+    "title": "构建 MCP 提示",
+    "subtitle": "从您的知识库创建可部署的 MCP 提示",
+    "back": "上一步",
+    "next": "下一步",
+    "steps": {
+      "sources": "选择来源",
+      "instructions": "填写说明",
+      "preview": "预览",
+      "build": "构建与部署"
+    },
+    "instructions": {
+      "title": "MCP 说明",
+      "description": "提供此 MCP 提示应执行的详细信息。",
+      "titleLabel": "标题",
+      "titlePlaceholder": "输入 MCP 提示的标题",
+      "titleRequired": "标题为必填项",
+      "namespaceLabel": "命名空间",
+      "namespaceHelp": "MCP 提示的唯一标识符（从标题自动生成，URL 安全）",
+      "namespaceInvalid": "命名空间必须是小写字母数字和连字符",
+      "namespacePlaceholder": "my-mcp-prompt",
+      "descriptionLabel": "描述",
+      "descriptionPlaceholder": "描述此 MCP 提示的功能",
+      "instructionsLabel": "构建说明",
+      "instructionsPlaceholder": "提供额外的说明以自定义 MCP 提示的生成...",
+      "instructionsRequired": "说明为必填项",
+      "autoDeploy": "构建后自动部署",
+      "autoDeployHelp": "立即部署并获取连接详情",
+      "isPublic": "公开访问",
+      "isPublicHelp": "允许任何拥有 URL 的人使用此提示"
+    },
+    "preview": {
+      "title": "预览计划",
+      "description": "在构建之前查看生成的 MCP 提示计划。",
+      "panelTitle": "实时预览",
+      "generating": "生成 MCP 提示计划中...",
+      "namespace": "命名空间",
+      "contentPreview": "内容预览",
+      "noPlan": "尚未生成计划。请返回完成之前的步骤。",
+      "noContent": "完成步骤后查看预览"
+    },
+    "build": {
+      "title": "构建与部署",
+      "description": "从生成的计划创建 MCP 提示。",
+      "building": "构建和部署中...",
+      "success": "MCP 提示部署成功！",
+      "mcpCreated": "MCP \"{title}\" 已创建并可以使用。",
+      "readyToBuild": "您的 MCP 提示已准备好构建。",
+      "createMcp": "构建 MCP 提示"
+    },
+    "connection": {
+      "title": "连接详情",
+      "accessUrl": "访问 URL",
+      "claudeCode": "Claude Code 配置",
+      "cursor": "Cursor 配置",
+      "copy": "复制",
+      "copied": "已复制！"
+    }
+  },
   "mcp": {
     "title": "MCP",
     "createMcp": "创建MCP",
