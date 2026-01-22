@@ -2,7 +2,7 @@
 
 **Project Start:** 2026-01-21
 **Last Updated:** 2026-01-22
-**Status:** Phase 4 Complete
+**Status:** Phase 5 Complete - Project Complete 🎉
 
 ---
 
@@ -23,7 +23,7 @@ Transform expert-note from a knowledge capture system into an AI skill distribut
 | 2 | Generation Templates | ✅ Complete | 2026-01-21 |
 | 3 | Skills Builder Wizard | ✅ Complete | 2026-01-21 |
 | 4 | MCP Builder Wizard | ✅ Complete | 2026-01-22 |
-| 5 | Polish & Production | ⏳ Pending | - |
+| 5 | Polish & Production | ✅ Complete | 2026-01-22 |
 
 ---
 
@@ -215,18 +215,39 @@ bad2aec feat: Add i18n translations for MCP builder wizard
 
 ---
 
-## Phase 5: Polish & Production ⏳ PENDING
+## Phase 5: Polish & Production ✅ COMPLETE
 
 **Goal:** Production readiness and UX improvements
 
 ### Deliverables
-- [ ] Multi-tool config generation (Claude Code, Cursor, others)
-- [ ] Download tracking and analytics
-- [ ] Public sharing controls
-- [ ] Rate limiting on MCP endpoints
-- [ ] CORS headers for MCP endpoints
-- [ ] Production deployment to spansurvey.net
-- [ ] Documentation for end users
+- [x] CORS headers for MCP endpoints
+- [x] Rate limiting on MCP endpoints (100 req/min per IP per token)
+- [x] Access tracking for MCP prompts (access_count column)
+- [x] Public badge display (is_public field UI)
+- [x] Multi-tool config generation (Claude Code, Cursor, Windsurf, Generic)
+- [x] i18n translations for new features
+- [x] User documentation (Skills & MCP guides)
+- [ ] Production deployment to spansurvey.net (manual step)
+
+### New Files Created
+- `src/lib/rateLimit.ts` - In-memory rate limiter
+- `sql/migrations/017_mcp_access_tracking.sql` - Access count migration
+- `docs/user-guide/07-skills-export.md` - Skills user guide
+- `docs/user-guide/08-mcp-endpoints.md` - MCP user guide
+
+### Commits
+```
+b0b7516 docs: Add Phase 5 Polish & Production implementation plan
+3d342fe feat: Add CORS headers to MCP endpoint
+5127cb5 feat: Add rate limiting to MCP endpoint
+88a9587 feat: Add access tracking to MCP prompts
+cc9e81c feat: Show public badge and access count on MCP detail page
+4f9a5dd feat: Add multi-tool config support (Windsurf, generic)
+53fdb9a test: Add Phase 5 polish and production test report
+```
+
+### Test Report
+`test-reports/phase5-polish-production-test.md`
 
 ---
 
@@ -301,15 +322,29 @@ POST /annote/mcp/{token}           → JSON-RPC handler
 | 2026-01-21 | 3 | Phase 2 complete: Generation templates (5 templates seeded) |
 | 2026-01-21 | 4 | Phase 3 complete: Skills Builder Wizard (6 components, 2 APIs) |
 | 2026-01-22 | 5 | Phase 4 complete: MCP Builder Wizard (4 components, 2 APIs) |
+| 2026-01-22 | 6 | Phase 5 complete: Polish & Production (CORS, rate limiting, docs) |
 
 ---
 
-## Next Actions (Phase 5: Polish & Production)
+## Project Complete 🎉
 
-1. Multi-tool config generation (Claude Code, Cursor, others)
-2. Download tracking and analytics
-3. Public sharing controls
-4. Rate limiting on MCP endpoints
-5. CORS headers for MCP endpoints
-6. Production deployment to spansurvey.net
-7. Documentation for end users
+All 5 phases of the Skills & MCP Export feature are complete:
+
+1. ✅ **Phase 1**: Database schema and basic CRUD
+2. ✅ **Phase 1.5**: Download, Edit, MCP server endpoint
+3. ✅ **Phase 2**: AI generation templates
+4. ✅ **Phase 3**: Skills Builder Wizard
+5. ✅ **Phase 4**: MCP Builder Wizard
+6. ✅ **Phase 5**: CORS, rate limiting, access tracking, docs
+
+### Remaining Manual Steps
+1. Apply migration `017_mcp_access_tracking.sql` to production
+2. Deploy to spansurvey.net
+3. Test CORS from external origin
+4. Verify rate limiting with load test
+
+### Future Enhancements (Optional)
+- Analytics dashboard for download/access counts
+- Public listing page for is_public MCPs
+- Webhook notifications for access
+- More tool-specific config formats
