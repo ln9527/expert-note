@@ -4,15 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/i18n';
 import { buildApiPath } from '@/lib/utils/pathHelper';
-import { WizardSourcesStep } from '@/components/skills';
-
-// Types for MCP wizard
-type McpWizardStep = 'sources' | 'instructions' | 'preview' | 'build';
-
-interface McpStepConfig {
-  key: McpWizardStep;
-  labelKey: string;
-}
+import { WizardStepIndicator, WizardSourcesStep, WIZARD_STEPS } from '@/components/skills';
+import type { WizardStep } from '@/components/skills';
 
 interface GeneratedMcpPlan {
   content: string;
@@ -27,14 +20,6 @@ interface DeployedMcp {
   deploymentStatus: string;
 }
 
-// Step configuration for MCP wizard
-const MCP_WIZARD_STEPS: McpStepConfig[] = [
-  { key: 'sources', labelKey: 'mcpBuilder.steps.sources' },
-  { key: 'instructions', labelKey: 'mcpBuilder.steps.instructions' },
-  { key: 'preview', labelKey: 'mcpBuilder.steps.preview' },
-  { key: 'build', labelKey: 'mcpBuilder.steps.build' },
-];
-
 // Helper to generate namespace from title
 const generateNamespace = (title: string): string => {
   return title
@@ -48,7 +33,7 @@ export default function McpBuilderPage() {
   const { t } = useTranslation();
 
   // Wizard step state
-  const [currentStep, setCurrentStep] = useState<McpWizardStep>('sources');
+  const [currentStep, setCurrentStep] = useState<WizardStep>('sources');
 
   // Source selection state
   const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>([]);
@@ -87,13 +72,13 @@ export default function McpBuilderPage() {
   };
 
   // Navigation helpers
-  const getCurrentStepIndex = () => MCP_WIZARD_STEPS.findIndex(s => s.key === currentStep);
+  const getCurrentStepIndex = () => WIZARD_STEPS.findIndex(s => s.key === currentStep);
 
   const canGoBack = () => getCurrentStepIndex() > 0;
 
   const canGoNext = () => {
     const stepIndex = getCurrentStepIndex();
-    if (stepIndex >= MCP_WIZARD_STEPS.length - 1) return false;
+    if (stepIndex >= WIZARD_STEPS.length - 1) return false;
 
     // Validation per step
     switch (currentStep) {
@@ -111,7 +96,7 @@ export default function McpBuilderPage() {
   const goBack = () => {
     if (!canGoBack()) return;
     const stepIndex = getCurrentStepIndex();
-    setCurrentStep(MCP_WIZARD_STEPS[stepIndex - 1].key);
+    setCurrentStep(WIZARD_STEPS[stepIndex - 1].key);
   };
 
   const goNext = () => {
@@ -130,12 +115,12 @@ export default function McpBuilderPage() {
     }
 
     const stepIndex = getCurrentStepIndex();
-    setCurrentStep(MCP_WIZARD_STEPS[stepIndex + 1].key);
+    setCurrentStep(WIZARD_STEPS[stepIndex + 1].key);
   };
 
-  const goToStep = (step: McpWizardStep) => {
+  const goToStep = (step: WizardStep) => {
     // Only allow navigating to completed or current steps
-    const targetIndex = MCP_WIZARD_STEPS.findIndex(s => s.key === step);
+    const targetIndex = WIZARD_STEPS.findIndex(s => s.key === step);
     const currentIndex = getCurrentStepIndex();
     if (targetIndex <= currentIndex) {
       setCurrentStep(step);
@@ -217,59 +202,6 @@ export default function McpBuilderPage() {
     } finally {
       setIsBuilding(false);
     }
-  };
-
-  // Render step indicator
-  const renderStepIndicator = () => {
-    const currentIndex = getCurrentStepIndex();
-
-    return (
-      <div className="flex items-center justify-between mb-8">
-        {MCP_WIZARD_STEPS.map((step, index) => {
-          const isActive = step.key === currentStep;
-          const isCompleted = index < currentIndex;
-          const isClickable = index <= currentIndex;
-
-          return (
-            <div key={step.key} className="flex items-center flex-1">
-              <button
-                onClick={() => isClickable && goToStep(step.key)}
-                disabled={!isClickable}
-                className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : isCompleted
-                    ? 'bg-green-500 text-white cursor-pointer'
-                    : 'bg-gray-200 text-gray-500'
-                } ${isClickable && !isActive ? 'hover:bg-green-600' : ''}`}
-              >
-                {isCompleted ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  index + 1
-                )}
-              </button>
-              <span
-                className={`ml-2 text-sm font-medium ${
-                  isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-500'
-                }`}
-              >
-                {t(step.labelKey)}
-              </span>
-              {index < MCP_WIZARD_STEPS.length - 1 && (
-                <div
-                  className={`flex-1 h-0.5 mx-4 ${
-                    isCompleted ? 'bg-green-500' : 'bg-gray-200'
-                  }`}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
   };
 
   // Render current step content
@@ -520,7 +452,10 @@ export default function McpBuilderPage() {
       )}
 
       {/* Step indicator */}
-      {renderStepIndicator()}
+      <WizardStepIndicator
+        currentStep={currentStep}
+        onStepClick={goToStep}
+      />
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
