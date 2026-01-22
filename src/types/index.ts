@@ -411,6 +411,7 @@ export interface McpPrompt {
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  accessCount?: number;
   creator?: CreatorInfo | null;
 }
 

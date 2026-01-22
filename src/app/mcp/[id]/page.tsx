@@ -318,10 +318,24 @@ export default function McpDetailPage() {
       {/* MCP Details Card */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h2 className="text-xl font-semibold text-gray-900">{mcp.title}</h2>
-          {mcp.description && (
-            <p className="mt-1 text-sm text-gray-500">{mcp.description}</p>
-          )}
+          <div className="flex items-center flex-wrap gap-2">
+            <h2 className="text-xl font-semibold text-gray-900">{mcp.title}</h2>
+            {mcp.isPublic && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                {t('mcp.publicBadge')}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-4 mt-1">
+            {mcp.description && (
+              <p className="text-sm text-gray-500">{mcp.description}</p>
+            )}
+            {mcp.accessCount !== undefined && mcp.accessCount > 0 && (
+              <span className="text-sm text-gray-500">
+                {t('mcp.accessCount')}: {mcp.accessCount}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="p-6 space-y-6">
