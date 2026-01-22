@@ -12,10 +12,13 @@ export interface McpConnectionPanelProps {
   };
 }
 
+type ConfigTab = 'claude' | 'cursor' | 'windsurf' | 'generic';
+
 export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
   const { t } = useTranslation();
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<ConfigTab>('claude');
 
   // Clear copied state after 2 seconds with proper cleanup
   useEffect(() => {
@@ -40,7 +43,7 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
     return `${baseUrl}/annote/mcp/${mcp.accessToken || mcp.id}`;
   };
 
-  // Generate MCP config (shared logic for Claude Code and Cursor)
+  // Generate MCP config for Claude Code and Cursor (uses npx mcp-remote)
   const getMcpConfig = () => {
     const url = getAccessUrl();
     return JSON.stringify({
@@ -51,6 +54,58 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
         }
       }
     }, null, 2);
+  };
+
+  // Generate Windsurf config (direct serverUrl)
+  const getWindsurfConfig = () => {
+    const url = getAccessUrl();
+    return JSON.stringify({
+      mcpServers: {
+        [mcp.namespace]: {
+          serverUrl: url
+        }
+      }
+    }, null, 2);
+  };
+
+  // Generate Generic config (plain text)
+  const getGenericConfig = () => {
+    const url = getAccessUrl();
+    return `Server URL: ${url}
+Namespace: ${mcp.namespace}
+Protocol: MCP (Model Context Protocol)
+Transport: HTTP/SSE`;
+  };
+
+  // Get current config based on active tab
+  const getCurrentConfig = (): string => {
+    switch (activeTab) {
+      case 'claude':
+      case 'cursor':
+        return getMcpConfig();
+      case 'windsurf':
+        return getWindsurfConfig();
+      case 'generic':
+        return getGenericConfig();
+      default:
+        return getMcpConfig();
+    }
+  };
+
+  // Get help text based on active tab
+  const getHelpText = (): string => {
+    switch (activeTab) {
+      case 'claude':
+        return t('mcp.claudeCodeConfigHelp') || 'Add this to your Claude Code MCP settings';
+      case 'cursor':
+        return t('mcp.cursorConfigHelp') || 'Add this to your Cursor MCP settings';
+      case 'windsurf':
+        return t('mcp.windsurfConfigHelp') || 'Add this to your Windsurf MCP settings';
+      case 'generic':
+        return t('mcp.genericConfigHelp') || 'Use these details to configure any MCP-compatible tool';
+      default:
+        return '';
+    }
   };
 
   const copyToClipboard = async (text: string, section: string) => {
@@ -128,36 +183,46 @@ export function McpConnectionPanel({ mcp }: McpConnectionPanelProps) {
         </div>
       </div>
 
-      {/* Claude Code config */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">
-            {t('mcp.claudeCodeConfig')}
-          </label>
-          <CopyButton text={getMcpConfig()} section="claudeCode" />
-        </div>
-        <p className="text-xs text-gray-500">
-          {t('mcp.claudeCodeConfigHelp')}
-        </p>
-        <pre className="p-3 bg-gray-900 text-gray-100 rounded-lg text-sm overflow-auto max-h-48 font-mono">
-          {getMcpConfig()}
-        </pre>
-      </div>
+      {/* Tool Config Tabs */}
+      <div className="space-y-4">
+        <label className="text-sm font-medium text-gray-700">
+          {t('mcp.toolConfig') || 'Tool Configuration'}
+        </label>
 
-      {/* Cursor config */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">
-            {t('mcp.cursorConfig')}
-          </label>
-          <CopyButton text={getMcpConfig()} section="cursor" />
+        {/* Tab buttons */}
+        <div className="flex flex-wrap gap-2">
+          {[
+            { key: 'claude' as ConfigTab, label: t('mcp.configTabs.claudeCode') || 'Claude Code' },
+            { key: 'cursor' as ConfigTab, label: t('mcp.configTabs.cursor') || 'Cursor' },
+            { key: 'windsurf' as ConfigTab, label: t('mcp.configTabs.windsurf') || 'Windsurf' },
+            { key: 'generic' as ConfigTab, label: t('mcp.configTabs.generic') || 'Generic' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                activeTab === tab.key
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-        <p className="text-xs text-gray-500">
-          {t('mcp.cursorConfigHelp')}
-        </p>
-        <pre className="p-3 bg-gray-900 text-gray-100 rounded-lg text-sm overflow-auto max-h-48 font-mono">
-          {getMcpConfig()}
-        </pre>
+
+        {/* Config display */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500">
+              {getHelpText()}
+            </p>
+            <CopyButton text={getCurrentConfig()} section={activeTab} />
+          </div>
+          <pre className="p-3 bg-gray-900 text-gray-100 rounded-lg text-sm overflow-auto max-h-48 font-mono">
+            {getCurrentConfig()}
+          </pre>
+        </div>
       </div>
     </div>
   );

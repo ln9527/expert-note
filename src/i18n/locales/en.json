@@ -611,6 +611,15 @@
     "copyFailed": "Copy failed",
     "claudeCodeConfigHelp": "Add this to your Claude Code settings to connect.",
     "cursorConfigHelp": "Add this to your Cursor settings to connect.",
+    "windsurfConfigHelp": "Add this to your Windsurf settings to connect.",
+    "genericConfigHelp": "Use these details to configure any MCP-compatible tool.",
+    "toolConfig": "Tool Configuration",
+    "configTabs": {
+      "claudeCode": "Claude Code",
+      "cursor": "Cursor",
+      "windsurf": "Windsurf",
+      "generic": "Generic"
+    },
     "notDeployed": "Deploy this MCP to get connection details.",
     "titlePlaceholder": "Enter MCP prompt name...",
     "descriptionPlaceholder": "Brief description of what this MCP prompt does...",

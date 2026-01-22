@@ -612,6 +612,15 @@
     "copyFailed": "复制失败",
     "claudeCodeConfigHelp": "将此配置添加到Claude Code设置以连接。",
     "cursorConfigHelp": "将此配置添加到Cursor设置以连接。",
+    "windsurfConfigHelp": "将此配置添加到Windsurf设置以连接。",
+    "genericConfigHelp": "使用这些详情配置任何MCP兼容的工具。",
+    "toolConfig": "工具配置",
+    "configTabs": {
+      "claudeCode": "Claude Code",
+      "cursor": "Cursor",
+      "windsurf": "Windsurf",
+      "generic": "通用"
+    },
     "notDeployed": "部署此MCP以获取连接详情。",
     "titlePlaceholder": "输入MCP提示名称...",
     "descriptionPlaceholder": "简要描述此MCP提示的功能...",
