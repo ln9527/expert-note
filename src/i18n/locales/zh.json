@@ -621,6 +621,9 @@
       "windsurf": "Windsurf",
       "generic": "通用"
     },
+    "publicBadge": "公开",
+    "accessCount": "访问次数",
+    "rateLimited": "请求过于频繁。请稍后再试。",
     "notDeployed": "部署此MCP以获取连接详情。",
     "titlePlaceholder": "输入MCP提示名称...",
     "descriptionPlaceholder": "简要描述此MCP提示的功能...",

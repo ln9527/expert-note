@@ -620,6 +620,9 @@
       "windsurf": "Windsurf",
       "generic": "Generic"
     },
+    "publicBadge": "Public",
+    "accessCount": "Access Count",
+    "rateLimited": "Rate limited. Please try again later.",
     "notDeployed": "Deploy this MCP to get connection details.",
     "titlePlaceholder": "Enter MCP prompt name...",
     "descriptionPlaceholder": "Brief description of what this MCP prompt does...",
