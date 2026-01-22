@@ -291,7 +291,6 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error('[API] GET /mcp/generate error:', error);
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'fetch MCP generation templates');
   }
 }
