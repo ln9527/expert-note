@@ -1,8 +1,8 @@
 # Skills & MCP Export Feature - Master Plan
 
 **Project Start:** 2026-01-21
-**Last Updated:** 2026-01-21
-**Status:** Phase 3 Complete
+**Last Updated:** 2026-01-22
+**Status:** Phase 4 Complete
 
 ---
 
@@ -22,7 +22,7 @@ Transform expert-note from a knowledge capture system into an AI skill distribut
 | 1.5 | Core Features (Download, Edit, MCP Endpoint) | ✅ Complete | 2026-01-21 |
 | 2 | Generation Templates | ✅ Complete | 2026-01-21 |
 | 3 | Skills Builder Wizard | ✅ Complete | 2026-01-21 |
-| 4 | MCP Builder Wizard | ⏳ Pending | - |
+| 4 | MCP Builder Wizard | ✅ Complete | 2026-01-22 |
 | 5 | Polish & Production | ⏳ Pending | - |
 
 ---
@@ -161,7 +161,7 @@ dc4357f feat: Integrate wizard with generate and build APIs
 
 ---
 
-## Phase 4: MCP Builder Wizard ⏳ PENDING
+## Phase 4: MCP Builder Wizard ✅ COMPLETE
 
 **Goal:** Similar wizard for building MCP prompts
 
@@ -172,22 +172,46 @@ dc4357f feat: Integrate wizard with generate and build APIs
 4. **Build & Deploy** - Create and optionally deploy
 
 ### Deliverables
-- [ ] Wizard UI component (`/mcp/build`)
-- [ ] `/api/mcp/generate` - AI generates MCP content
-- [ ] `/api/mcp/build` - Create MCP prompt
-- [ ] Auto-deploy option after build
-- [ ] Connect panel with config snippets
+- [x] Wizard UI component (`/mcp/build`)
+- [x] `/api/mcp/generate` - AI generates MCP content
+- [x] `/api/mcp/build` - Create MCP prompt with permission checks
+- [x] Auto-deploy option after build
+- [x] Connection panel with config snippets (Claude Code, Cursor)
+- [x] i18n translations (EN/ZH)
 
-### API Specs
-```
-POST /api/mcp/generate
-Body: { sourcePromptIds[], sourceKnowledgeIds[], title, description, namespace, instructions }
-Returns: { plan: { content, namespace }, previewContent }
+### Components Created
+- `McpWizardInstructionsStep.tsx` - Title, namespace, description, instructions form
+- `McpWizardPreviewStep.tsx` - Generated content preview
+- `McpWizardBuildStep.tsx` - Build button and success state
+- `McpConnectionPanel.tsx` - Connection config snippets with copy buttons
 
-POST /api/mcp/build
-Body: { plan, title, description, namespace, isShared, allowEdit, isPublic }
-Returns: { mcpPrompt }
+### Commits
 ```
+76368df docs: Add Phase 4 MCP Builder Wizard implementation plan
+bc503a6 feat: Add MCP builder wizard page layout
+1462e89 fix: Use WizardStepIndicator from skills instead of inline implementation
+ff4813c feat: Add MCP-specific wizard components
+40fb4e2 fix: Address code quality issues in McpConnectionPanel
+a3479c3 feat: Add MCP generate API endpoint
+ac1e932 fix: Use handleApiError in GET /mcp/generate endpoint
+d1fbca4 feat: Add MCP build API endpoint with auto-deploy
+e8a0f4d fix: Add source permission checks and handle deploy failure in MCP build
+dba0f38 feat: Integrate MCP wizard with generate and build APIs
+bad2aec feat: Add i18n translations for MCP builder wizard
+7e15f75 test: Add Phase 4 MCP builder test report
+```
+
+### Test Report
+`test-reports/phase4-mcp-builder-test.md`
+
+### Key Differences from Skills Wizard
+| Feature | Skills Wizard | MCP Wizard |
+|---------|---------------|------------|
+| Output | File structure (SKILL.md, prompts/, examples/, tests/) | Single content string |
+| Namespace | Not applicable | Required, auto-generated from title |
+| Auto-deploy | Not applicable | Checkbox option (default: true) |
+| Connection panel | Not applicable | Shows config snippets for Claude Code, Cursor |
+| Download | ZIP file | Not applicable |
 
 ---
 
@@ -276,14 +300,16 @@ POST /annote/mcp/{token}           → JSON-RPC handler
 | 2026-01-21 | 2 | Phase 1.5 complete: Download, Edit, MCP endpoint |
 | 2026-01-21 | 3 | Phase 2 complete: Generation templates (5 templates seeded) |
 | 2026-01-21 | 4 | Phase 3 complete: Skills Builder Wizard (6 components, 2 APIs) |
+| 2026-01-22 | 5 | Phase 4 complete: MCP Builder Wizard (4 components, 2 APIs) |
 
 ---
 
-## Next Actions (Phase 4: MCP Builder Wizard)
+## Next Actions (Phase 5: Polish & Production)
 
-1. Create wizard UI component (`/mcp/build`)
-2. Build source selection component (reuse from skills wizard)
-3. Implement `/api/mcp/generate` endpoint
-4. Implement `/api/mcp/build` endpoint
-5. Add auto-deploy option after build
-6. Connect panel with config snippets
+1. Multi-tool config generation (Claude Code, Cursor, others)
+2. Download tracking and analytics
+3. Public sharing controls
+4. Rate limiting on MCP endpoints
+5. CORS headers for MCP endpoints
+6. Production deployment to spansurvey.net
+7. Documentation for end users
