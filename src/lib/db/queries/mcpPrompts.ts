@@ -27,6 +27,7 @@ export interface McpPromptRow {
   updated_at: string;
   is_deleted: boolean;
   deleted_at: string | null;
+  access_count: number;
   // Joined from users table
   creator?: {
     id: number;
@@ -55,6 +56,7 @@ export interface McpPrompt {
   updatedAt: Date;
   isDeleted: boolean;
   deletedAt: Date | null;
+  accessCount: number;
   creator?: {
     id: number;
     username: string;
@@ -83,6 +85,7 @@ function mapMcpPromptRow(row: McpPromptRow): McpPrompt {
     updatedAt: new Date(row.updated_at),
     isDeleted: row.is_deleted || false,
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
+    accessCount: row.access_count ?? 0,
     creator: row.creator || null,
   };
 }
@@ -486,4 +489,17 @@ export async function getMcpPromptByAccessToken(accessToken: string): Promise<Mc
   if (!row) return null;
 
   return mapMcpPromptRow(row);
+}
+
+/**
+ * Increment the access count for an MCP prompt
+ * Called when the MCP endpoint is accessed
+ */
+export async function incrementAccessCount(id: string): Promise<void> {
+  await query(
+    `UPDATE mcp_prompts
+     SET access_count = access_count + 1
+     WHERE id = $1`,
+    [id]
+  );
 }

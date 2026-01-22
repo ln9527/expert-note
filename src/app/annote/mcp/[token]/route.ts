@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getMcpPromptByAccessToken } from '@/lib/db/queries/mcpPrompts';
+import { getMcpPromptByAccessToken, incrementAccessCount } from '@/lib/db/queries/mcpPrompts';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 interface RouteParams {
@@ -238,6 +238,11 @@ export async function POST(
         { status: 404, headers: corsHeaders() }
       );
     }
+
+    // Track access (fire and forget)
+    incrementAccessCount(mcpPrompt.id).catch(err =>
+      console.error('[MCP] Failed to increment access count:', err)
+    );
 
     // Parse JSON-RPC request body
     let body: {
