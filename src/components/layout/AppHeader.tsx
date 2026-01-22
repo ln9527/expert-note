@@ -91,6 +91,8 @@ export default function AppHeader({
   const navLinks = [
     { href: '/knowledge', labelKey: 'nav.knowledgeBase' },
     { href: '/prompts', labelKey: 'nav.prompts' },
+    { href: '/skills', labelKey: 'nav.skills' },
+    { href: '/mcp', labelKey: 'nav.mcp' },
     { href: '/settings', labelKey: 'nav.settings' },
   ];
 
