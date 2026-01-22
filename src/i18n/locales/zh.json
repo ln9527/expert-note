@@ -520,7 +520,9 @@
       "title": "生成技能",
       "description": "从生成的计划创建技能包。",
       "building": "生成技能中...",
-      "createSkill": "创建技能"
+      "createSkill": "创建技能",
+      "success": "技能生成成功！",
+      "download": "下载技能包"
     }
   },
   "mcp": {

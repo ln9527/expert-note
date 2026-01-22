@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/i18n';
+import { buildApiPath } from '@/lib/utils/pathHelper';
 import {
   WizardStepIndicator,
   WizardSourcesStep,
@@ -12,7 +13,7 @@ import {
   WizardPreviewPanel,
   WIZARD_STEPS,
 } from '@/components/skills';
-import type { WizardStep, GeneratedPlan } from '@/components/skills';
+import type { WizardStep, GeneratedPlan, BuiltSkill } from '@/components/skills';
 
 export default function SkillsBuilderPage() {
   const { t } = useTranslation();
@@ -31,6 +32,10 @@ export default function SkillsBuilderPage() {
 
   // Generated plan state
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
+
+  // Built skill state
+  const [builtSkill, setBuiltSkill] = useState<BuiltSkill | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string>('');
 
   // Loading states
   const [isGenerating, setIsGenerating] = useState(false);
@@ -69,6 +74,19 @@ export default function SkillsBuilderPage() {
 
   const goNext = () => {
     if (!canGoNext()) return;
+
+    // Special handling: when leaving instructions step, trigger generation
+    if (currentStep === 'instructions') {
+      handleGenerate();
+      return;
+    }
+
+    // Special handling: when leaving preview step, trigger build
+    if (currentStep === 'preview') {
+      handleBuild();
+      return;
+    }
+
     const stepIndex = getCurrentStepIndex();
     setCurrentStep(WIZARD_STEPS[stepIndex + 1].key);
   };
@@ -82,10 +100,84 @@ export default function SkillsBuilderPage() {
     }
   };
 
-  const handleBuild = () => {
-    // Build logic will be implemented later
+  // API Handlers
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    setError('');
+
+    try {
+      const response = await fetch(buildApiPath('skills/generate'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourcePromptIds: selectedPromptIds,
+          sourceKnowledgeIds: selectedKnowledgeIds,
+          title,
+          description,
+          instructions,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || 'Generation failed');
+        return;
+      }
+
+      setGeneratedPlan(data.plan);
+      setCurrentStep('preview');
+    } catch (err) {
+      setError('Failed to generate skill');
+      console.error(err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleBuild = async () => {
+    if (!generatedPlan) return;
+
     setIsBuilding(true);
-    setTimeout(() => setIsBuilding(false), 2000);
+    setError('');
+
+    try {
+      const response = await fetch(buildApiPath('skills/build'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: generatedPlan,
+          title,
+          description,
+          sourcePromptIds: selectedPromptIds,
+          sourceKnowledgeIds: selectedKnowledgeIds,
+          isShared: false,
+          allowEdit: false,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || 'Build failed');
+        return;
+      }
+
+      setBuiltSkill(data.skill);
+      setDownloadUrl(data.downloadUrl);
+      setCurrentStep('build');
+    } catch (err) {
+      setError('Failed to build skill');
+      console.error(err);
+    } finally {
+      setIsBuilding(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (downloadUrl) {
+      window.open(downloadUrl, '_blank');
+    }
   };
 
   // Render current step content
@@ -122,17 +214,15 @@ export default function SkillsBuilderPage() {
         return (
           <WizardBuildStep
             isBuilding={isBuilding}
+            builtSkill={builtSkill}
             onBuild={handleBuild}
+            onDownload={handleDownload}
           />
         );
       default:
         return null;
     }
   };
-
-  // Suppress unused variable warnings for state setters that will be used in later tasks
-  void setGeneratedPlan;
-  void setIsGenerating;
 
   return (
     <div className="space-y-6">

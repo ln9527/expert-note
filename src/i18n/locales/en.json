@@ -519,7 +519,9 @@
       "title": "Build Skill",
       "description": "Create the skill package from the generated plan.",
       "building": "Building skill...",
-      "createSkill": "Create Skill"
+      "createSkill": "Create Skill",
+      "success": "Skill built successfully!",
+      "download": "Download Skill Package"
     }
   },
   "mcp": {

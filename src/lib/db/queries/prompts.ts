@@ -43,6 +43,7 @@ export interface SystemPromptRow {
     id: number;
     username: string;
     displayName: string | null;
+    orgId: number | null;
   } | null;
 }
 
@@ -68,6 +69,7 @@ export interface SystemPrompt {
     id: number;
     username: string;
     displayName: string | null;
+    orgId: number | null;
   } | null;
 }
 
@@ -256,13 +258,13 @@ export async function getAllPrompts(
     ? `
       SELECT sp.*,
         CASE WHEN u.id IS NOT NULL THEN
-          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
         ELSE NULL END as creator
       FROM system_prompts sp
       LEFT JOIN users u ON sp.user_id = u.id
       ${tagJoin}
       WHERE ${whereClause}
-      GROUP BY sp.id, u.id, u.username, u.display_name
+      GROUP BY sp.id, u.id, u.username, u.display_name, u.org_id
       ${tagHaving}
       ORDER BY sp.updated_at DESC
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}
@@ -270,7 +272,7 @@ export async function getAllPrompts(
     : `
       SELECT sp.*,
         CASE WHEN u.id IS NOT NULL THEN
-          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name)
+          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
         ELSE NULL END as creator
       FROM system_prompts sp
       LEFT JOIN users u ON sp.user_id = u.id
@@ -316,8 +318,24 @@ export async function getAllPrompts(
  */
 export async function getPromptById(id: string, includeDeleted = false): Promise<SystemPrompt | null> {
   const sql = includeDeleted
-    ? `SELECT * FROM system_prompts WHERE id = $1`
-    : `SELECT * FROM system_prompts WHERE id = $1 AND is_deleted = FALSE`;
+    ? `
+      SELECT sp.*,
+        CASE WHEN u.id IS NOT NULL THEN
+          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
+        ELSE NULL END as creator
+      FROM system_prompts sp
+      LEFT JOIN users u ON sp.user_id = u.id
+      WHERE sp.id = $1
+    `
+    : `
+      SELECT sp.*,
+        CASE WHEN u.id IS NOT NULL THEN
+          json_build_object('id', u.id, 'username', u.username, 'displayName', u.display_name, 'orgId', u.org_id)
+        ELSE NULL END as creator
+      FROM system_prompts sp
+      LEFT JOIN users u ON sp.user_id = u.id
+      WHERE sp.id = $1 AND sp.is_deleted = FALSE
+    `;
   const row = await queryOne<SystemPromptRow>(sql, [id]);
   if (!row) return null;
 

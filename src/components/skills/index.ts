@@ -12,7 +12,7 @@ export { WizardPreviewStep } from './WizardPreviewStep';
 export type { GeneratedPlan, WizardPreviewStepProps } from './WizardPreviewStep';
 
 export { WizardBuildStep } from './WizardBuildStep';
-export type { WizardBuildStepProps } from './WizardBuildStep';
+export type { BuiltSkill, WizardBuildStepProps } from './WizardBuildStep';
 
 export { WizardPreviewPanel } from './WizardPreviewPanel';
 export type { WizardPreviewPanelProps } from './WizardPreviewPanel';
