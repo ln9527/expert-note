@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getMcpPromptByAccessToken } from '@/lib/db/queries/mcpPrompts';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 interface RouteParams {
   params: Promise<{ token: string }>;
@@ -48,7 +49,7 @@ export async function OPTIONS() {
  * Returns JSON manifest with server info and capabilities
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
   try {
@@ -59,6 +60,28 @@ export async function GET(
       return NextResponse.json(
         { error: 'Invalid token format' },
         { status: 400, headers: corsHeaders() }
+      );
+    }
+
+    // Rate limiting
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const clientIp = forwardedFor?.split(',')[0]?.trim() || 'unknown';
+    const rateLimitKey = `mcp:${clientIp}:${token}`;
+
+    const rateLimit = checkRateLimit(rateLimitKey, { windowMs: 60000, maxRequests: 100 });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(rateLimit.resetTime),
+            'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)),
+          }
+        }
       );
     }
 
@@ -85,7 +108,13 @@ export async function GET(
       },
     };
 
-    return NextResponse.json(manifest, { headers: corsHeaders() });
+    return NextResponse.json(manifest, {
+      headers: {
+        ...corsHeaders(),
+        'X-RateLimit-Remaining': String(rateLimit.remaining),
+        'X-RateLimit-Reset': String(rateLimit.resetTime),
+      }
+    });
   } catch (error) {
     console.error('[MCP] GET /annote/mcp/[token] error:', error);
     return NextResponse.json(
@@ -111,24 +140,45 @@ const JSON_RPC_ERRORS = {
  */
 function jsonRpcError(
   id: string | number | null,
-  error: { code: number; message: string; data?: unknown }
+  error: { code: number; message: string; data?: unknown },
+  rateLimit?: { remaining: number; resetTime: number } | null
 ): NextResponse {
+  const headers: HeadersInit = rateLimit
+    ? {
+        ...corsHeaders(),
+        'X-RateLimit-Remaining': String(rateLimit.remaining),
+        'X-RateLimit-Reset': String(rateLimit.resetTime),
+      }
+    : corsHeaders();
+
   return NextResponse.json({
     jsonrpc: '2.0',
     id,
     error,
-  }, { headers: corsHeaders() });
+  }, { headers });
 }
 
 /**
  * Create a JSON-RPC success response
  */
-function jsonRpcSuccess(id: string | number | null, result: unknown): NextResponse {
+function jsonRpcSuccess(
+  id: string | number | null,
+  result: unknown,
+  rateLimit?: { remaining: number; resetTime: number } | null
+): NextResponse {
+  const headers: HeadersInit = rateLimit
+    ? {
+        ...corsHeaders(),
+        'X-RateLimit-Remaining': String(rateLimit.remaining),
+        'X-RateLimit-Reset': String(rateLimit.resetTime),
+      }
+    : corsHeaders();
+
   return NextResponse.json({
     jsonrpc: '2.0',
     id,
     result,
-  }, { headers: corsHeaders() });
+  }, { headers });
 }
 
 /**
@@ -144,6 +194,8 @@ export async function POST(
   request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  let rateLimit: { allowed: boolean; remaining: number; resetTime: number } | null = null;
+
   try {
     const { token } = await params;
 
@@ -152,6 +204,28 @@ export async function POST(
       return NextResponse.json(
         { error: 'Invalid token format' },
         { status: 400, headers: corsHeaders() }
+      );
+    }
+
+    // Rate limiting
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const clientIp = forwardedFor?.split(',')[0]?.trim() || 'unknown';
+    const rateLimitKey = `mcp:${clientIp}:${token}`;
+
+    rateLimit = checkRateLimit(rateLimitKey, { windowMs: 60000, maxRequests: 100 });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(rateLimit.resetTime),
+            'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)),
+          }
+        }
       );
     }
 
@@ -176,12 +250,12 @@ export async function POST(
     try {
       body = await request.json();
     } catch {
-      return jsonRpcError(null, JSON_RPC_ERRORS.PARSE_ERROR);
+      return jsonRpcError(null, JSON_RPC_ERRORS.PARSE_ERROR, rateLimit);
     }
 
     // Validate JSON-RPC structure
     if (!body || body.jsonrpc !== '2.0' || typeof body.method !== 'string') {
-      return jsonRpcError(body?.id ?? null, JSON_RPC_ERRORS.INVALID_REQUEST);
+      return jsonRpcError(body?.id ?? null, JSON_RPC_ERRORS.INVALID_REQUEST, rateLimit);
     }
 
     const { id, method } = body;
@@ -200,7 +274,7 @@ export async function POST(
               listChanged: false,
             },
           },
-        });
+        }, rateLimit);
 
       case 'prompts/list':
         return jsonRpcSuccess(id ?? null, {
@@ -211,7 +285,7 @@ export async function POST(
               arguments: [],
             },
           ],
-        });
+        }, rateLimit);
 
       case 'prompts/get': {
         // Validate params - should have name matching the namespace
@@ -222,7 +296,7 @@ export async function POST(
           return jsonRpcError(id ?? null, {
             ...JSON_RPC_ERRORS.INVALID_PARAMS,
             data: { message: `Prompt '${requestParams.name}' not found` },
-          });
+          }, rateLimit);
         }
 
         return jsonRpcSuccess(id ?? null, {
@@ -236,18 +310,27 @@ export async function POST(
               },
             },
           ],
-        });
+        }, rateLimit);
       }
 
       case 'notifications/initialized':
         // Notification - no response needed, return 204
-        return new NextResponse(null, { status: 204, headers: corsHeaders() });
+        return new NextResponse(null, {
+          status: 204,
+          headers: rateLimit
+            ? {
+                ...corsHeaders(),
+                'X-RateLimit-Remaining': String(rateLimit.remaining),
+                'X-RateLimit-Reset': String(rateLimit.resetTime),
+              }
+            : corsHeaders(),
+        });
 
       default:
-        return jsonRpcError(id ?? null, JSON_RPC_ERRORS.METHOD_NOT_FOUND);
+        return jsonRpcError(id ?? null, JSON_RPC_ERRORS.METHOD_NOT_FOUND, rateLimit);
     }
   } catch (error) {
     console.error('[MCP] POST /annote/mcp/[token] error:', error);
-    return jsonRpcError(null, JSON_RPC_ERRORS.INTERNAL_ERROR);
+    return jsonRpcError(null, JSON_RPC_ERRORS.INTERNAL_ERROR, rateLimit);
   }
 }
