@@ -7,6 +7,13 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isValidUUID(id: string): boolean {
+  return UUID_REGEX.test(id);
+}
+
 /**
  * Content structure expected in skill.content
  */
@@ -37,6 +44,11 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // Validate UUID format to prevent database errors
+    if (!isValidUUID(id)) {
+      return NextResponse.json({ success: false, error: 'Invalid skill ID format' }, { status: 400 });
+    }
 
     // Fetch skill
     const skill = await getSkillById(id);

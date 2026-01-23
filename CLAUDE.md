@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ Voice Input Feature - Deployed to Production (Jan 21, 2026)
+**Status**: ✅ Skills & MCP Fully Functional - Deployed to Production (Jan 23, 2026)
 
 ---
 
@@ -52,6 +52,68 @@ sql/migrations/                # Database migrations
 3. **Remove Legacy "Test Organization"** - Clean up seed data
 
 ## Recent Work
+
+### Session 13 (Jan 23, 2026) - Skills & MCP Production Fix
+
+Fixed critical production issues preventing Skills and MCP from working:
+
+**Issues Fixed:**
+1. **SQL Parameter Mismatch (500 Error)** - `getAllSkills()` and `getAllMcpPrompts()` always added `userId` to params array, but for `super_admin` role the visibility condition was `'TRUE'` with no parameter placeholders, causing PostgreSQL error: "bind message supplies 1 parameters, but prepared statement requires 0"
+2. **Missing Layout Files on Server** - `skills/layout.tsx` and `mcp/layout.tsx` were missing on production (git pull had failed due to network issues), causing pages to render without AppHeader
+3. **Missing /new Page Directories** - `skills/new/` and `mcp/new/` directories weren't deployed, causing 500 errors when trying to create new items
+
+**Files Fixed:**
+| File | Fix |
+|------|-----|
+| `src/lib/db/queries/skills.ts` | Only add userId to params when used in query (not for super_admin) |
+| `src/lib/db/queries/mcpPrompts.ts` | Only add userId to params when used in query (not for super_admin) |
+
+**Root Cause Pattern:**
+```typescript
+// BEFORE (buggy) - userId always in params
+const params: unknown[] = [userId];
+if (role === 'super_admin') {
+  visibilityCondition = 'TRUE';  // No $1 placeholder!
+}
+
+// AFTER (fixed) - only add when needed
+const params: unknown[] = [];
+if (role === 'super_admin') {
+  visibilityCondition = 'TRUE';
+} else {
+  params.push(userId);
+  visibilityCondition = `s.created_by = $${paramIndex++}`;
+}
+```
+
+**Deployment Note:** When git pull fails on production due to network issues, files must be manually copied via scp.
+
+**Verified Working:**
+- ✅ Skills list page loads with AppHeader
+- ✅ MCP list page loads with AppHeader
+- ✅ Create new skill works
+- ✅ Create new MCP works
+- ✅ View skill details works
+
+### Session 12 (Jan 23, 2026) - Skills & MCP UUID Validation
+
+Fixed API routes catching "new" as an ID and failing with PostgreSQL UUID parse errors.
+
+**API Routes Updated (added UUID validation):**
+- `src/app/api/mcp/[id]/route.ts`
+- `src/app/api/mcp/[id]/deploy/route.ts`
+- `src/app/api/mcp/[id]/disable/route.ts`
+- `src/app/api/mcp/[id]/regenerate-token/route.ts`
+- `src/app/api/skills/[id]/route.ts`
+- `src/app/api/skills/[id]/download/route.ts`
+
+**UUID Validation Pattern:**
+```typescript
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+if (!isValidUUID(id)) {
+  return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+}
+```
 
 ### Session 11 (Jan 21, 2026) - Voice Input for Annotations
 
@@ -156,4 +218,4 @@ const canEdit =
 
 ---
 
-**Last Updated:** 2026-01-21 (Session 11: Voice Input Feature)
+**Last Updated:** 2026-01-23 (Session 13: Skills & MCP Production Fix)

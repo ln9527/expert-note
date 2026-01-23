@@ -10,6 +10,13 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isValidUUID(id: string): boolean {
+  return UUID_REGEX.test(id);
+}
+
 /**
  * POST /api/mcp/[id]/deploy - Deploy MCP prompt
  * Generates access token if not exists and sets status to 'deployed'
@@ -26,6 +33,11 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    // Validate UUID format to prevent database errors
+    if (!isValidUUID(id)) {
+      return NextResponse.json({ success: false, error: 'Invalid MCP prompt ID format' }, { status: 400 });
+    }
 
     // Check if MCP prompt exists
     const existingMcpPrompt = await getMcpPromptById(id);
