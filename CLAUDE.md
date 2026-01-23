@@ -53,6 +53,24 @@ sql/migrations/                # Database migrations
 
 ## Recent Work
 
+### Session 15 (Jan 23, 2026) - Wizard Knowledge Data Fix
+
+Fixed critical bug where Skills/MCP wizard showed 0 knowledge entries despite data existing.
+
+**Root Cause:** API returns `{ entries: [...] }` but wizard expected `{ knowledgeEntries: [...] }`.
+
+**Fix:**
+```typescript
+// src/components/skills/WizardSourcesStep.tsx
+// BEFORE (buggy)
+setKnowledge(knowledgeData.knowledgeEntries || []);
+
+// AFTER (fixed)
+setKnowledge(knowledgeData.entries || []);
+```
+
+**Verified:** Both Skills and MCP wizards now correctly display knowledge entries and complete end-to-end.
+
 ### Session 14 (Jan 23, 2026) - Wizard-Only Creation for Skills & MCP
 
 Enforced wizard-based creation flow, removing redundant manual forms.
