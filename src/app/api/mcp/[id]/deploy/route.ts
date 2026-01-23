@@ -60,11 +60,11 @@ export async function POST(
       return NextResponse.json({ success: false, error: 'Failed to deploy MCP prompt' }, { status: 500 });
     }
 
-    // Build the access URL
-    // The URL structure follows the design: /annote/mcp/{token}
+    // Build the access URL for the MCP server API endpoint
+    // The URL structure follows the design: /annote/api/mcp/server/{token}
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://spansurvey.net';
     const basePath = process.env.BASE_PATH || '/annote';
-    const accessUrl = `${baseUrl}${basePath}/mcp/${mcpPrompt.accessToken}`;
+    const accessUrl = `${baseUrl}${basePath}/api/mcp/server/${mcpPrompt.accessToken}`;
 
     return NextResponse.json({
       success: true,
