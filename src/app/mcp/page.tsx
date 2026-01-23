@@ -155,7 +155,7 @@ export default function McpListPage() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/mcp/new"
+            href="/mcp/build"
             className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +226,7 @@ export default function McpListPage() {
           </p>
           <div className="mt-4">
             <Link
-              href="/mcp/new"
+              href="/mcp/build"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
             >
               {t('mcp.createMcp')}

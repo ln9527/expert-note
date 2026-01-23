@@ -53,6 +53,29 @@ sql/migrations/                # Database migrations
 
 ## Recent Work
 
+### Session 14 (Jan 23, 2026) - Wizard-Only Creation for Skills & MCP
+
+Enforced wizard-based creation flow, removing redundant manual forms.
+
+**Problem:** Two parallel creation paths existed:
+- Manual form (`/skills/new`, `/mcp/new`) - Direct content entry
+- Wizard (`/skills/build`, `/mcp/build`) - 4-step guided process using AI generation
+
+The manual path contradicted the design vision of packaging existing prompts/knowledge into structured skills.
+
+**Changes:**
+| File | Change |
+|------|--------|
+| `src/app/skills/new/` | DELETED (entire directory) |
+| `src/app/mcp/new/` | DELETED (entire directory) |
+| `src/app/skills/page.tsx` | Updated "Create Skill" links → `/skills/build` |
+| `src/app/mcp/page.tsx` | Updated "Create MCP" links → `/mcp/build` |
+
+**Behavior:**
+- Create buttons now redirect to wizard flow
+- Old URLs `/skills/new` and `/mcp/new` return 404
+- Edit forms (`/skills/[id]/edit`, `/mcp/[id]/edit`) unchanged
+
 ### Session 13 (Jan 23, 2026) - Skills & MCP Production Fix
 
 Fixed critical production issues preventing Skills and MCP from working:
@@ -218,4 +241,4 @@ const canEdit =
 
 ---
 
-**Last Updated:** 2026-01-23 (Session 13: Skills & MCP Production Fix)
+**Last Updated:** 2026-01-23 (Session 14: Wizard-Only Creation)
