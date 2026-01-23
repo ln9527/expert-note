@@ -100,28 +100,32 @@ export async function getAllSkills(
   const { search, limit = 50, offset = 0, orgId, role } = options;
 
   const conditions: string[] = ['s.is_deleted = FALSE'];
-  const params: unknown[] = [userId];
-  let paramIndex = 2;
+  const params: unknown[] = [];
+  let paramIndex = 1;
 
   // Build visibility condition based on role
+  // Only add userId to params when it's actually used in the query
   let visibilityCondition: string;
   if (role === 'super_admin') {
-    // Super admin sees all skills
+    // Super admin sees all skills - no userId needed in query
     visibilityCondition = 'TRUE';
   } else if (role === 'owner' && orgId) {
     // Owners see ALL skills in their org
+    params.push(userId);
     params.push(orgId);
-    visibilityCondition = `(s.created_by = $1 OR s.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))`;
+    visibilityCondition = `(s.created_by = $${paramIndex++} OR s.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))`;
   } else if (role === 'member' && orgId) {
     // Members see own skills + shared skills from same org
+    params.push(userId);
     params.push(orgId);
     visibilityCondition = `(
-      s.created_by = $1
+      s.created_by = $${paramIndex++}
       OR (s.is_shared = TRUE AND s.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))
     )`;
   } else {
     // Individuals and users without org: only own skills
-    visibilityCondition = `s.created_by = $1`;
+    params.push(userId);
+    visibilityCondition = `s.created_by = $${paramIndex++}`;
   }
   conditions.push(visibilityCondition);
 

@@ -117,28 +117,32 @@ export async function getAllMcpPrompts(
   const { search, limit = 50, offset = 0, status, orgId, role } = options;
 
   const conditions: string[] = ['m.is_deleted = FALSE'];
-  const params: unknown[] = [userId];
-  let paramIndex = 2;
+  const params: unknown[] = [];
+  let paramIndex = 1;
 
   // Build visibility condition based on role
+  // Only add userId to params when it's actually used in the query
   let visibilityCondition: string;
   if (role === 'super_admin') {
-    // Super admin sees all MCP prompts
+    // Super admin sees all MCP prompts - no userId needed in query
     visibilityCondition = 'TRUE';
   } else if (role === 'owner' && orgId) {
     // Owners see ALL MCP prompts in their org
+    params.push(userId);
     params.push(orgId);
-    visibilityCondition = `(m.created_by = $1 OR m.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))`;
+    visibilityCondition = `(m.created_by = $${paramIndex++} OR m.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))`;
   } else if (role === 'member' && orgId) {
     // Members see own MCP prompts + shared MCP prompts from same org
+    params.push(userId);
     params.push(orgId);
     visibilityCondition = `(
-      m.created_by = $1
+      m.created_by = $${paramIndex++}
       OR (m.is_shared = TRUE AND m.created_by IN (SELECT id FROM users WHERE org_id = $${paramIndex++}))
     )`;
   } else {
     // Individuals and users without org: only own MCP prompts
-    visibilityCondition = `m.created_by = $1`;
+    params.push(userId);
+    visibilityCondition = `m.created_by = $${paramIndex++}`;
   }
   conditions.push(visibilityCondition);
 
