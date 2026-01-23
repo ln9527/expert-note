@@ -50,7 +50,7 @@ export function WizardSourcesStep({
         setPrompts(promptsData.prompts || []);
       }
       if (knowledgeData.success) {
-        setKnowledge(knowledgeData.knowledgeEntries || []);
+        setKnowledge(knowledgeData.entries || []);
       }
     } catch (err) {
       console.error('Failed to load sources:', err);
