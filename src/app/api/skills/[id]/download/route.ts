@@ -16,12 +16,13 @@ function isValidUUID(id: string): boolean {
 
 /**
  * Content structure expected in skill.content
+ * Note: Uses camelCase to match the build endpoint output
  */
 interface SkillContent {
-  skill_md?: string;
-  prompts?: Array<{ name: string; content: string }>;
-  examples?: Array<{ name: string; content: string }>;
-  tests?: Array<{ name: string; content: string }>;
+  skillMd?: string;
+  prompts?: Record<string, string> | Array<{ name: string; content: string }>;
+  examples?: Record<string, string> | Array<{ name: string; content: string }>;
+  tests?: Record<string, string> | Array<{ name: string; content: string }>;
 }
 
 /**
@@ -81,39 +82,63 @@ export async function GET(
     }
 
     // Add SKILL.md (main skill definition)
-    if (content.skill_md) {
-      folder.file('SKILL.md', content.skill_md);
+    if (content.skillMd) {
+      folder.file('SKILL.md', content.skillMd);
     }
 
-    // Add prompts
-    if (content.prompts && Array.isArray(content.prompts)) {
+    // Add prompts - supports both Record<string, string> and Array formats
+    if (content.prompts) {
       const promptsFolder = folder.folder('prompts');
       if (promptsFolder) {
-        for (const prompt of content.prompts) {
-          const filename = sanitizeFilename(prompt.name);
-          promptsFolder.file(`${filename}.md`, prompt.content || '');
+        if (Array.isArray(content.prompts)) {
+          for (const prompt of content.prompts) {
+            const filename = sanitizeFilename(prompt.name);
+            promptsFolder.file(`${filename}.md`, prompt.content || '');
+          }
+        } else {
+          // Handle Record<string, string> format from build endpoint
+          for (const [name, promptContent] of Object.entries(content.prompts)) {
+            const filename = sanitizeFilename(name);
+            promptsFolder.file(`${filename}.md`, promptContent || '');
+          }
         }
       }
     }
 
-    // Add examples
-    if (content.examples && Array.isArray(content.examples)) {
+    // Add examples - supports both Record<string, string> and Array formats
+    if (content.examples) {
       const examplesFolder = folder.folder('examples');
       if (examplesFolder) {
-        for (const example of content.examples) {
-          const filename = sanitizeFilename(example.name);
-          examplesFolder.file(`${filename}.md`, example.content || '');
+        if (Array.isArray(content.examples)) {
+          for (const example of content.examples) {
+            const filename = sanitizeFilename(example.name);
+            examplesFolder.file(`${filename}.md`, example.content || '');
+          }
+        } else {
+          // Handle Record<string, string> format from build endpoint
+          for (const [name, exampleContent] of Object.entries(content.examples)) {
+            const filename = sanitizeFilename(name);
+            examplesFolder.file(`${filename}.md`, exampleContent || '');
+          }
         }
       }
     }
 
-    // Add tests
-    if (content.tests && Array.isArray(content.tests)) {
+    // Add tests - supports both Record<string, string> and Array formats
+    if (content.tests) {
       const testsFolder = folder.folder('tests');
       if (testsFolder) {
-        for (const test of content.tests) {
-          const filename = sanitizeFilename(test.name);
-          testsFolder.file(`${filename}.md`, test.content || '');
+        if (Array.isArray(content.tests)) {
+          for (const test of content.tests) {
+            const filename = sanitizeFilename(test.name);
+            testsFolder.file(`${filename}.md`, test.content || '');
+          }
+        } else {
+          // Handle Record<string, string> format from build endpoint
+          for (const [name, testContent] of Object.entries(content.tests)) {
+            const filename = sanitizeFilename(name);
+            testsFolder.file(`${filename}.md`, testContent || '');
+          }
         }
       }
     }
