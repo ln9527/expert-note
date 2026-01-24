@@ -177,14 +177,17 @@
   },
   "prompts": {
     "title": "生成指南",
+    "generatingPromptsTitle": "生成提示词",
+    "promptsItem": "提示词",
     "subtitle": "显示 {count} 个生成指南",
     "newPrompt": "+ 新建指南",
+    "newPrompts": "+ 新建提示词",
     "noPrompts": "暂无生成指南",
     "noPromptsMatch": "没有匹配的指南",
     "createFirst": "创建您的第一个生成指南以帮助 AI 生成更好的内容。",
     "tableHeaders": {
       "title": "标题",
-      "guide": "指南",
+      "guide": "模板",
       "description": "描述",
       "version": "版本",
       "details": "详情",
@@ -197,6 +200,7 @@
     },
     "deletePrompt": "删除指南",
     "downloadPrompt": "下载指南",
+    "allPrompts": "全部提示词",
     "allGuides": "全部指南"
   },
   "generate": {

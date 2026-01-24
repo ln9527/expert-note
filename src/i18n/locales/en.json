@@ -176,14 +176,17 @@
   },
   "prompts": {
     "title": "Generation Guides",
+    "generatingPromptsTitle": "Generating Prompts",
+    "promptsItem": "prompts",
     "subtitle": "Showing {count} generation guides",
     "newPrompt": "+ New Guide",
+    "newPrompts": "+ New Prompts",
     "noPrompts": "No generation guides yet",
     "noPromptsMatch": "No guides match your filters",
     "createFirst": "Create your first generation guide to help AI generate better content.",
     "tableHeaders": {
       "title": "Title",
-      "guide": "Guide",
+      "guide": "Template",
       "description": "Description",
       "version": "Version",
       "details": "Details",
@@ -196,6 +199,7 @@
     },
     "deletePrompt": "Delete Guide",
     "downloadPrompt": "Download Guide",
+    "allPrompts": "All Prompts",
     "allGuides": "All Guides"
   },
   "generate": {

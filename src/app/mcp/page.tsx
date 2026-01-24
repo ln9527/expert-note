@@ -21,6 +21,12 @@ export default function McpListPage() {
   // Deploy/Disable action state
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Current user for ownership checks
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+  // Sharing toggle state
+  const [togglingMcpId, setTogglingMcpId] = useState<string | null>(null);
+
   const fetchMcpPrompts = useCallback(async () => {
     try {
       const params = new URLSearchParams();
@@ -46,7 +52,15 @@ export default function McpListPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetchMcpPrompts().finally(() => setLoading(false));
+    // Fetch MCP prompts and session in parallel
+    Promise.all([
+      fetchMcpPrompts(),
+      fetch(buildApiPath('auth/session')).then(res => res.json())
+    ]).then(([, sessionData]) => {
+      if (sessionData.authenticated && sessionData.user) {
+        setCurrentUserId(sessionData.user.userId);
+      }
+    }).finally(() => setLoading(false));
   }, [fetchMcpPrompts]);
 
   // Debounce search
@@ -107,6 +121,67 @@ export default function McpListPage() {
       setError(t('errors.networkError'));
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  // Handle share toggle
+  const handleShareToggle = async (mcp: McpPrompt) => {
+    if (!currentUserId || mcp.createdBy !== currentUserId) return;
+    setTogglingMcpId(mcp.id);
+    try {
+      const res = await fetch(buildApiPath(`mcp/${mcp.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isShared: !mcp.isShared,
+          // If disabling sharing, also disable edit permission
+          allowEdit: !mcp.isShared ? false : mcp.allowEdit,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMcpPrompts(mcpPrompts.map(m =>
+          m.id === mcp.id
+            ? { ...m, isShared: !mcp.isShared, allowEdit: !mcp.isShared ? false : mcp.allowEdit }
+            : m
+        ));
+      } else {
+        console.error('Share toggle failed:', data.error);
+      }
+    } catch (err) {
+      console.error('Share toggle error:', err);
+    } finally {
+      setTogglingMcpId(null);
+    }
+  };
+
+  // Handle edit toggle
+  const handleEditToggle = async (mcp: McpPrompt) => {
+    if (!currentUserId || mcp.createdBy !== currentUserId) return;
+    if (!mcp.isShared) return; // Can't enable edit if not shared
+    setTogglingMcpId(mcp.id);
+    try {
+      const res = await fetch(buildApiPath(`mcp/${mcp.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          allowEdit: !mcp.allowEdit,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMcpPrompts(mcpPrompts.map(m =>
+          m.id === mcp.id
+            ? { ...m, allowEdit: !mcp.allowEdit }
+            : m
+        ));
+      } else {
+        console.error('Edit toggle failed:', data.error);
+      }
+    } catch (err) {
+      console.error('Edit toggle error:', err);
+    } finally {
+      setTogglingMcpId(null);
     }
   };
 
@@ -247,8 +322,11 @@ export default function McpListPage() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('mcp.status')}
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('documents.tableHeaders.sharing')}
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('documents.tableHeaders.edit')}
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('prompts.tableHeaders.created')}
@@ -284,21 +362,30 @@ export default function McpListPage() {
                       {getStatusLabel(mcp.deploymentStatus)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 text-sm whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      {mcp.isShared ? (
-                        <>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {t('common.shared')}
-                          </span>
-                          {mcp.allowEdit && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                              {t('common.allowEdit')}
-                            </span>
-                          )}
-                        </>
+                      {currentUserId && mcp.createdBy === currentUserId ? (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleShareToggle(mcp);
+                          }}
+                          disabled={togglingMcpId === mcp.id}
+                          className={`font-medium transition-colors ${
+                            togglingMcpId === mcp.id
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : mcp.isShared
+                              ? 'text-green-600 hover:text-green-800'
+                              : 'text-gray-500 hover:text-gray-700'
+                          }`}
+                        >
+                          {togglingMcpId === mcp.id ? '...' : mcp.isShared ? t('common.yes') : t('common.no')}
+                        </button>
                       ) : (
-                        <span className="text-sm text-gray-400">{t('documents.private')}</span>
+                        <span className={mcp.isShared ? 'text-green-600' : 'text-gray-400'}>
+                          {mcp.isShared ? t('common.yes') : t('common.no')}
+                        </span>
                       )}
                       {mcp.isPublic && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
@@ -306,6 +393,34 @@ export default function McpListPage() {
                         </span>
                       )}
                     </div>
+                  </td>
+                  <td className="px-4 py-4 text-sm whitespace-nowrap">
+                    {currentUserId && mcp.createdBy === currentUserId ? (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEditToggle(mcp);
+                        }}
+                        disabled={togglingMcpId === mcp.id || !mcp.isShared}
+                        className={`font-medium transition-colors ${
+                          !mcp.isShared
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : togglingMcpId === mcp.id
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : mcp.allowEdit
+                            ? 'text-green-600 hover:text-green-800'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                        title={!mcp.isShared ? t('common.enableSharingFirst') : undefined}
+                      >
+                        {togglingMcpId === mcp.id ? '...' : mcp.allowEdit ? t('common.yes') : t('common.no')}
+                      </button>
+                    ) : (
+                      <span className={mcp.allowEdit ? 'text-green-600' : 'text-gray-400'}>
+                        {mcp.allowEdit ? t('common.yes') : t('common.no')}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(mcp.createdAt)}

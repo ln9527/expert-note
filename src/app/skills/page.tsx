@@ -18,6 +18,12 @@ export default function SkillsListPage() {
   const [deletingSkill, setDeletingSkill] = useState<Skill | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Current user for ownership checks
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+  // Sharing toggle state
+  const [togglingSkillId, setTogglingSkillId] = useState<string | null>(null);
+
   const fetchSkills = useCallback(async () => {
     try {
       const params = new URLSearchParams();
@@ -43,7 +49,15 @@ export default function SkillsListPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetchSkills().finally(() => setLoading(false));
+    // Fetch skills and session in parallel
+    Promise.all([
+      fetchSkills(),
+      fetch(buildApiPath('auth/session')).then(res => res.json())
+    ]).then(([, sessionData]) => {
+      if (sessionData.authenticated && sessionData.user) {
+        setCurrentUserId(sessionData.user.userId);
+      }
+    }).finally(() => setLoading(false));
   }, [fetchSkills]);
 
   // Debounce search
@@ -79,6 +93,67 @@ export default function SkillsListPage() {
       setError(t('errors.networkError'));
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Handle share toggle
+  const handleShareToggle = async (skill: Skill) => {
+    if (!currentUserId || skill.createdBy !== currentUserId) return;
+    setTogglingSkillId(skill.id);
+    try {
+      const res = await fetch(buildApiPath(`skills/${skill.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isShared: !skill.isShared,
+          // If disabling sharing, also disable edit permission
+          allowEdit: !skill.isShared ? false : skill.allowEdit,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSkills(skills.map(s =>
+          s.id === skill.id
+            ? { ...s, isShared: !skill.isShared, allowEdit: !skill.isShared ? false : skill.allowEdit }
+            : s
+        ));
+      } else {
+        console.error('Share toggle failed:', data.error);
+      }
+    } catch (err) {
+      console.error('Share toggle error:', err);
+    } finally {
+      setTogglingSkillId(null);
+    }
+  };
+
+  // Handle edit toggle
+  const handleEditToggle = async (skill: Skill) => {
+    if (!currentUserId || skill.createdBy !== currentUserId) return;
+    if (!skill.isShared) return; // Can't enable edit if not shared
+    setTogglingSkillId(skill.id);
+    try {
+      const res = await fetch(buildApiPath(`skills/${skill.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          allowEdit: !skill.allowEdit,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSkills(skills.map(s =>
+          s.id === skill.id
+            ? { ...s, allowEdit: !skill.allowEdit }
+            : s
+        ));
+      } else {
+        console.error('Edit toggle failed:', data.error);
+      }
+    } catch (err) {
+      console.error('Edit toggle error:', err);
+    } finally {
+      setTogglingSkillId(null);
     }
   };
 
@@ -200,8 +275,11 @@ export default function SkillsListPage() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('skills.status')}
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('documents.tableHeaders.sharing')}
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('documents.tableHeaders.edit')}
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('prompts.tableHeaders.created')}
@@ -241,23 +319,58 @@ export default function SkillsListPage() {
                       {skill.status === 'published' ? t('skills.published') : t('skills.draft')}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {skill.isShared ? (
-                        <>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {t('common.shared')}
-                          </span>
-                          {skill.allowEdit && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                              {t('common.allowEdit')}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-sm text-gray-400">{t('documents.private')}</span>
-                      )}
-                    </div>
+                  <td className="px-4 py-4 text-sm whitespace-nowrap">
+                    {currentUserId && skill.createdBy === currentUserId ? (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleShareToggle(skill);
+                        }}
+                        disabled={togglingSkillId === skill.id}
+                        className={`font-medium transition-colors ${
+                          togglingSkillId === skill.id
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : skill.isShared
+                            ? 'text-green-600 hover:text-green-800'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {togglingSkillId === skill.id ? '...' : skill.isShared ? t('common.yes') : t('common.no')}
+                      </button>
+                    ) : (
+                      <span className={skill.isShared ? 'text-green-600' : 'text-gray-400'}>
+                        {skill.isShared ? t('common.yes') : t('common.no')}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 text-sm whitespace-nowrap">
+                    {currentUserId && skill.createdBy === currentUserId ? (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEditToggle(skill);
+                        }}
+                        disabled={togglingSkillId === skill.id || !skill.isShared}
+                        className={`font-medium transition-colors ${
+                          !skill.isShared
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : togglingSkillId === skill.id
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : skill.allowEdit
+                            ? 'text-green-600 hover:text-green-800'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                        title={!skill.isShared ? t('common.enableSharingFirst') : undefined}
+                      >
+                        {togglingSkillId === skill.id ? '...' : skill.allowEdit ? t('common.yes') : t('common.no')}
+                      </button>
+                    ) : (
+                      <span className={skill.allowEdit ? 'text-green-600' : 'text-gray-400'}>
+                        {skill.allowEdit ? t('common.yes') : t('common.no')}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(skill.createdAt)}

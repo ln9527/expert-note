@@ -314,7 +314,7 @@ export default function PromptsListPage() {
 
   // Build filter options dynamically from templates
   const filterOptions: FilterOption[] = [
-    { value: 'all', label: 'All Guides' },
+    { value: 'all', label: t('prompts.allPrompts') },
     ...templates.map(t => ({
       value: t.templateType || t.name,
       label: t.name,
@@ -326,9 +326,9 @@ export default function PromptsListPage() {
       {/* Header with actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('prompts.title')}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('prompts.generatingPromptsTitle')}</h2>
           <p className="mt-1 text-sm text-gray-500">
-            {t('common.showing', { count: prompts.length, item: t('prompts.title').toLowerCase() })}
+            {t('common.showing', { count: prompts.length, item: t('prompts.promptsItem').toLowerCase() })}
           </p>
         </div>
 
@@ -350,7 +350,7 @@ export default function PromptsListPage() {
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            {t('prompts.newPrompt')}
+            {t('prompts.newPrompts')}
           </Link>
         </div>
       </div>
@@ -461,7 +461,7 @@ export default function PromptsListPage() {
               href="/prompts/generate"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
             >
-              {t('prompts.newPrompt')}
+              {t('prompts.newPrompts')}
             </Link>
           </div>
         </div>
