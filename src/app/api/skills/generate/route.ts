@@ -34,6 +34,14 @@ interface GeneratedPlan {
 }
 
 /**
+ * Template configuration for generation
+ */
+interface TemplateConfig {
+  id: string;
+  enabled: boolean;
+}
+
+/**
  * Request body for skill generation
  */
 interface GenerateSkillRequest {
@@ -42,6 +50,12 @@ interface GenerateSkillRequest {
   title: string;
   description?: string;
   instructions?: string;
+  templates?: {
+    skillMd?: TemplateConfig;
+    prompts?: TemplateConfig;
+    examples?: TemplateConfig;
+    tests?: TemplateConfig;
+  };
 }
 
 /**
@@ -117,6 +131,32 @@ function buildSourceContext(
 }
 
 /**
+ * Get template by ID or fall back to default for template type
+ */
+async function getTemplateByIdOrDefault(
+  templateId: string | undefined,
+  templateType: string,
+  allTemplates: { id: string; templateType: string | null }[]
+): Promise<{ id: string; content: string } | null> {
+  if (templateId) {
+    const { getPromptTemplateById } = await import('@/lib/db/queries/promptTemplates');
+    const template = await getPromptTemplateById(templateId);
+    if (template) {
+      return { id: template.id, content: template.content };
+    }
+  }
+  const fallback = allTemplates.find(t => t.templateType === templateType);
+  if (fallback) {
+    const { getPromptTemplateById } = await import('@/lib/db/queries/promptTemplates');
+    const template = await getPromptTemplateById(fallback.id);
+    if (template) {
+      return { id: template.id, content: template.content };
+    }
+  }
+  return null;
+}
+
+/**
  * Parse JSON response safely, handling markdown code blocks
  */
 function safeParseJson(response: string): Record<string, string> {
@@ -164,6 +204,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       instructions,
+      templates: templateSelection,
     } = body;
 
     // Validate required fields
@@ -229,14 +270,32 @@ export async function POST(request: NextRequest) {
     // Load generation templates from database
     const generationTemplates = await getAllPromptTemplates({ category: 'skill-generation' });
 
-    // Find templates by template_type
-    const findTemplate = (templateType: string) =>
-      generationTemplates.find(t => t.templateType === templateType);
+    // Build template list for lookup
+    const templateList = generationTemplates.map(t => ({ id: t.id, templateType: t.templateType }));
 
-    const skillMdTemplate = findTemplate('skill-md');
-    const skillPromptsTemplate = findTemplate('skill-prompts');
-    const skillExamplesTemplate = findTemplate('skill-examples');
-    const skillTestsTemplate = findTemplate('skill-tests');
+    // Determine which templates are enabled (default: all enabled)
+    const promptsEnabled = templateSelection?.prompts?.enabled !== false;
+    const examplesEnabled = templateSelection?.examples?.enabled !== false;
+    const testsEnabled = templateSelection?.tests?.enabled !== false;
+
+    // Get templates by ID or fall back to defaults
+    const skillMdTemplate = await getTemplateByIdOrDefault(
+      templateSelection?.skillMd?.id,
+      'skill-md',
+      templateList
+    );
+
+    const skillPromptsTemplate = promptsEnabled
+      ? await getTemplateByIdOrDefault(templateSelection?.prompts?.id, 'skill-prompts', templateList)
+      : null;
+
+    const skillExamplesTemplate = examplesEnabled
+      ? await getTemplateByIdOrDefault(templateSelection?.examples?.id, 'skill-examples', templateList)
+      : null;
+
+    const skillTestsTemplate = testsEnabled
+      ? await getTemplateByIdOrDefault(templateSelection?.tests?.id, 'skill-tests', templateList)
+      : null;
 
     // Build source context
     const sourceContext = buildSourceContext(prompts, knowledge);
@@ -255,7 +314,7 @@ ${sourceContext}
     // Generate skill-md content
     console.log('[Skills Generate] Generating SKILL.md content...');
     let skillMd = '';
-    if (skillMdTemplate) {
+    if (skillMdTemplate?.content) {
       const skillMdPrompt = `${skillMdTemplate.content}
 
 ${userRequestContext}
@@ -285,7 +344,7 @@ ${instructions || 'Follow the guidance provided in the source materials.'}
     // Generate skill-prompts JSON
     console.log('[Skills Generate] Generating prompts...');
     let skillPrompts: Record<string, string> = {};
-    if (skillPromptsTemplate) {
+    if (skillPromptsTemplate?.content) {
       const promptsPrompt = `${skillPromptsTemplate.content}
 
 ${userRequestContext}
@@ -302,7 +361,7 @@ Generate the prompts JSON object now. Return ONLY valid JSON:`;
     // Generate skill-examples JSON
     console.log('[Skills Generate] Generating examples...');
     let skillExamples: Record<string, string> = {};
-    if (skillExamplesTemplate) {
+    if (skillExamplesTemplate?.content) {
       const examplesPrompt = `${skillExamplesTemplate.content}
 
 ${userRequestContext}
@@ -319,7 +378,7 @@ Generate the examples JSON object now. Return ONLY valid JSON:`;
     // Generate skill-tests JSON
     console.log('[Skills Generate] Generating tests...');
     let skillTests: Record<string, string> = {};
-    if (skillTestsTemplate) {
+    if (skillTestsTemplate?.content) {
       const testsPrompt = `${skillTestsTemplate.content}
 
 ${userRequestContext}
