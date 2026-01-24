@@ -30,6 +30,9 @@ interface GenerateMcpRequest {
   namespace: string;
   description?: string;
   instructions?: string;
+  template?: {
+    id: string;
+  };
 }
 
 /**
@@ -119,6 +122,7 @@ export async function POST(request: NextRequest) {
       namespace,
       description,
       instructions,
+      template: templateSelection,
     } = body;
 
     // Validate required fields
@@ -190,7 +194,16 @@ export async function POST(request: NextRequest) {
 
     // Load MCP generation template from database
     const mcpTemplates = await getAllPromptTemplates({ category: 'mcp-generation' });
-    const promptTemplate = mcpTemplates.find(t => t.templateType === 'mcp-prompt');
+
+    // Use selected template ID or fall back to first match
+    let promptTemplate = null;
+    if (templateSelection?.id) {
+      const { getPromptTemplateById } = await import('@/lib/db/queries/promptTemplates');
+      promptTemplate = await getPromptTemplateById(templateSelection.id);
+    }
+    if (!promptTemplate) {
+      promptTemplate = mcpTemplates.find(t => t.templateType === 'mcp-prompt') || null;
+    }
 
     // Build source context
     const sourceContext = buildSourceContext(prompts, knowledge);
