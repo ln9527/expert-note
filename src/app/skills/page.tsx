@@ -201,6 +201,9 @@ export default function SkillsListPage() {
                   {t('skills.status')}
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('documents.tableHeaders.sharing')}
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('prompts.tableHeaders.created')}
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -237,6 +240,24 @@ export default function SkillsListPage() {
                     }`}>
                       {skill.status === 'published' ? t('skills.published') : t('skills.draft')}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {skill.isShared ? (
+                        <>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            {t('common.shared')}
+                          </span>
+                          {skill.allowEdit && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                              {t('common.allowEdit')}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-sm text-gray-400">{t('documents.private')}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(skill.createdAt)}

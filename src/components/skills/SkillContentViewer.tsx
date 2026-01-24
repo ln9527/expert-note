@@ -177,8 +177,8 @@ export default function SkillContentViewer({ content, skillTitle }: SkillContent
           }}
           className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm text-left rounded transition-colors ${
             isSelected
-              ? 'bg-blue-100 text-blue-800'
-              : 'hover:bg-gray-100 text-gray-700'
+              ? 'bg-white font-medium text-gray-900 shadow-sm border border-gray-200'
+              : 'hover:bg-gray-50 text-gray-700'
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
@@ -251,7 +251,7 @@ export default function SkillContentViewer({ content, skillTitle }: SkillContent
                     {selectedFile}
                   </span>
                 </div>
-                <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono bg-gray-50 border border-gray-200 p-4 rounded-lg overflow-x-auto">
                   {selectedContent}
                 </pre>
               </div>
