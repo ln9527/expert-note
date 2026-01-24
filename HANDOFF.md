@@ -1,7 +1,7 @@
 # Expert Note - Handoff Document
 
-**Last Updated:** 2026-01-23
-**Status:** ✅ Skills & MCP Bug Fixes Complete
+**Last Updated:** 2026-01-24
+**Status:** ✅ Custom Template Selection + Duplicate Cleanup Complete
 
 ---
 
@@ -14,7 +14,66 @@
 
 ---
 
-## Recent Changes (Jan 23, 2026)
+## Recent Changes (Jan 24, 2026)
+
+### Custom Template Selection for Skills/MCP Wizards
+
+Added ability for users to select custom generation templates and disable optional components during wizard flow.
+
+**Features:**
+- Collapsible "Advanced: Generation Templates" section in wizard Details step
+- Checkbox to enable/disable each component (SKILL.md always required)
+- Dropdown to select template for each enabled component
+- Skills: SKILL.md, Prompts, Examples, Tests (last 3 optional)
+- MCP: Single MCP Prompt template
+
+**Files Created:**
+```
+src/components/shared/TemplateSelector.tsx    # Reusable template selector UI
+src/components/shared/index.ts                # Shared component exports
+docs/plans/2026-01-24-custom-template-selection-design.md
+docs/plans/2026-01-24-custom-template-selection-implementation.md
+```
+
+**Files Modified:**
+```
+src/types/index.ts                            # Added TemplateConfig, SkillTemplateSelection, McpTemplateSelection
+src/app/api/skills/generate/route.ts          # Accept templates param, use selected or defaults
+src/app/api/mcp/generate/route.ts             # Accept template param
+src/components/skills/WizardInstructionsStep.tsx  # Added template selector
+src/app/skills/build/page.tsx                 # Pass template selections to API
+src/components/mcp/McpWizardInstructionsStep.tsx  # Added template selector
+src/app/mcp/build/page.tsx                    # Pass template selection to API
+src/app/settings/prompts/page.tsx             # Added skill-generation & mcp-generation category filters
+src/i18n/locales/en.json                      # Added i18n strings
+src/i18n/locales/zh.json                      # Added i18n strings
+```
+
+### Prompt Template Duplicate Cleanup
+
+Fixed duplicate templates caused by migrations running multiple times.
+
+**Migrations Updated:**
+```
+sql/migrations/015_skill_generation_templates.sql  # Added unique partial index + ON CONFLICT
+sql/migrations/016_mcp_generation_templates.sql    # Added ON CONFLICT DO NOTHING
+sql/migrations/017_cleanup_duplicate_templates.sql # NEW: Removes older duplicates
+```
+
+**Final Template State (7 total, no duplicates):**
+| Category | Template Type | Name |
+|----------|--------------|------|
+| extraction | (default) | Default Knowledge Extraction |
+| generation | (default) | Default Prompt Generation |
+| skill-generation | skill-md | Skill MD Generator |
+| skill-generation | skill-prompts | Skill Prompts Generator |
+| skill-generation | skill-examples | Skill Examples Generator |
+| skill-generation | skill-tests | Skill Tests Generator |
+| mcp-generation | mcp-prompt | MCP Prompt Generator |
+
+---
+
+## Previous Changes (Jan 23, 2026)
 
 ### Skills & MCP Bug Fixes
 
@@ -188,7 +247,7 @@ src/
 ├── lib/
 │   ├── auth/          # Session management
 │   └── db/queries/    # Database queries with org visibility
-sql/migrations/        # Database migrations (latest: 011)
+sql/migrations/        # Database migrations (latest: 017)
 ```
 
 ---
