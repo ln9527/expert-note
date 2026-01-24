@@ -158,8 +158,9 @@ export async function POST(request: NextRequest) {
 
     console.log('[Skills Build] Skill created:', skill.id);
 
-    // Build the download URL
-    const downloadUrl = `/api/skills/${skill.id}/download`;
+    // Build the download URL with base path for production
+    const basePath = process.env.BASE_PATH || '';
+    const downloadUrl = `${basePath}/api/skills/${skill.id}/download`;
 
     return NextResponse.json({
       success: true,
