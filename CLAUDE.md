@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ Skills & MCP Fully Functional (incl. Download) - Deployed to Production (Jan 24, 2026)
+**Status**: ✅ Custom Template Selection + Duplicate Cleanup - Deployed to Production (Jan 24, 2026)
 
 ---
 
@@ -48,8 +48,9 @@ sql/migrations/                # Database migrations
 ## Current Priorities
 
 1. **PDF Word-Joining** - Words like "demandpersonalized" still occur
-2. **Migration Cleanup** - Renumber duplicate files (005, 006, 007)
+2. **Test Custom Template Selection** - Verify end-to-end workflow with custom templates
 3. **Remove Legacy "Test Organization"** - Clean up seed data
+4. **Create Custom Templates** - Domain-specific templates (security, API integration, etc.)
 
 ## Recent Work
 
@@ -141,7 +142,7 @@ DO NOTHING;
 - Category badges use distinct colors (orange for skill, blue for MCP)
 - Create modal includes all 4 categories
 
-**To Apply:** Run migration 017 on production to clean up existing duplicates.
+**Applied:** Migrations 015-017 ran on production. 7 templates, no duplicates.
 
 ### Session 16 (Jan 24, 2026) - Skill Download Fix
 
@@ -341,7 +342,7 @@ psql -h localhost -U ningli -d annotservice
 SELECT username, role, org_id FROM users;
 ```
 
-**Latest Migration:** 011_knowledge_entry_content.sql
+**Latest Migration:** 017_cleanup_duplicate_templates.sql
 
 ## Production
 
