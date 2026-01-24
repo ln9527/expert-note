@@ -2,7 +2,7 @@
 
 Annotation-based knowledge capture system for structured expert note-taking.
 
-**Status**: ✅ Skills & MCP Fully Functional - Deployed to Production (Jan 23, 2026)
+**Status**: ✅ Skills & MCP Fully Functional (incl. Download) - Deployed to Production (Jan 24, 2026)
 
 ---
 
@@ -52,6 +52,33 @@ sql/migrations/                # Database migrations
 3. **Remove Legacy "Test Organization"** - Clean up seed data
 
 ## Recent Work
+
+### Session 16 (Jan 24, 2026) - Skill Download Fix
+
+Fixed skill download endpoint not producing valid ZIP files.
+
+**Issues Found:**
+1. **Property name mismatch** - Download route looked for `content.skill_md` (snake_case) but build route saves as `skillMd` (camelCase)
+2. **Format mismatch** - Download expected `Array<{name, content}>` but build saves as `Record<string, string>`
+
+**Files Fixed:**
+| File | Fix |
+|------|-----|
+| `src/app/api/skills/[id]/download/route.ts` | Use `skillMd` instead of `skill_md`; handle both Array and Record formats for prompts/examples/tests |
+
+**Root Cause Pattern:**
+```typescript
+// Build endpoint saves:
+{ skillMd: "...", prompts: {}, examples: {}, tests: {} }
+
+// Download endpoint expected (BEFORE):
+{ skill_md: "...", prompts: [], examples: [], tests: [] }
+
+// Download endpoint now handles (AFTER):
+{ skillMd: "...", prompts: {} | [], examples: {} | [], tests: {} | [] }
+```
+
+**Verified:** Download count increments and ZIP file downloads successfully.
 
 ### Session 15 (Jan 23, 2026) - Wizard Knowledge Data Fix
 
@@ -259,4 +286,4 @@ const canEdit =
 
 ---
 
-**Last Updated:** 2026-01-23 (Session 14: Wizard-Only Creation)
+**Last Updated:** 2026-01-24 (Session 16: Skill Download Fix)
