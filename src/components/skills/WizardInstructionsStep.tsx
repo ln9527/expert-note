@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/i18n';
+import { TemplateSelector, SkillTemplateSelectionState } from '@/components/shared';
 
 export interface WizardInstructionsStepProps {
   title: string;
@@ -9,6 +10,9 @@ export interface WizardInstructionsStepProps {
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onInstructionsChange: (value: string) => void;
+  // Template selection
+  templateSelection: SkillTemplateSelectionState;
+  onTemplateSelectionChange: (selection: SkillTemplateSelectionState) => void;
 }
 
 export function WizardInstructionsStep({
@@ -18,6 +22,8 @@ export function WizardInstructionsStep({
   onTitleChange,
   onDescriptionChange,
   onInstructionsChange,
+  templateSelection,
+  onTemplateSelectionChange,
 }: WizardInstructionsStepProps) {
   const { t } = useTranslation();
 
@@ -67,6 +73,13 @@ export function WizardInstructionsStep({
           />
         </div>
       </div>
+
+      {/* Template Selection */}
+      <TemplateSelector
+        category="skill-generation"
+        selection={templateSelection}
+        onChange={onTemplateSelectionChange}
+      />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   WIZARD_STEPS,
 } from '@/components/skills';
 import type { WizardStep, GeneratedPlan, BuiltSkill } from '@/components/skills';
+import type { SkillTemplateSelectionState } from '@/components/shared';
 
 export default function SkillsBuilderPage() {
   const { t } = useTranslation();
@@ -29,6 +30,14 @@ export default function SkillsBuilderPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [instructions, setInstructions] = useState('');
+
+  // Template selection state
+  const [templateSelection, setTemplateSelection] = useState<SkillTemplateSelectionState>({
+    skillMd: { id: '', enabled: true },
+    prompts: { id: '', enabled: true },
+    examples: { id: '', enabled: true },
+    tests: { id: '', enabled: true },
+  });
 
   // Generated plan state
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
@@ -115,6 +124,7 @@ export default function SkillsBuilderPage() {
           title,
           description,
           instructions,
+          templates: templateSelection,
         }),
       });
 
@@ -201,6 +211,8 @@ export default function SkillsBuilderPage() {
             onTitleChange={setTitle}
             onDescriptionChange={setDescription}
             onInstructionsChange={setInstructions}
+            templateSelection={templateSelection}
+            onTemplateSelectionChange={setTemplateSelection}
           />
         );
       case 'preview':
