@@ -128,6 +128,28 @@ function safeParseJson(response: string): Record<string, string> {
   }
 }
 
+/**
+ * Strip markdown code fences from AI response
+ * AI sometimes wraps output in ```markdown ... ``` even when not asked
+ */
+function stripMarkdownCodeFence(content: string): string {
+  let result = content.trim();
+
+  // Remove opening code fence (```markdown, ```md, or just ```)
+  const openFenceMatch = result.match(/^```(?:markdown|md)?\s*\n?/i);
+  if (openFenceMatch) {
+    result = result.slice(openFenceMatch[0].length);
+  }
+
+  // Remove closing code fence
+  const closeFenceMatch = result.match(/\n?```\s*$/);
+  if (closeFenceMatch) {
+    result = result.slice(0, -closeFenceMatch[0].length);
+  }
+
+  return result.trim();
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getSessionUser();
@@ -240,10 +262,12 @@ ${userRequestContext}
 
 Generate the SKILL.md content now:`;
 
-      skillMd = await chatCompletion(
+      const rawSkillMd = await chatCompletion(
         [{ role: 'user', content: skillMdPrompt }],
         { temperature: 0.7, maxTokens: 4000 }
       );
+      // Strip any code fences the AI may have added
+      skillMd = stripMarkdownCodeFence(rawSkillMd);
     } else {
       // Fallback if no template exists
       skillMd = `# ${title.trim()}
