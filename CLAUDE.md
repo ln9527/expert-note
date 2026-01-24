@@ -53,6 +53,96 @@ sql/migrations/                # Database migrations
 
 ## Recent Work
 
+### Session 18 (Jan 24, 2026) - Custom Template Selection for Wizards
+
+Added ability for users to select custom generation templates (and skip optional components) in Skills and MCP wizards.
+
+**Features:**
+- Collapsible "Advanced: Generation Templates" section in wizard Instructions step
+- For Skills: Select templates for SKILL.md (required), Prompts, Examples, Tests (optional)
+- For MCP: Select template for MCP Prompt (required)
+- Checkboxes to enable/disable optional components (disabled = skipped during generation)
+- Dropdowns to select which template to use for each component
+- Full backward compatibility - API uses defaults if no selection provided
+
+**Files Created:**
+| File | Purpose |
+|------|---------|
+| `src/components/shared/TemplateSelector.tsx` | Reusable template selection UI component |
+| `src/components/shared/index.ts` | Barrel export for shared components |
+
+**Files Modified:**
+| File | Change |
+|------|--------|
+| `src/types/index.ts` | Added TemplateConfig, SkillTemplateSelection, McpTemplateSelection types |
+| `src/app/api/skills/generate/route.ts` | Accept templates param, use selected IDs or fall back to defaults |
+| `src/app/api/mcp/generate/route.ts` | Accept template param, use selected ID or fall back to default |
+| `src/components/skills/WizardInstructionsStep.tsx` | Added TemplateSelector integration |
+| `src/app/skills/build/page.tsx` | Added template selection state, pass to API |
+| `src/components/mcp/McpWizardInstructionsStep.tsx` | Added TemplateSelector integration |
+| `src/app/mcp/build/page.tsx` | Added template selection state, pass to API |
+| `src/i18n/locales/en.json` | Added templateSelector translations |
+| `src/i18n/locales/zh.json` | Added Chinese templateSelector translations |
+
+**API Request Format:**
+```typescript
+// Skills generate
+POST /api/skills/generate
+{
+  templates: {
+    skillMd: { id: "uuid", enabled: true },
+    prompts: { id: "uuid", enabled: false },  // skip prompts/
+    examples: { id: "uuid", enabled: true },
+    tests: { id: "uuid", enabled: false },    // skip tests/
+  }
+}
+
+// MCP generate
+POST /api/mcp/generate
+{
+  template: { id: "uuid" }
+}
+```
+
+**Use Cases Enabled:**
+1. Different output styles (concise vs detailed templates)
+2. Domain-specific templates (security-focused, API integration, etc.)
+3. Skip unnecessary components (simple skills don't need tests/)
+
+### Session 17 (Jan 24, 2026) - Prompt Templates Cleanup
+
+Fixed duplicate prompt templates in Settings > Prompts page and added missing category filters.
+
+**Problem:** Migrations 015/016 created duplicate templates when run multiple times. UI only showed extraction/generation filters, hiding skill-generation and mcp-generation templates.
+
+**Files Changed:**
+| File | Change |
+|------|--------|
+| `sql/migrations/015_skill_generation_templates.sql` | Added unique index + ON CONFLICT DO NOTHING |
+| `sql/migrations/016_mcp_generation_templates.sql` | Added ON CONFLICT DO NOTHING |
+| `sql/migrations/017_cleanup_duplicate_templates.sql` | NEW - Removes existing duplicates |
+| `src/app/settings/prompts/page.tsx` | Added skill-generation/mcp-generation filter buttons + category labels |
+
+**Migration Pattern for Idempotent Inserts:**
+```sql
+-- Create unique partial index (only for non-null template_type)
+CREATE UNIQUE INDEX prompt_templates_category_template_type_unique
+ON prompt_templates (category, template_type)
+WHERE template_type IS NOT NULL;
+
+-- Use ON CONFLICT to skip duplicates
+INSERT INTO prompt_templates (...) VALUES (...)
+ON CONFLICT (category, template_type) WHERE template_type IS NOT NULL
+DO NOTHING;
+```
+
+**UI Changes:**
+- Filter bar now shows: All | Extraction | Generation | Skill Generation | MCP Generation
+- Category badges use distinct colors (orange for skill, blue for MCP)
+- Create modal includes all 4 categories
+
+**To Apply:** Run migration 017 on production to clean up existing duplicates.
+
 ### Session 16 (Jan 24, 2026) - Skill Download Fix
 
 Fixed skill download endpoint not producing valid ZIP files.
@@ -286,4 +376,4 @@ const canEdit =
 
 ---
 
-**Last Updated:** 2026-01-24 (Session 16: Skill Download Fix)
+**Last Updated:** 2026-01-24 (Session 18: Custom Template Selection for Wizards)

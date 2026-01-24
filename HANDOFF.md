@@ -1,7 +1,7 @@
 # Expert Note - Handoff Document
 
-**Last Updated:** 2026-01-19
-**Status:** ✅ Security Fix - Org-Based API Filtering deployed
+**Last Updated:** 2026-01-23
+**Status:** ✅ Skills & MCP Bug Fixes Complete
 
 ---
 
@@ -14,7 +14,91 @@
 
 ---
 
-## Recent Changes (Jan 19, 2026)
+## Recent Changes (Jan 23, 2026)
+
+### Skills & MCP Bug Fixes
+
+Fixed critical bugs affecting Skills and MCP features:
+
+**Issues Fixed:**
+1. **500 Error on Invalid UUIDs** - Requests to `/api/mcp/new` or `/api/skills/new` were caught by dynamic routes and failed with PostgreSQL UUID parse errors
+2. **Missing Header** - Skills/MCP pages weren't showing AppHeader (stale build cache)
+
+**Files Modified (UUID validation added):**
+```
+src/app/api/mcp/[id]/route.ts
+src/app/api/mcp/[id]/deploy/route.ts
+src/app/api/mcp/[id]/disable/route.ts
+src/app/api/mcp/[id]/regenerate-token/route.ts
+src/app/api/skills/[id]/route.ts
+src/app/api/skills/[id]/download/route.ts
+```
+
+**Fix Pattern:**
+```typescript
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+if (!isValidUUID(id)) {
+  return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+}
+```
+
+**Test Report:** `test-reports/ui-test-2026-01-23-skills-mcp-fixes.md`
+
+---
+
+## Previous Changes (Jan 21, 2026)
+
+### Voice Input Feature for Annotations (NEW - NEEDS TESTING)
+
+Added voice recognition to annotation input using **Alibaba Cloud ASR (智能语音交互)**.
+
+**Features:**
+- Bilingual support (Chinese & English) via 中英自由说 model
+- Real-time transcription with interim results
+- Microphone button in AnnotationModal
+
+**Files Created:**
+```
+src/hooks/useVoiceInput.ts              # Voice capture + WebSocket hook
+src/app/api/speech/token/route.ts       # Aliyun ASR token generation API
+src/components/editor/VoiceInputButton.tsx  # Mic button component
+```
+
+**Files Modified:**
+```
+src/components/editor/AnnotationModal.tsx  # Added voice input button
+.env.local                                  # Added Aliyun credentials
+```
+
+**Environment Variables Added (.env.local):**
+```bash
+ALIYUN_ACCESS_KEY_ID=<your-access-key-id>
+ALIYUN_ACCESS_KEY_SECRET=<your-access-key-secret>
+ALIYUN_ASR_APP_KEY=<your-app-key>
+NEXT_PUBLIC_ALIYUN_ASR_APP_KEY=<your-app-key>
+```
+
+**Aliyun Console Setup:**
+- Service: 智能语音交互 (Intelligent Speech Interaction)
+- Project: expert-note
+- Model: 中英自由说 (Chinese-English bilingual)
+- AppKey: (see .env.local)
+
+**To Test:**
+1. Start dev server: `npm run dev`
+2. Log in and open any document
+3. Click annotation button (MACRO/MESO/MICRO)
+4. Click microphone icon 🎤 in top-right of text input
+5. Speak in Chinese or English
+6. Text should appear in the textarea
+
+**Known Issues:**
+- Dev server had compilation issues on one machine (may need to clear .next cache: `rm -rf .next`)
+- If server stuck on "Loading...", try restarting
+
+---
+
+## Previous Changes (Jan 19, 2026)
 
 ### Security Fix: Org-Based API Filtering
 

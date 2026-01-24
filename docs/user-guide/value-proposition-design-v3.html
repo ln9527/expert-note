@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert Note - The Asset of Judgment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Modern Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #1e293b 0%, #3b82f6 50%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Subtle Grid Background */
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(226, 232, 240, 0.5) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+        }
+
+        /* Card Styles */
+        .bento-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.02),
+                0 10px 15px -3px rgba(0, 0, 0, 0.04),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bento-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.05),
+                0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+
+        /* Scroller Animation */
+        .scroller {
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+        .scroller-inner {
+            display: flex;
+            gap: 2rem;
+            width: max-content;
+            animation: scroll 40s linear infinite;
+        }
+        @keyframes scroll {
+            to { transform: translate(calc(-50% - 1rem)); }
+        }
+        .scroller-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            min-width: 280px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f1f5f9;
+        }
+
+        /* Hidden Utility */
+        .hidden { display: none; }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
+        }
+    </style>
+</head>
+<body class="text-slate-600 bg-slate-50">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-200/60">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-slate-200">
+                    E
+                </div>
+                <span class="font-bold text-xl text-slate-900 tracking-tight">Expert Note</span>
+            </div>
+            <button id="lang-toggle" class="group flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-sm font-semibold text-slate-600">
+                <span class="w-2 h-2 rounded-full bg-indigo-500 group-hover:animate-pulse"></span>
+                <span>EN / 中文</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="grid-bg relative pt-40 pb-32 overflow-hidden">
+        <!-- Background Blurs -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-indigo-100/50 rounded-full blur-3xl -z-10"></div>
+        <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-100/40 rounded-full blur-3xl -z-10"></div>
+
+        <div class="max-w-5xl mx-auto px-6 text-center">
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm mb-8">
+                <span class="flex h-2 w-2 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-slate-500 lang-en">The Logic Layer for AI</span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-slate-500 lang-cn hidden">AI 的逻辑层</span>
+            </div>
+
+            <!-- Headline -->
+            <div class="lang-en">
+                <h1 class="text-6xl md:text-7xl font-bold text-slate-900 leading-tight mb-8">
+                    Turn Tacit Knowledge<br/>
+                    into <span class="gradient-text">Software Assets</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto leading-relaxed mb-12">
+                    Generic AI handles the easy 80%. Expert Note captures the nuanced 20%—your rules, your style, your judgment—and scales it infinitely.
+                </p>
+            </div>
+
+            <div class="lang-cn hidden">
+                <h1 class="text-6xl md:text-7xl font-bold text-slate-900 leading-tight mb-8">
+                    将隐性知识<br/>
+                    转化为 <span class="gradient-text">软件资产</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto leading-relaxed mb-12">
+                    通用 AI 处理简单的 80%。Expert Note 捕捉那微妙的 20%——您的规则、风格、判断力——并将其无限扩展。
+                </p>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a href="#" class="px-8 py-4 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 hover:scale-105 transition-all shadow-xl shadow-slate-200 w-full sm:w-auto text-center">
+                    <span class="lang-en">Start Capturing</span>
+                    <span class="lang-cn hidden">开始捕捉</span>
+                </a>
+                <a href="#examples" class="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all w-full sm:w-auto text-center">
+                    <span class="lang-en">View Examples</span>
+                    <span class="lang-cn hidden">查看示例</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visual Concept: The 100% Bar -->
+    <section class="py-20 bg-white border-y border-slate-100">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="bg-slate-50 rounded-3xl p-10 md:p-16 border border-slate-200/60 shadow-inner relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-10 opacity-5">
+                    <svg class="w-64 h-64" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
+                </div>
+
+                <div class="relative z-10 text-center max-w-3xl mx-auto">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-10 lang-en">The Perfection Gap</h2>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-10 lang-cn hidden">完美差距</h2>
+                    
+                    <!-- Progress Bar Component -->
+                    <div class="w-full h-16 bg-slate-200 rounded-2xl overflow-hidden flex shadow-inner mb-6">
+                        <!-- 80% Segment -->
+                        <div class="w-[80%] bg-slate-400 flex items-center justify-center relative group">
+                            <span class="text-slate-100 font-bold text-lg">Standard AI (80%)</span>
+                            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
+                        <!-- 20% Segment -->
+                        <div class="w-[20%] bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-center relative shadow-lg">
+                            <span class="text-white font-bold text-lg animate-pulse">+ Expert Note (20%)</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between text-left text-sm mt-4 px-2">
+                        <div class="w-3/4 pr-8">
+                            <h4 class="font-bold text-slate-700 mb-1 lang-en">Commodity Intelligence</h4>
+                            <h4 class="font-bold text-slate-700 mb-1 lang-cn hidden">商品化智能</h4>
+                            <p class="text-slate-500 lang-en">Grammar, basic facts, generic formatting. Available to everyone.</p>
+                            <p class="text-slate-500 lang-cn hidden">语法、基本事实、通用格式。人人皆可获得。</p>
+                        </div>
+                        <div class="w-1/4 border-l-2 border-indigo-500 pl-4">
+                            <h4 class="font-bold text-indigo-600 mb-1 lang-en">Your Competitive Edge</h4>
+                            <h4 class="font-bold text-indigo-600 mb-1 lang-cn hidden">您的竞争优势</h4>
+                            <p class="text-slate-600 lang-en">Context, institutional memory, specialized rules.</p>
+                            <p class="text-slate-600 lang-cn hidden">语境、机构记忆、特定规则。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4 Core Examples (Bento Grid) -->
+    <section id="examples" class="py-32 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl font-bold text-slate-900 mb-4 lang-en">Where Expertise Matters</h2>
+                <h2 class="text-4xl font-bold text-slate-900 mb-4 lang-cn hidden">专业知识至关重要的领域</h2>
+                <p class="text-lg text-slate-500 lang-en">Four scenarios where standard AI fails and human judgment wins.</p>
+                <p class="text-lg text-slate-500 lang-cn hidden">标准 AI 失败而人类判断力制胜的四个场景。</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <!-- Card 1: Education -->
+                <div class="bento-card rounded-3xl p-10 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="text-9xl">🎓</span>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-6">
+                            A+
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4 lang-en">The Grading Agent</h3>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4 lang-cn hidden">评分 Agent</h3>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="flex gap-3 text-sm">
+                                <span class="font-bold text-slate-400 uppercase text-xs w-12 pt-1 lang-en">Input</span>
+                                <span class="font-bold text-slate-400 uppercase text-xs w-12 pt-1 lang-cn hidden">输入</span>
+                                <p class="text-slate-600 lang-en">Teacher annotates 5 thesis papers with comments like <span class="bg-yellow-100 text-yellow-800 px-1 rounded">"Argument lacks empirical support"</span>.</p>
+                                <p class="text-slate-600 lang-cn hidden">教师批注 5 篇论文，评论如<span class="bg-yellow-100 text-yellow-800 px-1 rounded">“论点缺乏实证支持”</span>。</p>
+                            </div>
+                            <div class="flex gap-3 text-sm">
+                                <span class="font-bold text-indigo-600 uppercase text-xs w-12 pt-1 lang-en">Asset</span>
+                                <span class="font-bold text-indigo-600 uppercase text-xs w-12 pt-1 lang-cn hidden">资产</span>
+                                <p class="font-medium text-slate-800 lang-en">A reusable "Virtual TA" that grades the next 500 students using the professor's exact rubric and tone.</p>
+                                <p class="font-medium text-slate-800 lang-cn hidden">一个可复用的“虚拟助教”，用教授完全一致的标准和语气批改接下来的 500 名学生。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Legal Code -->
+                <div class="bento-card rounded-3xl p-10 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="text-9xl">⚖️</span>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 bg-violet-100 text-violet-600 rounded-2xl flex items-center justify-center text-2xl mb-6">
+                            §
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4 lang-en">Compliance Guardrails</h3>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4 lang-cn hidden">合规护栏</h3>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="flex gap-3 text-sm">
+                                <span class="font-bold text-slate-400 uppercase text-xs w-12 pt-1 lang-en">Input</span>
+                                <span class="font-bold text-slate-400 uppercase text-xs w-12 pt-1 lang-cn hidden">输入</span>
+                                <p class="text-slate-600 lang-en">Senior Partner highlights boilerplate contract clauses: <span class="bg-red-100 text-red-800 px-1 rounded">"Never accept jurisdiction in NY."</span></p>
+                                <p class="text-slate-600 lang-cn hidden">高级合伙人高亮通用合同条款：<span class="bg-red-100 text-red-800 px-1 rounded">“绝不接受纽约管辖权。”</span></p>
+                            </div>
+                            <div class="flex gap-3 text-sm">
+                                <span class="font-bold text-indigo-600 uppercase text-xs w-12 pt-1 lang-en">Asset</span>
+                                <span class="font-bold text-indigo-600 uppercase text-xs w-12 pt-1 lang-cn hidden">资产</span>
+                                <p class="font-medium text-slate-800 lang-en">An automated "Risk Checker" that scans every new draft against the firm's specific internal policy.</p>
+                                <p class="font-medium text-slate-800 lang-cn hidden">一个自动化的“风险检查器”，根据律所的特定内部政策扫描每一份新草稿。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Research -->
+                <div class="bento-card rounded-3xl p-10 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="text-9xl">🔬</span>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-6">
+                            R
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4 lang-en">The Paper Reviewer</h3>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4 lang-cn hidden">论文审稿人</h3>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="flex gap-3 text-sm">
+                                <span class="font-bold text-slate-400 uppercase text-xs w-12 pt-1 lang-en">Input</span>
+                                <span class="font-bold text-slate-400 uppercase text-xs w-12 pt-1 lang-cn hidden">输入</span>
+                                <p class="text-slate-600 lang-en">Editor annotates submissions for novelty. <span class="bg-emerald-100 text-emerald-800 px-1 rounded">"Methodology valid, but literature review outdated."</span></p>
+                                <p class="text-slate-600 lang-cn hidden">编辑批注投稿的新颖性。<span class="bg-emerald-100 text-emerald-800 px-1 rounded">“方法论有效，但文献综述过时。”</span></p>
+                            </div>
+                            <div class="flex gap-3 text-sm">
+                                <span class="font-bold text-indigo-600 uppercase text-xs w-12 pt-1 lang-en">Asset</span>
+                                <span class="font-bold text-indigo-600 uppercase text-xs w-12 pt-1 lang-cn hidden">资产</span>
+                                <p class="font-medium text-slate-800 lang-en">A "Pre-Screening Agent" that filters 1,000s of submissions to find the top 10% that match the journal's standards.</p>
+                                <p class="font-medium text-slate-800 lang-cn hidden">一个“预筛选 Agent”，从数千份投稿中过滤出符合期刊标准的前 10%。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Executive Voice -->
+                <div class="bento-card rounded-3xl p-10 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="text-9xl">✍️</span>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-2xl mb-6">
+                            V
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4 lang-en">Executive Voice Clone</h3>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4 lang-cn hidden">高管声音克隆</h3>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="flex gap-3 text-sm">
+                                <span class="font-bold text-slate-400 uppercase text-xs w-12 pt-1 lang-en">Input</span>
+                                <span class="font-bold text-slate-400 uppercase text-xs w-12 pt-1 lang-cn hidden">输入</span>
+                                <p class="text-slate-600 lang-en">CEO annotates ghostwritten drafts. <span class="bg-orange-100 text-orange-800 px-1 rounded">"Too formal. Use shorter sentences. More urgency."</span></p>
+                                <p class="text-slate-600 lang-cn hidden">CEO 批注代笔草稿。<span class="bg-orange-100 text-orange-800 px-1 rounded">“太正式了。用短句。更紧迫些。”</span></p>
+                            </div>
+                            <div class="flex gap-3 text-sm">
+                                <span class="font-bold text-indigo-600 uppercase text-xs w-12 pt-1 lang-en">Asset</span>
+                                <span class="font-bold text-indigo-600 uppercase text-xs w-12 pt-1 lang-cn hidden">资产</span>
+                                <p class="font-medium text-slate-800 lang-en">A "Ghostwriting Agent" that generates comms in the CEO's exact style, requiring 0 edits.</p>
+                                <p class="font-medium text-slate-800 lang-cn hidden">一个“代笔 Agent”，以 CEO 独特的风格生成通讯稿，无需修改。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Infinite Scroll Scenarios -->
+    <section class="py-20 bg-white border-t border-slate-100 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 mb-12">
+            <h3 class="text-2xl font-bold text-slate-900 lang-en">More Tacit Knowledge Scenarios</h3>
+            <h3 class="text-2xl font-bold text-slate-900 lang-cn hidden">更多隐性知识场景</h3>
+        </div>
+        
+        <div class="scroller w-full">
+            <div class="scroller-inner">
+                <!-- Items -->
+                <div class="scroller-item">
+                    <div class="text-2xl mb-2">🏥</div>
+                    <h4 class="font-bold text-slate-900 lang-en">Medical Triage</h4>
+                    <h4 class="font-bold text-slate-900 lang-cn hidden">医疗分诊</h4>
+                    <p class="text-sm text-slate-500 mt-1">Clinical intuition vs textbook symptoms.</p>
+                </div>
+                <div class="scroller-item">
+                    <div class="text-2xl mb-2">🏗️</div>
+                    <h4 class="font-bold text-slate-900 lang-en">Code Review</h4>
+                    <h4 class="font-bold text-slate-900 lang-cn hidden">代码审查</h4>
+                    <p class="text-sm text-slate-500 mt-1">Engineering culture & trade-offs.</p>
+                </div>
+                <div class="scroller-item">
+                    <div class="text-2xl mb-2">💡</div>
+                    <h4 class="font-bold text-slate-900 lang-en">VC Investment</h4>
+                    <h4 class="font-bold text-slate-900 lang-cn hidden">风险投资</h4>
+                    <p class="text-sm text-slate-500 mt-1">Gut feeling on founder quality.</p>
+                </div>
+                <div class="scroller-item">
+                    <div class="text-2xl mb-2">🎨</div>
+                    <h4 class="font-bold text-slate-900 lang-en">UX Audits</h4>
+                    <h4 class="font-bold text-slate-900 lang-cn hidden">UX 审计</h4>
+                    <p class="text-sm text-slate-500 mt-1">Brand feel & interaction nuance.</p>
+                </div>
+                <div class="scroller-item">
+                    <div class="text-2xl mb-2">🤝</div>
+                    <h4 class="font-bold text-slate-900 lang-en">Sales Coaching</h4>
+                    <h4 class="font-bold text-slate-900 lang-cn hidden">销售教练</h4>
+                    <p class="text-sm text-slate-500 mt-1">Emotional subtext in negotiation.</p>
+                </div>
+                <div class="scroller-item">
+                    <div class="text-2xl mb-2">🛡️</div>
+                    <h4 class="font-bold text-slate-900 lang-en">Crisis Comms</h4>
+                    <h4 class="font-bold text-slate-900 lang-cn hidden">危机公关</h4>
+                    <p class="text-sm text-slate-500 mt-1">Tone sensitivity & risk mitigation.</p>
+                </div>
+                 <div class="scroller-item">
+                    <div class="text-2xl mb-2">📝</div>
+                    <h4 class="font-bold text-slate-900 lang-en">Grant Writing</h4>
+                    <h4 class="font-bold text-slate-900 lang-cn hidden">基金申请</h4>
+                    <p class="text-sm text-slate-500 mt-1">Alignment with donor priorities.</p>
+                </div>
+                <!-- Duplicate for loop -->
+                 <div class="scroller-item">
+                    <div class="text-2xl mb-2">🏥</div>
+                    <h4 class="font-bold text-slate-900 lang-en">Medical Triage</h4>
+                    <h4 class="font-bold text-slate-900 lang-cn hidden">医疗分诊</h4>
+                    <p class="text-sm text-slate-500 mt-1">Clinical intuition vs textbook symptoms.</p>
+                </div>
+                <div class="scroller-item">
+                    <div class="text-2xl mb-2">🏗️</div>
+                    <h4 class="font-bold text-slate-900 lang-en">Code Review</h4>
+                    <h4 class="font-bold text-slate-900 lang-cn hidden">代码审查</h4>
+                    <p class="text-sm text-slate-500 mt-1">Engineering culture & trade-offs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-16">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+                <span class="font-bold text-white text-xl">Expert Note</span>
+                <p class="mt-2 text-sm">Capturing the unwritten rules of your business.</p>
+            </div>
+            <div class="flex justify-end gap-6">
+                <a href="#" class="hover:text-white transition-colors">Twitter</a>
+                <a href="#" class="hover:text-white transition-colors">LinkedIn</a>
+                <a href="#" class="hover:text-white transition-colors">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const langToggle = document.getElementById('lang-toggle');
+        const enElements = document.querySelectorAll('.lang-en');
+        const cnElements = document.querySelectorAll('.lang-cn');
+        let currentLang = 'en';
+
+        langToggle.addEventListener('click', () => {
+            if (currentLang === 'en') {
+                enElements.forEach(el => el.classList.add('hidden'));
+                cnElements.forEach(el => el.classList.remove('hidden'));
+                currentLang = 'cn';
+            } else {
+                cnElements.forEach(el => el.classList.add('hidden'));
+                enElements.forEach(el => el.classList.remove('hidden'));
+                currentLang = 'en';
+            }
+        });
+    </script>
+</body>
+</html>

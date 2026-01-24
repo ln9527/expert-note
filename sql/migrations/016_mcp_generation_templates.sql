@@ -1,8 +1,12 @@
 -- Migration: 016_mcp_generation_templates.sql
 -- Description: Add MCP prompt generator template for generating deployable MCP prompt content
 -- Date: 2026-01-21
+-- Updated: 2026-01-24 - Added ON CONFLICT to prevent duplicates on re-runs
 
 BEGIN;
+
+-- Note: Unique index prompt_templates_category_template_type_unique
+-- is created in migration 015 and applies here as well
 
 -- MCP Prompt Generator (generates deployable MCP prompt content)
 INSERT INTO prompt_templates (
@@ -117,7 +121,9 @@ Generate a complete, self-contained markdown document with this exact structure:
     TRUE,
     TRUE,
     NULL
-);
+)
+ON CONFLICT (category, template_type) WHERE template_type IS NOT NULL
+DO NOTHING;
 
 COMMIT;
 

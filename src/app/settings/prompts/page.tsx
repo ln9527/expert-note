@@ -8,6 +8,15 @@ import { useTranslation } from '@/i18n';
 
 type FilterCategory = 'all' | PromptTemplateCategory;
 
+// Category display names for the filter bar
+const CATEGORY_LABELS: Record<FilterCategory, string> = {
+  all: 'All',
+  extraction: 'Extraction',
+  generation: 'Generation',
+  'skill-generation': 'Skill Generation',
+  'mcp-generation': 'MCP Generation',
+};
+
 // Admin roles that can access generation guides
 const ADMIN_ROLES: UserRole[] = ['super_admin', 'owner'];
 
@@ -265,8 +274,8 @@ export default function PromptTemplatesPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-2">
-        {(['all', 'extraction', 'generation'] as FilterCategory[]).map((cat) => (
+      <div className="flex flex-wrap items-center gap-2">
+        {(['all', 'extraction', 'generation', 'skill-generation', 'mcp-generation'] as FilterCategory[]).map((cat) => (
           <button
             key={cat}
             onClick={() => setFilter(cat)}
@@ -276,7 +285,7 @@ export default function PromptTemplatesPage() {
                 : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
             }`}
           >
-            {cat === 'all' ? t('common.all') : cat === 'extraction' ? t('common.extraction') : t('common.generation')}
+            {cat === 'all' ? t('common.all') : CATEGORY_LABELS[cat]}
           </button>
         ))}
       </div>
@@ -301,7 +310,7 @@ export default function PromptTemplatesPage() {
           <p className="mt-2 text-gray-500">
             {filter === 'all'
               ? t('common.getStartedGuide')
-              : t('common.noGuidesAvailable', { category: filter === 'extraction' ? t('common.extraction').toLowerCase() : t('common.generation').toLowerCase() })}
+              : t('common.noGuidesAvailable', { category: CATEGORY_LABELS[filter].toLowerCase() })}
           </p>
         </div>
       ) : (
@@ -326,9 +335,13 @@ export default function PromptTemplatesPage() {
                       <span className={`px-2 py-0.5 text-xs rounded-full ${
                         template.category === 'extraction'
                           ? 'bg-green-100 text-green-700'
+                          : template.category === 'skill-generation'
+                          ? 'bg-orange-100 text-orange-700'
+                          : template.category === 'mcp-generation'
+                          ? 'bg-blue-100 text-blue-700'
                           : 'bg-purple-100 text-purple-700'
                       }`}>
-                        {template.category}
+                        {CATEGORY_LABELS[template.category]}
                       </span>
                       {template.templateType && (
                         <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
@@ -461,8 +474,10 @@ export default function PromptTemplatesPage() {
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="extraction">{t('common.extraction')}</option>
-                      <option value="generation">{t('common.generation')}</option>
+                      <option value="extraction">{CATEGORY_LABELS.extraction}</option>
+                      <option value="generation">{CATEGORY_LABELS.generation}</option>
+                      <option value="skill-generation">{CATEGORY_LABELS['skill-generation']}</option>
+                      <option value="mcp-generation">{CATEGORY_LABELS['mcp-generation']}</option>
                     </select>
                   </div>
                 )}

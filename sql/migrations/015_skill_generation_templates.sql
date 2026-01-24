@@ -1,8 +1,23 @@
 -- Migration: 015_skill_generation_templates.sql
 -- Description: Add skill-generation templates for Claude Code skill package generation
 -- Date: 2026-01-21
+-- Updated: 2026-01-24 - Added ON CONFLICT to prevent duplicates on re-runs
 
 BEGIN;
+
+-- Add unique constraint if not exists (for idempotent inserts)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'prompt_templates_category_template_type_unique'
+    ) THEN
+        -- Create unique index for category + template_type combination
+        CREATE UNIQUE INDEX prompt_templates_category_template_type_unique
+        ON prompt_templates (category, template_type)
+        WHERE template_type IS NOT NULL;
+    END IF;
+END $$;
 
 -- 1. Skill MD Generator (generates SKILL.md file content)
 INSERT INTO prompt_templates (
@@ -77,7 +92,9 @@ Generate a complete SKILL.md file with this exact structure:
     TRUE,
     TRUE,
     NULL
-);
+)
+ON CONFLICT (category, template_type) WHERE template_type IS NOT NULL
+DO NOTHING;
 
 -- 2. Skill Prompts Generator (generates prompts/ folder content)
 INSERT INTO prompt_templates (
@@ -143,7 +160,9 @@ Return a JSON object where:
     TRUE,
     TRUE,
     NULL
-);
+)
+ON CONFLICT (category, template_type) WHERE template_type IS NOT NULL
+DO NOTHING;
 
 -- 3. Skill Examples Generator (generates examples/ folder content)
 INSERT INTO prompt_templates (
@@ -210,7 +229,9 @@ Each example file MUST include:
     TRUE,
     TRUE,
     NULL
-);
+)
+ON CONFLICT (category, template_type) WHERE template_type IS NOT NULL
+DO NOTHING;
 
 -- 4. Skill Tests Generator (generates tests/ folder content)
 INSERT INTO prompt_templates (
@@ -286,7 +307,9 @@ Each test MUST include:
     TRUE,
     TRUE,
     NULL
-);
+)
+ON CONFLICT (category, template_type) WHERE template_type IS NOT NULL
+DO NOTHING;
 
 COMMIT;
 
