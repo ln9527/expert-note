@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/i18n';
+import { TemplateSelector, McpTemplateSelectionState } from '@/components/shared';
 
 export interface McpWizardInstructionsStepProps {
   title: string;
@@ -9,12 +10,14 @@ export interface McpWizardInstructionsStepProps {
   instructions: string;
   autoDeploy: boolean;
   isPublic: boolean;
+  templateSelection: McpTemplateSelectionState;
   onTitleChange: (value: string) => void;
   onNamespaceChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onInstructionsChange: (value: string) => void;
   onAutoDeployChange: (value: boolean) => void;
   onPublicChange: (value: boolean) => void;
+  onTemplateSelectionChange: (selection: McpTemplateSelectionState) => void;
 }
 
 // Validate namespace: lowercase alphanumeric with hyphens only
@@ -41,12 +44,14 @@ export function McpWizardInstructionsStep({
   instructions,
   autoDeploy,
   isPublic,
+  templateSelection,
   onTitleChange,
   onNamespaceChange,
   onDescriptionChange,
   onInstructionsChange,
   onAutoDeployChange,
   onPublicChange,
+  onTemplateSelectionChange,
 }: McpWizardInstructionsStepProps) {
   const { t } = useTranslation();
 
@@ -167,6 +172,13 @@ export function McpWizardInstructionsStep({
             </div>
           </label>
         </div>
+
+        {/* Template selector */}
+        <TemplateSelector
+          category="mcp-generation"
+          selection={templateSelection}
+          onChange={onTemplateSelectionChange}
+        />
       </div>
     </div>
   );

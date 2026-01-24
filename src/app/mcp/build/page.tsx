@@ -12,6 +12,7 @@ import {
   McpWizardBuildStep,
 } from '@/components/mcp';
 import type { GeneratedMcpPlan, DeployedMcp } from '@/components/mcp';
+import type { McpTemplateSelectionState } from '@/components/shared';
 
 // Helper to generate namespace from title
 const generateNamespace = (title: string): string => {
@@ -41,6 +42,11 @@ export default function McpBuilderPage() {
   // MCP-specific options
   const [autoDeploy, setAutoDeploy] = useState(true);
   const [isPublic, setIsPublic] = useState(false);
+
+  // Template selection state
+  const [templateSelection, setTemplateSelection] = useState<McpTemplateSelectionState>({
+    mcpPrompt: { id: '', enabled: true },
+  });
 
   // Generated plan state
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedMcpPlan | null>(null);
@@ -136,6 +142,7 @@ export default function McpBuilderPage() {
           description,
           instructions,
           namespace,
+          template: templateSelection.mcpPrompt.id ? { id: templateSelection.mcpPrompt.id } : undefined,
         }),
       });
 
@@ -218,12 +225,14 @@ export default function McpBuilderPage() {
             instructions={instructions}
             autoDeploy={autoDeploy}
             isPublic={isPublic}
+            templateSelection={templateSelection}
             onTitleChange={handleTitleChange}
             onNamespaceChange={setNamespace}
             onDescriptionChange={setDescription}
             onInstructionsChange={setInstructions}
             onAutoDeployChange={setAutoDeploy}
             onPublicChange={setIsPublic}
+            onTemplateSelectionChange={setTemplateSelection}
           />
         );
       case 'preview':
