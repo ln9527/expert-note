@@ -434,6 +434,27 @@ export interface PromptTemplate {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// TEMPLATE SELECTION TYPES (for Skills/MCP wizards)
+// ═══════════════════════════════════════════════════════════════════
+
+// Template selection configuration for wizards
+export interface TemplateConfig {
+  id: string;        // Template UUID to use
+  enabled: boolean;  // Whether to generate this component
+}
+
+export interface SkillTemplateSelection {
+  skillMd: TemplateConfig;       // Required - always enabled
+  prompts?: TemplateConfig;      // Optional
+  examples?: TemplateConfig;     // Optional
+  tests?: TemplateConfig;        // Optional
+}
+
+export interface McpTemplateSelection {
+  mcpPrompt: TemplateConfig;     // Required - always enabled
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // BULK UPLOAD TYPES
 // ═══════════════════════════════════════════════════════════════════
 
