@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { buildApiPath } from '@/lib/utils/pathHelper';
 import { Skill } from '@/types';
 import DeleteConfirmModal from '@/components/shared/DeleteConfirmModal';
+import SkillContentViewer from '@/components/skills/SkillContentViewer';
 import { useTranslation } from '@/i18n';
 
 export default function SkillDetailPage() {
@@ -233,14 +234,18 @@ export default function SkillDetailPage() {
             </div>
           </div>
 
-          {/* Content JSON */}
+          {/* Content Viewer */}
           <div className="border-t border-gray-200 pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">{t('skills.contentStructure')}</h3>
-            <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-              <pre className="text-sm text-gray-100 font-mono whitespace-pre-wrap">
-                {JSON.stringify(skill.content, null, 2)}
-              </pre>
-            </div>
+            <SkillContentViewer
+              content={skill.content as {
+                skillMd?: string;
+                prompts?: Record<string, string> | Array<{ name: string; content: string }>;
+                examples?: Record<string, string> | Array<{ name: string; content: string }>;
+                tests?: Record<string, string> | Array<{ name: string; content: string }>;
+              }}
+              skillTitle={skill.title}
+            />
           </div>
         </div>
       </div>

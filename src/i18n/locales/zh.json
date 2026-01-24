@@ -460,7 +460,21 @@
     "contentRequired": "技能内容为必填项",
     "sharing": "共享设置",
     "sharedHelp": "与组织内的其他人共享",
-    "allowEditHelp": "允许其他人编辑此技能"
+    "allowEditHelp": "允许其他人编辑此技能",
+    "fileTree": "文件树",
+    "selectFileToView": "选择文件查看内容",
+    "noFiles": "此技能中没有文件",
+    "assets": "资源文件",
+    "assetsHelp": "为技能包添加提示词、示例和测试文件。",
+    "prompts": "提示词",
+    "examples": "示例",
+    "tests": "测试",
+    "addPrompt": "添加提示词",
+    "addExample": "添加示例",
+    "addTest": "添加测试",
+    "assetNamePlaceholder": "输入文件名...",
+    "assetContentPlaceholder": "输入内容...",
+    "noAssets": "暂无资源文件。点击下方按钮添加。"
   },
   "landing": {
     "tagline": "赋能人类智慧",

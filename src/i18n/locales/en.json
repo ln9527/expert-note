@@ -459,7 +459,21 @@
     "contentRequired": "Skill content is required",
     "sharing": "Sharing",
     "sharedHelp": "Share with others in your organization",
-    "allowEditHelp": "Allow others to edit this skill"
+    "allowEditHelp": "Allow others to edit this skill",
+    "fileTree": "File Tree",
+    "selectFileToView": "Select a file to view its content",
+    "noFiles": "No files in this skill",
+    "assets": "Assets",
+    "assetsHelp": "Add prompts, examples, and tests to your skill package.",
+    "prompts": "Prompts",
+    "examples": "Examples",
+    "tests": "Tests",
+    "addPrompt": "Add Prompt",
+    "addExample": "Add Example",
+    "addTest": "Add Test",
+    "assetNamePlaceholder": "Enter file name...",
+    "assetContentPlaceholder": "Enter content...",
+    "noAssets": "No assets yet. Click the button below to add one."
   },
   "landing": {
     "tagline": "Empowering Human Judgment",
