@@ -601,6 +601,21 @@
       "copied": "Copied!"
     }
   },
+  "templateSelector": {
+    "advancedTitle": "Advanced: Generation Templates",
+    "clickToExpand": "Click to expand",
+    "clickToCollapse": "Click to collapse",
+    "description": "Select which templates to use for generating each component. Required items are always included.",
+    "required": "required",
+    "loading": "Loading templates...",
+    "noTemplatesAvailable": "No templates available",
+    "noTemplatesFound": "No generation templates found. Please create templates in Settings.",
+    "skillMd": "SKILL.md",
+    "prompts": "Prompts",
+    "examples": "Examples",
+    "tests": "Tests",
+    "mcpPrompt": "MCP Prompt"
+  },
   "mcp": {
     "title": "MCP",
     "createMcp": "Create MCP",

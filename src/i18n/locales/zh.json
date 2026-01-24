@@ -602,6 +602,21 @@
       "copied": "已复制！"
     }
   },
+  "templateSelector": {
+    "advancedTitle": "高级选项：生成模板",
+    "clickToExpand": "点击展开",
+    "clickToCollapse": "点击收起",
+    "description": "选择用于生成每个组件的模板。必需项始终包含。",
+    "required": "必需",
+    "loading": "加载模板中...",
+    "noTemplatesAvailable": "无可用模板",
+    "noTemplatesFound": "未找到生成模板。请在设置中创建模板。",
+    "skillMd": "SKILL.md",
+    "prompts": "提示词",
+    "examples": "示例",
+    "tests": "测试",
+    "mcpPrompt": "MCP 提示"
+  },
   "mcp": {
     "title": "MCP",
     "createMcp": "创建MCP",
